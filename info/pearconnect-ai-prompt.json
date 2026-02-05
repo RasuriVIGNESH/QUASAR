@@ -1,0 +1,436 @@
+      "projectTasks": {
+        "fields": [
+          "projectId (string)", "taskId (string)", "title (string)", 
+          "description (string)", "assignedTo (string)", "assignedBy (string)",
+          "status (string)", "priority (string)", "dueDate (timestamp)",
+          "createdAt (timestamp)", "completedAt (timestamp)"
+        ]
+      },
+      "collaborativeNotes": {
+        "fields": [
+          "projectId (string)", "content (string)", "lastEditedBy (string)",
+          "lastEditedAt (timestamp)", "version (number)"
+        ]
+      },
+      "pendingSkills": {
+        "fields": [
+          "skillName (string)", "category (string)", "requestedBy (string)",
+          "description (string)", "status (string)", "reviewedBy (string)",
+          "createdAt (timestamp)", "reviewedAt (timestamp)"
+        ]
+      },      "project_management": {
+        "project_details": {
+          "subsections": [
+            "Problem Statement - Define the project problem and scope",
+            "Objectives - List clear project goals and deliverables", 
+            "Tech Stack - Technologies and tools to be used",
+            "Tasks - Collaborative to-do list with task assignment to team members"
+          ],
+          "task_management": {
+            "features": ["Create tasks", "Assign to team members", "Mark as complete", "Set priorities", "Add due dates"],
+            "visibility": "All team members can view and manage tasks",
+            "real_time": "Real-time updates using Firestore listeners"
+          }
+        },
+        "collaborative_notepad": {
+          "description": "Shared notepad for team collaboration and project planning",
+          "features": ["Real-time editing", "Team member access", "Project planning", "Meeting notes"],
+          "visibility": "All team members can view and edit",
+          "implementation": "Built-in collaborative text editor with Firestore real-time sync"
+        }
+      },{
+  "project": {
+    "name": "PearConnect",
+    "description": "A college-focused platform for skill-based team formation and project collaboration with AI-powered documentation",
+    "version": "1.0.0",
+    "type": "full_stack_web_application"
+  },
+  "problem_statement": {
+    "primary_issues": [
+      "Lack of visibility into students' skills, roles, and preferences leading to mismatched teams",
+      "Manual, biased team formation based on familiarity rather than structured data",
+      "No centralized system to capture and analyze skill data for interdisciplinary collaboration",
+      "Difficulty in organizing and tracking meeting notes, resulting in missed action items"
+    ],
+    "target_users": "College students looking to form project teams based on complementary skills",
+    "context": "Every college has students who need to collaborate on academic, personal, or competition projects but lack visibility into other students' skills and availability"
+  },
+  "core_objectives": [
+    "Build a centralized platform to map students to projects based on skills and preferences",
+    "Provide detailed user profiles to improve visibility of skillsets, roles, and interests",
+    "Promote cross-department collaboration by aligning project goals with available expertise",
+    "Integrate an AI-powered collaborative notepad for structured and traceable meeting documentation",
+    "Enable students to discover and connect with peers having complementary skills"
+  ],
+  "technology_stack": {
+    "frontend": {
+      "core": ["HTML5", "CSS3", "JavaScript (ES6+)", "React 18"],
+      "development": "Node.js",
+      "styling": "Tailwind CSS",
+      "routing": "React Router v6",
+      "state_management": "React Hooks (useState, useEffect, useContext)",
+      "ui_components": "Custom components + Lucide React icons",
+      "build_tools": ["Vite", "npm/yarn"]
+    },
+    "backend": {
+      "current": "CSV files for static data",
+      "future": "Cloud database migration planned",
+      "data_sources": [
+        "predefined-skills.csv",
+        "project-templates.csv", 
+        "achievements.csv",
+        "learning-resources.csv"
+      ]
+    },
+    "cloud_services": {
+      "platform": "Firebase",
+      "authentication": "Firebase Auth (email/password with college domain verification)",
+      "database": "Cloud Firestore (NoSQL document database)",
+      "storage": "Firebase Storage (profile pictures, project images)",
+      "hosting": "Firebase Hosting",
+      "functions": "Cloud Functions (for server-side logic)"
+    },
+    "data_processing": {
+      "csv_parsing": "PapaParse library",
+      "data_validation": "Custom validators",
+      "real_time_sync": "Firestore real-time listeners"
+    }
+  },
+  "key_features": {
+    "authentication": {
+      "type": "Email/Password based",
+      "college_verification": {
+        "preferred": "Any email ending in .edu domain",
+        "fallback": "Other email addresses allowed with limited access",
+        "verification_method": "Firebase email verification for all users"
+      },
+      "access_levels": {
+        "full_access": "Users with .edu email addresses",
+        "limited_access": "Users with other email addresses (cannot create projects, limited discovery)"
+      },
+      "email_verification": "Firebase email verification",
+      "password_reset": "Firebase password reset functionality"
+    },
+    "user_profiles": {
+      "basic_info": ["name", "email", "graduation_year", "branch", "bio"],
+      "social_links": ["github", "linkedin", "portfolio"],
+      "skills_management": {
+        "predefined_skills": "Loaded from CSV with categories (Programming, Design, Data Science, Mobile, Other)",
+        "custom_skills": "Users can add new skills (requires admin approval before becoming available to other users)",
+        "proficiency_levels": ["Beginner", "Intermediate", "Advanced", "Expert"],
+        "skill_ratings": "Anonymous peer-to-peer rating system after project completion"
+      },
+      "availability_status": ["Available", "Busy", "Offline"]
+    },
+    "project_system": {
+      "project_creation": {
+        "required_fields": ["title", "description", "category", "expected_duration", "max_team_size"],
+        "categories": ["Academic", "Personal", "Hackathon", "Research", "Startup"],
+        "tech_stack_tagging": "Multi-select from skills database",
+        "project_templates": "Pre-built structures loaded from CSV"
+      },
+      "project_showcase": {
+        "completed_projects": "Display with team members, tech stack, demo links",
+        "project_gallery": "Multiple image uploads via Firebase Storage",
+        "github_integration": "Repository links",
+        "demo_links": "Live project URLs"
+      },
+      "team_formation": {
+        "connect_requests": "Students send connection requests to join projects",
+        "request_workflow": ["Pending", "Accepted", "Rejected"],
+        "team_management": "Project Lead can view full profiles of all applicants",
+        "member_limits": "Team lead sets limits for projects and team membership",
+        "role_assignment": ["Lead", "Member"]
+      }
+    },
+    "discovery_system": {
+      "student_discovery": {
+        "search_filters": ["skills", "graduation_year", "branch", "availability"],
+        "card_view": "Grid layout showing student profiles with key skills",
+        "detailed_profiles": "Click to view complete profile"
+      },
+      "project_discovery": {
+        "search_filters": ["category", "status", "required_skills", "duration"],
+        "project_cards": "Show project info, required skills, team size",
+        "recommendations": "Suggest projects based on user skills"
+      }
+    },
+    "skill_analytics": {
+      "demand_tracking": {
+        "description": "Show students which skills are in high demand based on project requirements",
+        "features": ["Most requested skills in projects", "Trending skills over time", "Skill gap analysis", "Market demand insights"],
+        "data_source": "Aggregated from project required_skills and user_skills data",
+        "purpose": "Help students identify valuable skills to learn for better collaboration opportunities"
+      }
+    },
+    "gamification": {
+      "achievement_system": {
+        "badge_types": ["First Steps", "Team Player", "Skill Master", "Mentor", "Learning Enthusiast"],
+        "criteria_tracking": "Automatic achievement unlocking based on activities",
+        "badge_display": "Visual badges on user profiles"
+      },
+      "skill_demand_insights": {
+        "trending_skills": "Display most in-demand skills based on project requirements",
+        "skill_analytics": "Show skill popularity trends and demand metrics", 
+        "learning_guidance": "Suggest high-value skills for career development"
+      }
+    },
+    "ai_collaboration": {
+      "collaborative_notepad": {
+        "current_implementation": "Real-time shared notepad for team collaboration",
+        "features": ["Shared editing", "Project planning", "Task assignment", "Meeting notes"],
+        "future_enhancement": "AI-powered features (summarization, action item extraction)"
+      },
+      "future_ai_features": ["Meeting summarization", "Action item extraction", "Smart task suggestions"]
+    }
+  },
+  "database_schema": {
+    "firestore_collections": {
+      "users": {
+        "fields": [
+          "email (string)", "firstName (string)", "lastName (string)",
+          "collegeId (string)", "profilePicture (string)", "bio (string)",
+          "socialLinks (object)", "graduationYear (number)", "branch (string)",
+          "isVerified (boolean)", "availabilityStatus (string)", 
+          "createdAt (timestamp)", "updatedAt (timestamp)"
+        ]
+      },
+      "skills": {
+        "fields": [
+          "name (string)", "category (string)", "isPredefined (boolean)",
+          "createdBy (string)", "createdAt (timestamp)"
+        ]
+      },
+      "userSkills": {
+        "fields": [
+          "userId (string)", "skillId (string)", "proficiencyLevel (string)",
+          "yearsOfExperience (number)", "averageRating (number)", 
+          "totalRatings (number)", "endorsements (array)", "createdAt (timestamp)"
+        ]
+      },
+      "projects": {
+        "fields": [
+          "title (string)", "description (string)", "LeadId (string)",
+          "category (string)", "status (string)", "maxTeamSize (number)",
+          "currentTeamSize (number)", "expectedDuration (string)",
+          "techStack (array)", "requiredSkills (array)", "githubRepo (string)",
+          "demoUrl (string)", "templateUsed (string)", "images (array)",
+          "problemStatement (string)", "objectives (array)", "milestones (array)",
+          "createdAt (timestamp)", "updatedAt (timestamp)"
+        ]
+      },
+      "connectRequests": {
+        "fields": [
+          "projectId (string)", "senderId (string)", "receiverId (string)",
+          "message (string)", "status (string)", "createdAt (timestamp)",
+          "respondedAt (timestamp)"
+        ]
+      },
+      "teamMembers": {
+        "fields": [
+          "projectId (string)", "userId (string)", "role (string)",
+          "joinedAt (timestamp)", "contribution (string)", "isActive (boolean)"
+        ]
+      },
+      "skillRatings": {
+        "fields": [
+          "raterId (string)", "ratedUserId (string)", "skillId (string)",
+          "projectId (string)", "rating (number)", "comment (string)",
+          "createdAt (timestamp)"
+        ]
+      },
+      "achievements": {
+        "fields": [
+          "name (string)", "description (string)", "badgeIcon (string)",
+          "badgeColor (string)", "criteriaType (string)", "criteriaValue (number)",
+          "createdAt (timestamp)"
+        ]
+      },
+      "userAchievements": {
+        "fields": [
+          "userId (string)", "achievementId (string)", "earnedAt (timestamp)",
+          "progress (number)"
+        ]
+      }
+    },
+    "csv_data_structure": {
+      "predefined_skills": ["id", "name", "category", "description"],
+      "project_templates": ["id", "name", "category", "description", "required_skills", "difficulty", "duration"],
+      "achievements": ["id", "name", "description", "badge_icon", "badge_color", "criteria_type", "criteria_value"]
+    }
+  },
+  "user_interface": {
+    "design_system": {
+      "framework": "Tailwind CSS",
+      "color_scheme": "Modern professional palette with accent colors",
+      "typography": "Clean, readable fonts",
+      "icons": "Lucide React icon set",
+      "responsive": "Mobile-first approach"
+    },
+    "key_pages": [
+      {
+        "name": "Landing Page",
+        "components": ["Hero section", "Features overview", "CTA buttons"],
+        "purpose": "Introduce platform and drive user registration"
+      },
+      {
+        "name": "Authentication Pages", 
+        "components": ["Login form", "Register form", "Email verification", "Password reset"],
+        "purpose": "User onboarding with college email verification"
+      },
+      {
+        "name": "Profile Page",
+        "components": ["Profile header", "Skills section", "Projects showcase", "Achievement badges"],
+        "purpose": "Display and edit user information and achievements"
+      },
+      {
+        "name": "Discovery Page",
+        "components": ["Search filters", "Student cards grid", "Project cards grid", "Recommendations"],
+        "purpose": "Find students and projects based on skills and interests"
+      },
+      {
+        "name": "Project Management",
+        "components": [
+          "Project form with subsections (Problem Statement, Objectives, Tech Stack)", 
+          "Team dashboard with member profiles", 
+          "Connect request management with full applicant profiles", 
+          "Collaborative task management system",
+          "Real-time collaborative notepad",
+          "Project showcase with detailed sections"
+        ],
+        "purpose": "Create, manage, and showcase projects with comprehensive team collaboration tools"
+      },
+      {
+        "name": "Skills Analytics Center",
+        "components": ["Skill demand dashboard", "Trending skills analytics", "Market insights", "Skill gap analysis"],
+        "purpose": "Show students which skills are in high demand to guide learning decisions"
+      },
+      {
+        "name": "Admin Panel",
+        "components": ["Pending skill approvals", "User management", "System analytics", "Content moderation"],
+        "purpose": "Manage custom skill approvals and system administration"
+      },
+      {
+        "name": "Learning Center",
+        "components": ["Skill demand insights", "Trending skills dashboard", "Learning recommendations", "Skill development guidance"],
+        "purpose": "Skill market analysis and learning guidance based on demand data"
+      }
+    ]
+  },
+  "development_workflow": {
+    "phases": [
+      {
+        "phase": 1,
+        "name": "Foundation Setup",
+        "duration": "Week 1-2",
+        "deliverables": [
+          "React project initialization with Vite",
+          "Firebase project setup (Auth, Firestore, Storage)",
+          "Basic authentication flow (login, register, email verification)",
+          "College email domain validation",
+          "CSV data loading utilities",
+          "Basic routing and protected routes"
+        ]
+      },
+      {
+        "phase": 2,
+        "name": "Core Features",
+        "duration": "Week 3-4",  
+        "deliverables": [
+          "User profile management system with access level controls",
+          "Skills management with admin approval workflow for custom skills",
+          "Anonymous skill rating system",
+          "CSV integration for predefined skills",
+          "Profile picture upload to Firebase Storage",
+          "Student discovery with search functionality and access restrictions",
+          "Project creation with detailed subsections (Problem Statement, Objectives, Tech Stack)",
+          "Skill demand analytics dashboard"
+        ]
+      },
+      {
+        "phase": 3,
+        "name": "Team Formation",
+        "duration": "Week 5-6",
+        "deliverables": [
+          "Connect request system with full applicant profile viewing",
+          "Project templates integration from CSV with detailed subsections", 
+          "Team management dashboard with collaborative tools",
+          "Project discovery with advanced filtering",
+          "Real-time collaborative notepad for team planning",
+          "Task management system with assignment and tracking",
+          "Notification system for connect requests and task updates",
+          "Team member role and access management"
+        ]
+      },
+      {
+        "phase": 4,
+        "name": "Enhanced Features",
+        "duration": "Week 7-8",
+        "deliverables": [
+          "Anonymous skill rating system implementation",
+          "Achievement system with automatic badge assignment using CSV criteria",
+          "Admin panel for custom skill approval workflow",
+          "Advanced skill demand analytics and trending insights",
+          "Advanced search and recommendation engine",
+          "Project showcase with comprehensive subsections and image galleries",
+          "Skill-based project recommendations with demand insights"
+        ]
+      },
+      {
+        "phase": 5,
+        "name": "Polish & Optimization",
+        "duration": "Week 9-10",
+        "deliverables": [
+          "UI/UX refinements and animations",
+          "Mobile responsiveness optimization",
+          "Performance optimization (lazy loading, caching)",
+          "Error handling and loading states",
+          "Firebase security rules implementation",
+          "Comprehensive testing and bug fixes"
+        ]
+      }
+    ]
+  },
+  "security_considerations": {
+    "authentication": "Firebase Auth with email verification and .edu domain preference",
+    "access_levels": "Differentiated access for .edu vs other email users",
+    "data_access": "Firestore security rules for user data protection and access level enforcement",
+    "privacy": "Anonymous skill ratings, users control profile visibility",
+    "admin_controls": "Secure admin panel for skill approval and system management",
+    "input_validation": "Client-side and server-side validation for all user inputs",
+    "file_uploads": "Secure file upload to Firebase Storage with size and type restrictions"
+  },
+  "scalability_plan": {
+    "current_architecture": "CSV + Firestore hybrid for rapid development",
+    "migration_path": [
+      "Phase 1: CSV data for static content (skills, templates, achievements)",
+      "Phase 2: Full migration to Firestore for all data",
+      "Phase 3: Cloud Functions for complex business logic",
+      "Phase 4: Advanced features (AI integration, analytics)"
+    ],
+    "performance": "Firestore real-time listeners for live updates, caching strategies",
+    "monitoring": "Firebase Analytics for user behavior tracking"
+  },
+  "success_metrics": [
+    "User registration rate and email verification completion (.edu vs other domains)",
+    "Profile completion rate (skills, bio, social links)",
+    "Custom skill submission and approval rates", 
+    "Project creation with detailed subsections completion rate",
+    "Team formation success rate and connect request acceptance",
+    "Task assignment and completion rates in collaborative projects",
+    "Collaborative notepad usage and engagement",
+    "Anonymous skill rating participation after project completion",
+    "Skill demand analytics engagement and learning decision influence"
+  ],
+  "future_enhancements": [
+    "AI-powered features for collaborative notepad (summarization, action item extraction)",
+    "Advanced skill demand prediction using machine learning",
+    "Integration with college calendar systems and academic schedules",
+    "Mobile app development (React Native)",
+    "Integration with popular development tools (GitHub, Figma, Slack)",
+    "Mentor-mentee connection system with senior students and alumni",
+    "Project competition and hackathon integration",
+    "Advanced analytics dashboard for college administrators",
+    "Cross-college collaboration features for inter-institutional projects"
+  ]
+}

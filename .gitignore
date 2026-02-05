@@ -1,3 +1,24 @@
-node_modules
-.env
-.gitignore
+QUASAR-backend/HELP.md
+QUASAR-backend/.mvn/wrapper/maven-wrapper.jar
+QUASAR-backend/!**/src/main/**/target/
+QUASAR-backend/!**/src/test/**/target/
+
+
+### IntelliJ IDEA ###
+QUASAR-backend/.idea
+QUASAR-backend/*.iws
+QUASAR-backend/*.iml
+QUASAR-backend/*.ipr
+
+
+# Ignore local environment files
+QUASAR-backend/.env
+
+
+QUASAR-backend/.info
+QUASAR-backend/target/
+
+
+QUASAR-frontend/node_modules
+QUASAR-frontend/.env
+QUASAR-frontend/.gitignore
