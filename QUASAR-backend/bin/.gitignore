@@ -1,0 +1,18 @@
+HELP.md
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+
+# Ignore local Spring Boot properties that may contain credentials
+src/main/resources/application.properties
+
+.info
+/target/

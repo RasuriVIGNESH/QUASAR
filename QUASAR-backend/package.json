@@ -1,0 +1,20 @@
+{
+  "name": "peerconnect",
+  "version": "1.0.0",
+  "description": "PeerConnect is a collaboration platform that helps professionals find teammates, create and manage projects, and collaborate in real time. This README has been updated to reflect the project's current implementation: GitHub OAuth for social login, JWT authentication, WebSocket support, JPA/MySQL persistence, and Swagger API documentation.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RasuriVIGNESH/PeerConnect-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/RasuriVIGNESH/PeerConnect-backend/issues"
+  },
+  "homepage": "https://github.com/RasuriVIGNESH/PeerConnect-backend#readme"
+}
