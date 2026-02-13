@@ -120,28 +120,28 @@ export default function InviteMembers() {
   };
 
   if (loading) return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50">
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
       <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-slate-500 font-bold uppercase tracking-widest text-xs animate-pulse">Scanning Talent Pool...</p>
+      <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse">Scanning Talent Pool...</p>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans selection:bg-blue-100">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] font-sans selection:bg-blue-100 dark:selection:bg-blue-900">
       {/* Sticky Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 h-16 px-6 flex items-center justify-between">
+      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 h-16 px-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             onClick={() => navigate(`/projects/${projectId}`)}
-            className="text-slate-600 hover:text-blue-600 font-bold text-xs p-0 px-2"
+            className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-xs p-0 px-2"
           >
             <ArrowLeft className="w-4 h-4 mr-2" /> EXIT RECRUITMENT
           </Button>
-          <div className="h-6 w-px bg-slate-200" />
-          <h1 className="text-sm font-black text-slate-900 uppercase tracking-widest">Peers for {projectId?.slice(0, 6)}</h1>
+          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
+          <h1 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Peers for {projectId?.slice(0, 6)}</h1>
         </div>
-        <Badge className="bg-blue-50 text-blue-700 border-none font-black px-3 py-1 text-[10px]">
+        <Badge className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-none font-black px-3 py-1 text-[10px]">
           {invitedUserIds.length} INVITED
         </Badge>
       </header>
@@ -152,29 +152,29 @@ export default function InviteMembers() {
           <motion.h2
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="text-3xl md:text-5xl font-black text-slate-900 tracking-tight"
+            className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight"
           >
-            Find your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600">Dream Team.</span>
+            Find your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400">Dream Team.</span>
           </motion.h2>
-          <p className="text-slate-500 mt-3 font-medium text-lg">Browse skilled peers from your campus and beyond.</p>
+          <p className="text-slate-500 dark:text-slate-400 mt-3 font-medium text-lg">Browse skilled peers from your campus and beyond.</p>
         </div>
 
         {/* Search & Filter Bar */}
         <div className="mb-10 space-y-4">
           <div className="flex gap-3">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors" />
               <Input
                 placeholder="Search peers by name or skills..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-14 pl-12 rounded-xl bg-white border-slate-200 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all text-base"
+                className="h-14 pl-12 rounded-xl bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all text-base dark:text-white"
               />
             </div>
             <Button
               onClick={() => setShowFilters(!showFilters)}
               variant={showFilters ? "secondary" : "outline"}
-              className={`h-14 px-6 rounded-xl font-bold transition-all ${showFilters ? 'bg-blue-50 text-blue-600' : 'border-slate-200 bg-white'}`}
+              className={`h-14 px-6 rounded-xl font-bold transition-all ${showFilters ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-slate-700 dark:text-slate-300'}`}
             >
               <Filter className="w-4 h-4 mr-2" /> Filters
             </Button>
@@ -186,14 +186,14 @@ export default function InviteMembers() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
-                className="bg-white p-6 rounded-xl border border-slate-200 shadow-xl"
+                className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Branch</Label>
                     <Select value={filters.branch} onValueChange={(v) => setFilters(p => ({ ...p, branch: v }))}>
-                      <SelectTrigger className="h-11 rounded-lg border-slate-200"><SelectValue placeholder="All Branches" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><SelectValue placeholder="All Branches" /></SelectTrigger>
+                      <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
                         <SelectItem value="ALL">All Branches</SelectItem>
                         {branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
                       </SelectContent>
@@ -202,8 +202,8 @@ export default function InviteMembers() {
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Graduation Year</Label>
                     <Select value={filters.graduationYear} onValueChange={(v) => setFilters(p => ({ ...p, graduationYear: v }))}>
-                      <SelectTrigger className="h-11 rounded-lg border-slate-200"><SelectValue placeholder="Any Year" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><SelectValue placeholder="Any Year" /></SelectTrigger>
+                      <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
                         <SelectItem value="ALL">Any Year</SelectItem>
                         {graduationYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
                       </SelectContent>
@@ -212,8 +212,8 @@ export default function InviteMembers() {
                   <div className="space-y-1.5">
                     <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Availability</Label>
                     <Select value={filters.availabilityStatus} onValueChange={(v) => setFilters(p => ({ ...p, availabilityStatus: v }))}>
-                      <SelectTrigger className="h-11 rounded-lg border-slate-200"><SelectValue placeholder="Any Status" /></SelectTrigger>
-                      <SelectContent>
+                      <SelectTrigger className="h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><SelectValue placeholder="Any Status" /></SelectTrigger>
+                      <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
                         <SelectItem value="ALL">Any Status</SelectItem>
                         {availabilityStatuses.map(s => <SelectItem key={s} value={s}>{s.replace('_', ' ')}</SelectItem>)}
                       </SelectContent>
@@ -225,13 +225,13 @@ export default function InviteMembers() {
                       value={filters.skills}
                       onChange={(e) => setFilters(p => ({ ...p, skills: e.target.value }))}
                       placeholder="React, Java..."
-                      className="h-11 border-slate-200 rounded-lg"
+                      className="h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-3 mt-8 border-t border-slate-50 pt-6">
-                  <Button variant="ghost" onClick={() => fetchStudents({ branch: '', graduationYear: '', availabilityStatus: '', skills: '' })} className="font-bold text-slate-500">Reset</Button>
-                  <Button onClick={() => fetchStudents()} className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-11 rounded-lg font-bold shadow-lg shadow-blue-100">
+                <div className="flex justify-end gap-3 mt-8 border-t border-slate-50 dark:border-slate-800 pt-6">
+                  <Button variant="ghost" onClick={() => fetchStudents({ branch: '', graduationYear: '', availabilityStatus: '', skills: '' })} className="font-bold text-slate-500 dark:text-slate-400">Reset</Button>
+                  <Button onClick={() => fetchStudents()} className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-11 rounded-lg font-bold shadow-lg shadow-blue-100 dark:shadow-blue-900/20">
                     {applyLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Refresh Talent Pool"}
                   </Button>
                 </div>
@@ -240,7 +240,7 @@ export default function InviteMembers() {
           </AnimatePresence>
         </div>
 
-        {error && <Alert variant="destructive" className="mb-8 rounded-xl bg-red-50 text-red-800 border-red-100"><AlertDescription>{error}</AlertDescription></Alert>}
+        {error && <Alert variant="destructive" className="mb-8 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border-red-100 dark:border-red-900/50"><AlertDescription>{error}</AlertDescription></Alert>}
 
         {/* Talent Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -248,27 +248,27 @@ export default function InviteMembers() {
             {loading ? (
               [...Array(6)].map((_, i) => (
                 <div key={i}>
-                  <Card className="h-full bg-white border-slate-200 shadow-sm flex flex-col p-6">
+                  <Card className="h-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm flex flex-col p-6">
                     <div className="flex items-center gap-4 mb-6">
-                      <Skeleton className="h-14 w-14 rounded-xl bg-slate-100" />
+                      <Skeleton className="h-14 w-14 rounded-xl bg-slate-100 dark:bg-slate-800" />
                       <div className="flex-1 space-y-2">
-                        <Skeleton className="h-5 w-3/4 bg-slate-100" />
-                        <Skeleton className="h-3 w-1/2 bg-slate-100" />
+                        <Skeleton className="h-5 w-3/4 bg-slate-100 dark:bg-slate-800" />
+                        <Skeleton className="h-3 w-1/2 bg-slate-100 dark:bg-slate-800" />
                       </div>
                     </div>
                     <div className="space-y-4 mb-6 flex-grow">
-                      <Skeleton className="h-3 w-1/3 bg-slate-100" />
+                      <Skeleton className="h-3 w-1/3 bg-slate-100 dark:bg-slate-800" />
                       <div className="space-y-2">
-                        <Skeleton className="h-3 w-full bg-slate-100" />
-                        <Skeleton className="h-3 w-5/6 bg-slate-100" />
+                        <Skeleton className="h-3 w-full bg-slate-100 dark:bg-slate-800" />
+                        <Skeleton className="h-3 w-5/6 bg-slate-100 dark:bg-slate-800" />
                       </div>
                       <div className="flex gap-2 pt-2">
-                        <Skeleton className="h-5 w-16 rounded bg-slate-100" />
-                        <Skeleton className="h-5 w-16 rounded bg-slate-100" />
-                        <Skeleton className="h-5 w-16 rounded bg-slate-100" />
+                        <Skeleton className="h-5 w-16 rounded bg-slate-100 dark:bg-slate-800" />
+                        <Skeleton className="h-5 w-16 rounded bg-slate-100 dark:bg-slate-800" />
+                        <Skeleton className="h-5 w-16 rounded bg-slate-100 dark:bg-slate-800" />
                       </div>
                     </div>
-                    <Skeleton className="h-11 w-full rounded-lg bg-slate-100" />
+                    <Skeleton className="h-11 w-full rounded-lg bg-slate-100 dark:bg-slate-800" />
                   </Card>
                 </div>
               ))
@@ -281,19 +281,19 @@ export default function InviteMembers() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.05 }}
                 >
-                  <Card className="h-full bg-white border-slate-200 hover:border-blue-300 hover:shadow-xl transition-all duration-300 group overflow-hidden flex flex-col">
+                  <Card className="h-full bg-white dark:bg-slate-900/60 backdrop-blur-sm border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700/50 hover:shadow-xl dark:hover:shadow-blue-900/10 transition-all duration-300 group overflow-hidden flex flex-col">
                     <CardContent className="p-6 flex-1 flex flex-col">
                       <div className="flex items-center gap-4 mb-4">
-                        <Avatar className="h-14 w-14 rounded-xl shadow-sm border border-slate-100">
+                        <Avatar className="h-14 w-14 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
                           <AvatarImage src={student.profilePictureUrl || student.profileImage} />
                           <AvatarFallback className="bg-blue-600 text-white font-black text-lg">{student.displayName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-bold text-slate-900 truncate group-hover:text-blue-600 transition-colors">{student.displayName}</h3>
+                            <h3 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{student.displayName}</h3>
                             {student.availabilityStatus && (
-                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-5 font-bold border-0 ${student.availabilityStatus === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700' :
-                                student.availabilityStatus === 'OPEN_TO_WORK' ? 'bg-blue-50 text-blue-700' : 'bg-slate-100 text-slate-500'
+                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-5 font-bold border-0 ${student.availabilityStatus === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
+                                student.availabilityStatus === 'OPEN_TO_WORK' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
                                 }`}>
                                 {student.availabilityStatus.replace(/_/g, ' ')}
                               </Badge>
@@ -303,8 +303,8 @@ export default function InviteMembers() {
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{student.branch || 'Student'}</span>
                             {student.graduationYear && (
                               <>
-                                <span className="text-[10px] text-slate-300">•</span>
-                                <span className="text-[10px] font-bold text-slate-500">'{student.graduationYear.toString().slice(-2)}</span>
+                                <span className="text-[10px] text-slate-300 dark:text-slate-600">•</span>
+                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">'{student.graduationYear.toString().slice(-2)}</span>
                               </>
                             )}
                           </div>
@@ -313,21 +313,21 @@ export default function InviteMembers() {
 
                       <div className="space-y-4 mb-6 flex-grow">
                         {student.collegeName && (
-                          <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
-                            <MapPin className="h-3 w-3 text-blue-600 shrink-0" />
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
+                            <MapPin className="h-3 w-3 text-blue-600 dark:text-blue-400 shrink-0" />
                             <span className="truncate">{student.collegeName}</span>
                           </div>
                         )}
 
-                        <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed italic bg-slate-50 p-2 rounded-lg border border-slate-100">
+                        <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed italic bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
                           "{student.bio || 'Ready to contribute my skills to high-impact campus projects.'}"
                         </p>
 
                         <div className="flex flex-wrap gap-1.5">
                           {student.studentSkills.slice(0, 5).map((skill, si) => (
-                            <Badge key={si} variant="secondary" className="bg-white border border-slate-200 text-slate-600 font-bold text-[10px] px-2 hover:border-blue-300 transition-colors cursor-default">
+                            <Badge key={si} variant="secondary" className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[10px] px-2 hover:border-blue-300 dark:hover:border-blue-700 transition-colors cursor-default">
                               {skill.name}
-                              {skill.level && <span className="ml-1 text-[8px] opacity-60 font-medium border-l border-slate-200 pl-1">{skill.level}</span>}
+                              {skill.level && <span className="ml-1 text-[8px] opacity-60 font-medium border-l border-slate-200 dark:border-slate-600 pl-1">{skill.level}</span>}
                             </Badge>
                           ))}
                           {student.studentSkills.length > 5 && (
@@ -340,7 +340,7 @@ export default function InviteMembers() {
                         onClick={() => handleInvite(student)}
                         disabled={isInvited || !student.id}
                         className={`w-full h-11 rounded-lg font-bold transition-all ${isInvited
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/30'
                           : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                       >
                         {isInvited ? (
@@ -358,11 +358,11 @@ export default function InviteMembers() {
         </div>
 
         {filteredStudents.length === 0 && (
-          <div className="text-center py-24 bg-white rounded-2xl border border-slate-200 border-dashed">
-            <Users className="h-12 w-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-slate-900">No matching talent found</h3>
-            <p className="text-slate-500 mb-6">Try adjusting your filters or search keywords.</p>
-            <Button variant="link" onClick={() => fetchStudents({ branch: '', graduationYear: '', availabilityStatus: '', skills: '' })} className="text-blue-600 font-bold">Clear All Filters</Button>
+          <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed">
+            <Users className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white">No matching talent found</h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">Try adjusting your filters or search keywords.</p>
+            <Button variant="link" onClick={() => fetchStudents({ branch: '', graduationYear: '', availabilityStatus: '', skills: '' })} className="text-blue-600 dark:text-blue-400 font-bold">Clear All Filters</Button>
           </div>
         )}
       </main>

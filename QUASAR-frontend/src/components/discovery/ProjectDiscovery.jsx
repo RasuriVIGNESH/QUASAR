@@ -124,11 +124,11 @@ export default function ProjectDiscovery() {
 
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col font-sans selection:bg-blue-100 dark:selection:bg-blue-900">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col font-sans selection:bg-blue-100 dark:selection:bg-blue-900">
       {/* Search Header */}
-      <header className="sticky top-0 z-50 w-full h-20 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between">
+      <header className="sticky top-0 z-50 w-full h-20 bg-white/90 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60 px-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src="/data/logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
+          <img src="/data/Logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
           <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Project Hub</h1>
         </div>
 
@@ -152,7 +152,7 @@ export default function ProjectDiscovery() {
 
       <div className="flex flex-1">
         {/* Sidebar Filters */}
-        <aside className="w-72 border-r border-slate-200 dark:border-slate-800 p-8 hidden lg:flex flex-col gap-10 bg-white dark:bg-slate-900 sticky top-20 h-[calc(100vh-80px)] overflow-y-auto">
+        <aside className="w-72 border-r border-slate-200 dark:border-slate-800/60 p-8 hidden lg:flex flex-col gap-10 bg-white dark:bg-[#0B1120] sticky top-20 h-[calc(100vh-80px)] overflow-y-auto">
           <section>
             <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Discovery Filters</h4>
             <div className="space-y-6">
@@ -239,7 +239,7 @@ export default function ProjectDiscovery() {
           {loading && projects.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
               {[...Array(6)].map((_, i) => (
-                <Card key={i} className="h-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-[28px] overflow-hidden shadow-sm">
+                <Card key={i} className="h-full border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-900/60 rounded-[28px] overflow-hidden shadow-sm">
                   <CardContent className="p-8 flex flex-col h-full">
                     <div className="flex items-center justify-between mb-6">
                       <Skeleton className="h-6 w-24 rounded-full bg-slate-100 dark:bg-slate-800" />
@@ -285,7 +285,7 @@ export default function ProjectDiscovery() {
                       transition={{ delay: idx * 0.05 }}
                       layout
                     >
-                      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1.5 transition-all duration-300 rounded-[28px] overflow-hidden flex flex-col h-full group cursor-pointer" onClick={() => { setSelectedProject(project); setIsModalOpen(true); }}>
+                      <Card className="bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/60 shadow-sm hover:shadow-xl hover:shadow-blue-500/5 hover:-translate-y-1.5 transition-all duration-300 rounded-[28px] overflow-hidden flex flex-col h-full group cursor-pointer" onClick={() => { setSelectedProject(project); setIsModalOpen(true); }}>
                         <CardContent className="p-8 flex flex-col h-full">
                           <div className="flex items-center justify-between mb-6">
                             <Badge className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-none font-black text-[9px] uppercase tracking-[0.15em] px-3">

@@ -1,7 +1,7 @@
 // src/pages/auth/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { login, loginWithGitHub } = useAuth();
@@ -27,7 +28,10 @@ export default function Login() {
     try {
       setLoading(true);
       await login(email, password);
-      navigate('/dashboard');
+      setShowWelcome(true);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 2000);
     } catch (err) {
       console.error('Login error:', err);
       setError(err);
@@ -53,7 +57,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30 overflow-hidden relative">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-[#020617] dark:to-blue-950/30 overflow-hidden relative">
       <div className="absolute top-4 right-4 z-50">
         <ModeToggle />
       </div>
@@ -84,7 +88,7 @@ export default function Login() {
           {/* Header */}
           <div className="text-center">
             <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
-              <img src="/data/logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+              <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
               <span className="text-2xl font-bold text-slate-900 dark:text-white">Quasar</span>
             </Link>
             <h2 className="mt-6 text-4xl font-black text-slate-900 dark:text-white">
@@ -97,7 +101,7 @@ export default function Login() {
 
           {/* Form Card */}
           <div>
-            <Card className="border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl shadow-2xl shadow-slate-200/50 dark:shadow-black/50">
+            <Card className="border-0 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl shadow-2xl shadow-slate-200/50 dark:shadow-black/50 border-t border-white/20 dark:border-white/5">
               <CardContent className="p-8">
                 <ValidationAlert error={error} />
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -166,7 +170,7 @@ export default function Login() {
                     >
                       <Button
                         type="submit"
-                        className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl font-bold text-base shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+                        className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2"
                         disabled={loading}
                       >
                         {loading ? (
@@ -254,6 +258,35 @@ export default function Login() {
           </div>
         </div>
       </div>
+
+      {/* Welcome Animation Overlay */}
+      <AnimatePresence>
+        {showWelcome && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 1.1, opacity: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="text-center"
+            >
+              <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl mx-auto mb-6 shadow-2xl flex items-center justify-center p-2 border border-slate-100 dark:border-slate-800">
+                <img src="/data/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
+              </div>
+              <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+                Welcome back
+              </h1>
+              <p className="text-lg text-slate-500 dark:text-slate-400">Taking you to your dashboard...</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

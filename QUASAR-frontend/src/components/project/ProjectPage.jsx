@@ -144,11 +144,11 @@ export default function ProjectPage() {
   const isMember = members.some(m => String(m.user.id) === String(currentUserId)) || isProjectLead;
 
   return (
-    <div className="h-screen w-full bg-[#F8FAFC] text-slate-900 flex overflow-hidden font-sans">
+    <div className="h-screen w-full bg-[#F8FAFC] dark:bg-[#020617] text-slate-900 dark:text-white flex overflow-hidden font-sans">
 
       {/* --- SLIM SIDEBAR NAVIGATION --- */}
-      <aside className="w-20 border-r border-slate-200 flex flex-col items-center py-6 gap-8 bg-white z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-        <img src="/data/logo.png" alt="Dashboard" className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-indigo-200 cursor-pointer" onClick={() => navigate('/dashboard')} />
+      <aside className="w-20 border-r border-slate-200 dark:border-slate-800 flex flex-col items-center py-6 gap-8 bg-white dark:bg-[#0B1120] z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
+        <img src="/data/Logo.png" alt="Dashboard" className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 cursor-pointer" onClick={() => navigate('/dashboard')} />
 
         <nav className="flex flex-col gap-4">
           {[
@@ -165,17 +165,17 @@ export default function ProjectPage() {
                   <button
                     onClick={() => setActiveTab(item.id)}
                     className={`p-3 rounded-xl transition-all duration-200 relative ${activeTab === item.id
-                      ? 'bg-indigo-50 text-indigo-600 shadow-sm'
-                      : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+                      ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                      : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800'
                       }`}
                   >
                     <item.icon className="w-5 h-5" />
                     {activeTab === item.id && (
-                      <motion.div layoutId="sidebar-active" className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-indigo-600 rounded-r-full" />
+                      <motion.div layoutId="sidebar-active" className="absolute left-0 top-1/4 bottom-1/4 w-1 bg-indigo-600 dark:bg-indigo-400 rounded-r-full" />
                     )}
                   </button>
                 </TooltipTrigger>
-                <TooltipContent side="right" className="bg-slate-900 text-white text-xs font-semibold">
+                <TooltipContent side="right" className="bg-slate-900 dark:bg-slate-800 text-white text-xs font-semibold border-slate-700">
                   {item.label}
                 </TooltipContent>
               </Tooltip>
@@ -183,7 +183,7 @@ export default function ProjectPage() {
           ))}
         </nav>
 
-        <button onClick={() => navigate(-1)} className="mt-auto p-3 text-slate-400 hover:text-slate-900 transition-colors">
+        <button onClick={() => navigate(-1)} className="mt-auto p-3 text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </button>
       </aside>
@@ -192,12 +192,12 @@ export default function ProjectPage() {
       <main className="flex-1 flex flex-col relative overflow-hidden">
 
         {/* TOP BAR */}
-        <header className="h-16 border-b border-slate-200 px-8 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-40">
+        <header className="h-16 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-40">
           <div className="flex items-center gap-4">
-            <h1 className="text-lg font-bold text-slate-900">{project.title}</h1>
+            <h1 className="text-lg font-bold text-slate-900 dark:text-white">{project.title}</h1>
 
             {/* Status Display in Header (Read Only) */}
-            <Badge variant="secondary" className="bg-slate-100 text-slate-600 font-medium px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider">
+            <Badge variant="secondary" className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider">
               {project.status.replace('_', ' ')}
             </Badge>
           </div>
@@ -205,8 +205,8 @@ export default function ProjectPage() {
           <div className="flex items-center gap-4">
             <div className="flex -space-x-2 mr-2">
               {[1, 2, 3].map((i) => (
-                <Avatar key={i} className="w-7 h-7 border-2 border-white ring-1 ring-slate-100 shadow-sm">
-                  <AvatarFallback className="text-[10px] bg-indigo-50 text-indigo-600 font-bold">
+                <Avatar key={i} className="w-7 h-7 border-2 border-white dark:border-slate-800 ring-1 ring-slate-100 dark:ring-slate-700 shadow-sm">
+                  <AvatarFallback className="text-[10px] bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-300 font-bold">
                     {project.lead?.firstName?.[0]}
                   </AvatarFallback>
                 </Avatar>
@@ -214,7 +214,7 @@ export default function ProjectPage() {
             </div>
             <Button
               onClick={() => navigate(`/projects/${projectId}/invite`)}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 h-9 text-xs font-bold shadow-sm"
+              className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-lg px-4 h-9 text-xs font-bold shadow-sm shadow-indigo-200 dark:shadow-indigo-900/20"
             >
               Invite
             </Button>
@@ -222,7 +222,7 @@ export default function ProjectPage() {
         </header>
 
         {/* CONTENT VIEWPORT */}
-        <div className="flex-1 overflow-y-auto p-8 no-scrollbar bg-slate-50/30">
+        <div className="flex-1 overflow-y-auto p-8 no-scrollbar bg-slate-50/30 dark:bg-slate-950/30">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -244,49 +244,49 @@ export default function ProjectPage() {
       </main>
 
       {/* --- RIGHT SIDEBAR: PROJECT INTEL --- */}
-      <aside className="w-80 border-l border-slate-200 bg-white p-8 hidden xl:flex flex-col gap-10">
+      <aside className="w-80 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-[#0B1120] p-8 hidden xl:flex flex-col gap-10">
 
         <div className="space-y-6">
-          <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Project Stats</h4>
-          <Card className="p-5 border-slate-100 shadow-sm bg-gradient-to-br from-indigo-50/50 to-white">
+          <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Project Stats</h4>
+          <Card className="p-5 border-slate-100 dark:border-slate-800 shadow-sm bg-gradient-to-br from-indigo-50/50 to-white dark:from-slate-900 dark:to-slate-900/50">
             <div className="flex items-end justify-between mb-4">
-              <span className="text-3xl font-bold text-slate-900">{project.currentTeamSize + 1}</span>
-              <span className="text-xs font-bold text-slate-400">/ {project.maxTeamSize} Capacity</span>
+              <span className="text-3xl font-bold text-slate-900 dark:text-white">{project.currentTeamSize + 1}</span>
+              <span className="text-xs font-bold text-slate-400 dark:text-slate-500">/ {project.maxTeamSize} Capacity</span>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${((project.currentTeamSize + 1) / project.maxTeamSize) * 100}%` }}
-                className="h-full bg-indigo-500 rounded-full"
+                className="h-full bg-indigo-500 dark:bg-indigo-400 rounded-full"
               />
             </div>
           </Card>
         </div>
 
         <div className="space-y-4">
-          <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Project Status</h4>
+          <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Project Status</h4>
           {currentUserId ? (
             <div className="w-full">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="w-full justify-between bg-slate-50 border-slate-200 text-slate-700 font-semibold h-10">
+                  <Button variant="outline" className="w-full justify-between bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-semibold h-10 hover:bg-slate-100 dark:hover:bg-slate-800">
                     {project.status ? project.status.replace('_', ' ') : 'Status'}
                     <MoreHorizontal size={16} className="text-slate-400" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white z-[60] shadow-lg border-slate-200">
-                  <DropdownMenuLabel>Change Status</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => handleStatusChange('RECRUITING')}>
+                <DropdownMenuContent align="end" className="w-56 bg-white dark:bg-slate-900 z-[60] shadow-lg border-slate-200 dark:border-slate-800">
+                  <DropdownMenuLabel className="dark:text-slate-300">Change Status</DropdownMenuLabel>
+                  <DropdownMenuSeparator className="dark:bg-slate-800" />
+                  <DropdownMenuItem onClick={() => handleStatusChange('RECRUITING')} className="dark:text-slate-300 dark:focus:bg-slate-800">
                     Recruiting
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('IN_PROGRESS')}>
+                  <DropdownMenuItem onClick={() => handleStatusChange('IN_PROGRESS')} className="dark:text-slate-300 dark:focus:bg-slate-800">
                     In Progress
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('COMPLETED')}>
+                  <DropdownMenuItem onClick={() => handleStatusChange('COMPLETED')} className="dark:text-slate-300 dark:focus:bg-slate-800">
                     Completed
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleStatusChange('CANCELLED')} className="text-red-600">
+                  <DropdownMenuItem onClick={() => handleStatusChange('CANCELLED')} className="text-red-600 dark:text-red-400 dark:focus:bg-red-900/20">
                     Cancelled
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -294,33 +294,35 @@ export default function ProjectPage() {
 
               {/* Completion Dialog (Moved to Sidebar scope) */}
               <Dialog open={isCompletionDialogOpen} onOpenChange={setIsCompletionDialogOpen}>
-                <DialogContent className="bg-white">
+                <DialogContent className="bg-white dark:bg-slate-900 dark:text-white dark:border-slate-800">
                   <DialogHeader>
                     <DialogTitle>Project Completion</DialogTitle>
                   </DialogHeader>
                   <div className="py-4 space-y-4">
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
                       To mark this project as completed, please provide links to the final output. At least one link is required.
                     </p>
                     <div className="space-y-2">
-                      <Label>GitHub Repository</Label>
+                      <Label className="dark:text-slate-300">GitHub Repository</Label>
                       <Input
                         placeholder="https://github.com/..."
                         value={completionLinks.githubRepo}
                         onChange={e => setCompletionLinks({ ...completionLinks, githubRepo: e.target.value })}
+                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Live Demo URL</Label>
+                      <Label className="dark:text-slate-300">Live Demo URL</Label>
                       <Input
                         placeholder="https://..."
                         value={completionLinks.demoUrl}
                         onChange={e => setCompletionLinks({ ...completionLinks, demoUrl: e.target.value })}
+                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                       />
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={handleCompletionSubmit} className="bg-indigo-600 text-white">
+                    <Button onClick={handleCompletionSubmit} className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20">
                       Complete Project
                     </Button>
                   </DialogFooter>
@@ -328,14 +330,14 @@ export default function ProjectPage() {
               </Dialog>
             </div>
           ) : (
-            <div className="p-3 bg-slate-50 border border-slate-100 rounded-xl text-center">
-              <span className="text-sm font-bold text-slate-700">{project.status ? project.status.replace('_', ' ') : 'Status'}</span>
+            <div className="p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl text-center">
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-300">{project.status ? project.status.replace('_', ' ') : 'Status'}</span>
             </div>
           )}
         </div>
 
         <div className="space-y-4">
-          <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Resources</h4>
+          <h4 className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">Resources</h4>
           <div className="grid gap-2">
             {[
               { label: 'GitHub Repo', icon: Github, link: project.githubRepo },
@@ -345,13 +347,13 @@ export default function ProjectPage() {
               .map((res, i) => (
                 <a
                   key={i} href={res.link} target="_blank" rel="noreferrer"
-                  className="flex items-center justify-between p-3.5 bg-slate-50 hover:bg-indigo-50 border border-slate-100 rounded-xl transition-all group"
+                  className="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-900 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 border border-slate-100 dark:border-slate-800 rounded-xl transition-all group"
                 >
                   <div className="flex items-center gap-3">
-                    <res.icon size={16} className="text-slate-500 group-hover:text-indigo-600" />
-                    <span className="text-xs font-semibold text-slate-700">{res.label}</span>
+                    <res.icon size={16} className="text-slate-500 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{res.label}</span>
                   </div>
-                  <LinkIcon size={12} className="text-slate-300" />
+                  <LinkIcon size={12} className="text-slate-300 dark:text-slate-600" />
                 </a>
               ))}
           </div>
@@ -380,23 +382,12 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => {
   const handleAddSkill = async () => {
     if (!newSkill.name.trim()) return;
     try {
-      // Backend expects list of ProjectSkill objects: { skill: { name, category }, isRequired }
-      // This might depend on how backend handles updates. 
-      // If backend replaces the list, we need to send existing + new.
-      // Assuming 'requiredSkills' is the field to update.
       const currentSkills = project.requiredSkills || [];
-
-      // Construct the new skill object structure matching backend expectation
-      // Note: Backend might need existing skill IDs if they exist, or just the structure.
-      // Based on previous JSON, `requiredSkills` is a list of objects.
-
       const newSkillObj = {
         skill: { name: newSkill.name, category: newSkill.category },
         isRequired: newSkill.isRequired
       };
-
       const updatedSkills = [...currentSkills, newSkillObj];
-
       await projectService.updateProject(projectId, { requiredSkills: updatedSkills });
       window.location.reload();
     } catch (e) {
@@ -408,30 +399,30 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => {
   return (
     <div className="space-y-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="col-span-2 p-10 border-slate-200/60 shadow-sm bg-white rounded-[24px]">
+        <Card className="col-span-2 p-10 border-slate-200/60 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-[24px]">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <Layers className="text-indigo-600" size={20} />
-              <h3 className="text-lg font-bold text-slate-900">Project Mission</h3>
+              <Layers className="text-indigo-600 dark:text-indigo-400" size={20} />
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Project Mission</h3>
             </div>
             {project.category && (
-              <Badge variant="outline" className="text-slate-500 border-slate-200 bg-slate-50">
+              <Badge variant="outline" className="text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
                 {project.category.name}
               </Badge>
             )}
           </div>
-          <p className="text-slate-600 text-base leading-relaxed">
+          <p className="text-slate-600 dark:text-slate-300 text-base leading-relaxed">
             {project.description}
           </p>
 
-          <div className="mt-8 pt-6 border-t border-slate-100 flex flex-wrap gap-6 text-xs text-slate-500 font-medium">
+          <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-wrap gap-6 text-xs text-slate-500 dark:text-slate-400 font-medium">
             <div className="flex items-center gap-2">
-              <Calendar size={14} className="text-slate-400" />
+              <Calendar size={14} className="text-slate-400 dark:text-slate-500" />
               <span>Started {new Date(project.createdAt).toLocaleDateString()}</span>
             </div>
             {project.updatedAt && (
               <div className="flex items-center gap-2">
-                <Tag size={14} className="text-slate-400" />
+                <Tag size={14} className="text-slate-400 dark:text-slate-500" />
                 <span>Updated {new Date(project.updatedAt).toLocaleDateString()}</span>
               </div>
             )}
@@ -439,21 +430,21 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => {
         </Card>
 
         <div className="space-y-6">
-          <Card className="p-8 border-slate-200/60 shadow-sm bg-white rounded-[24px]">
-            <h3 className="text-sm font-bold text-slate-900 mb-6 uppercase tracking-widest">Key Goals</h3>
+          <Card className="p-8 border-slate-200/60 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-[24px]">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white mb-6 uppercase tracking-widest">Key Goals</h3>
             {project.goals ? (
               <div className="space-y-5">
                 {project.goals.split(',').map((goal, i) => (
                   <div key={i} className="flex gap-3 items-start group">
-                    <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                    <div className="w-5 h-5 rounded-full bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                       <CheckCircle2 size={12} />
                     </div>
-                    <span className="text-sm font-medium text-slate-600 leading-tight">{goal.trim()}</span>
+                    <span className="text-sm font-medium text-slate-600 dark:text-slate-300 leading-tight">{goal.trim()}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-slate-400 italic">No goals defined yet.</p>
+              <p className="text-sm text-slate-400 dark:text-slate-500 italic">No goals defined yet.</p>
             )}
           </Card>
         </div>
@@ -461,34 +452,34 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Tech Stack Card */}
-        <Card className="p-10 border-slate-200/60 shadow-sm bg-white rounded-[24px]">
+        <Card className="p-10 border-slate-200/60 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-[24px]">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <Layers className="text-indigo-600" size={20} />
-              <h3 className="text-lg font-bold text-slate-900">Tech Stack</h3>
+              <Layers className="text-indigo-600 dark:text-indigo-400" size={20} />
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Tech Stack</h3>
             </div>
             {isProjectLead && (
               <Dialog open={isTechDialogOpen} onOpenChange={setIsTechDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-8 rounded-lg border-slate-200 text-slate-600 gap-2">
+                  <Button size="sm" variant="outline" className="h-8 rounded-lg border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 gap-2 hover:bg-slate-50 dark:hover:bg-slate-800">
                     <Plus size={14} /> Add
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-white">
+                <DialogContent className="bg-white dark:bg-slate-900 dark:border-slate-800">
                   <DialogHeader>
-                    <DialogTitle>Add Tech Stack</DialogTitle>
+                    <DialogTitle className="dark:text-white">Add Tech Stack</DialogTitle>
                   </DialogHeader>
                   <div className="py-4">
-                    <Label>Technology Name</Label>
+                    <Label className="dark:text-slate-300">Technology Name</Label>
                     <Input
                       placeholder="e.g. React, Python..."
                       value={newTech}
                       onChange={(e) => setNewTech(e.target.value)}
-                      className="mt-2"
+                      className="mt-2 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                     />
                   </div>
                   <DialogFooter>
-                    <Button onClick={handleAddTech} className="bg-indigo-600 text-white">Add Technology</Button>
+                    <Button onClick={handleAddTech} className="bg-indigo-600 text-white hover:bg-indigo-700">Add Technology</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -496,50 +487,50 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => {
           </div>
           <div className="flex flex-wrap gap-3">
             {project.techStack?.map((tech, i) => (
-              <div key={`tech-${i}`} className="flex items-center px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl gap-2 hover:bg-slate-100 transition-colors">
-                <div className="w-2 h-2 rounded-full bg-indigo-500" />
-                <span className="text-sm font-semibold text-slate-700">{tech}</span>
+              <div key={`tech-${i}`} className="flex items-center px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-xl gap-2 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors">
+                <div className="w-2 h-2 rounded-full bg-indigo-500 dark:bg-indigo-400" />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{tech}</span>
               </div>
             ))}
             {!project.techStack?.length && (
-              <p className="text-slate-400 italic">No tech stack defined.</p>
+              <p className="text-slate-400 dark:text-slate-500 italic">No tech stack defined.</p>
             )}
           </div>
         </Card>
 
         {/* Required Skills Card */}
-        <Card className="p-10 border-slate-200/60 shadow-sm bg-white rounded-[24px]">
+        <Card className="p-10 border-slate-200/60 dark:border-slate-800 shadow-sm bg-white dark:bg-slate-900 rounded-[24px]">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <Sparkles className="text-indigo-600" size={20} />
-              <h3 className="text-lg font-bold text-slate-900">Required Skills</h3>
+              <Sparkles className="text-indigo-600 dark:text-indigo-400" size={20} />
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Required Skills</h3>
             </div>
             {isProjectLead && (
               <Dialog open={isSkillDialogOpen} onOpenChange={setIsSkillDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button size="sm" variant="outline" className="h-8 rounded-lg border-slate-200 text-slate-600 gap-2">
+                  <Button size="sm" variant="outline" className="h-8 rounded-lg border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 gap-2 hover:bg-slate-50 dark:hover:bg-slate-800">
                     <Plus size={14} /> Add
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="bg-white">
+                <DialogContent className="bg-white dark:bg-slate-900 dark:border-slate-800">
                   <DialogHeader>
-                    <DialogTitle>Add Required Skill</DialogTitle>
+                    <DialogTitle className="dark:text-white">Add Required Skill</DialogTitle>
                   </DialogHeader>
                   <div className="py-4 space-y-4">
                     <div>
-                      <Label>Skill Name</Label>
+                      <Label className="dark:text-slate-300">Skill Name</Label>
                       <Input
                         placeholder="e.g. Machine Learning"
                         value={newSkill.name}
                         onChange={(e) => setNewSkill({ ...newSkill, name: e.target.value })}
-                        className="mt-2"
+                        className="mt-2 dark:bg-slate-800 dark:border-slate-700 dark:text-white"
                       />
                     </div>
                     <div>
-                      <Label>Category</Label>
+                      <Label className="dark:text-slate-300">Category</Label>
                       <Select onValueChange={(v) => setNewSkill({ ...newSkill, category: v })} defaultValue="General">
-                        <SelectTrigger className="mt-2"><SelectValue /></SelectTrigger>
-                        <SelectContent className="bg-white">
+                        <SelectTrigger className="mt-2 dark:bg-slate-800 dark:border-slate-700 dark:text-white"><SelectValue /></SelectTrigger>
+                        <SelectContent className="bg-white dark:bg-slate-900 dark:border-slate-800 dark:text-white">
                           <SelectItem value="General">General</SelectItem>
                           <SelectItem value="Frontend">Frontend</SelectItem>
                           <SelectItem value="Backend">Backend</SelectItem>
@@ -550,7 +541,7 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => {
                     </div>
                   </div>
                   <DialogFooter>
-                    <Button onClick={handleAddSkill} className="bg-indigo-600 text-white">Add Skill</Button>
+                    <Button onClick={handleAddSkill} className="bg-indigo-600 text-white hover:bg-indigo-700">Add Skill</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
@@ -558,11 +549,11 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => {
           </div>
           <div className="flex flex-wrap gap-3">
             {project.requiredSkills?.map((ps, i) => (
-              <div key={`skill-${i}`} className="flex items-center px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl gap-2 hover:bg-slate-100 transition-colors">
-                <div className={`w-2 h-2 rounded-full ${ps.isRequired ? 'bg-indigo-500' : 'bg-slate-300'}`} />
-                <span className="text-sm font-semibold text-slate-700">{ps.skill?.name || "Unknown Skill"}</span>
+              <div key={`skill-${i}`} className="flex items-center px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-xl gap-2 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors">
+                <div className={`w-2 h-2 rounded-full ${ps.isRequired ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{ps.skill?.name || "Unknown Skill"}</span>
                 {ps.skill?.category && (
-                  <span className="text-[10px] text-slate-400 border-l border-slate-200 pl-2 ml-1 uppercase font-bold tracking-wider">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 border-l border-slate-200 dark:border-slate-700 pl-2 ml-1 uppercase font-bold tracking-wider">
                     {ps.skill.category}
                   </span>
                 )}
@@ -571,11 +562,11 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => {
 
             {/* Legacy Support for projectSkills if exists */}
             {project.projectSkills?.map((ps, i) => (
-              <div key={`legacy-skill-${i}`} className="flex items-center px-4 py-2 bg-slate-50 border border-slate-100 rounded-xl gap-2 hover:bg-slate-100 transition-colors">
-                <div className={`w-2 h-2 rounded-full ${ps.required ? 'bg-indigo-500' : 'bg-slate-300'}`} />
-                <span className="text-sm font-semibold text-slate-700">{ps.skill?.name || "Unknown Skill"}</span>
+              <div key={`legacy-skill-${i}`} className="flex items-center px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-xl gap-2 hover:bg-slate-100 dark:hover:bg-slate-800/80 transition-colors">
+                <div className={`w-2 h-2 rounded-full ${ps.required ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+                <span className="text-sm font-semibold text-slate-700 dark:text-slate-300">{ps.skill?.name || "Unknown Skill"}</span>
                 {ps.skill?.category && (
-                  <span className="text-[10px] text-slate-400 border-l border-slate-200 pl-2 ml-1 uppercase font-bold tracking-wider">
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 border-l border-slate-200 dark:border-slate-700 pl-2 ml-1 uppercase font-bold tracking-wider">
                     {ps.skill.category}
                   </span>
                 )}
@@ -583,13 +574,13 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => {
             ))}
 
             {(!project.requiredSkills?.length && !project.projectSkills?.length) && (
-              <p className="text-slate-400 italic">No specific skills listed.</p>
+              <p className="text-slate-400 dark:text-slate-500 italic">No specific skills listed.</p>
             )}
           </div>
         </Card>
       </div>
 
-      <Card className="p-10 border-slate-200/60 shadow-sm bg-indigo-600 rounded-[24px] text-white">
+      <Card className="p-10 border-slate-200/60 dark:border-slate-800 shadow-sm bg-indigo-600 dark:bg-indigo-900/50 rounded-[24px] text-white">
         <div className="flex items-center gap-3 mb-4 opacity-80">
           <Flag size={18} />
           <h3 className="text-xs font-bold uppercase tracking-widest">The Problem Statement</h3>
@@ -662,40 +653,40 @@ const TaskBoard = ({ projectId, project }) => {
     <div className="flex flex-col gap-8 h-full">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Task Pipeline</h2>
-          <p className="text-sm text-slate-500">Manage your sprint progress and team tasks.</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Task Pipeline</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">Manage your sprint progress and team tasks.</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl h-10 px-6 font-bold shadow-md shadow-indigo-100">
+            <Button className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white rounded-xl h-10 px-6 font-bold shadow-md shadow-indigo-100 dark:shadow-indigo-900/20">
               <Plus className="w-4 h-4 mr-2" /> Add Task
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-white rounded-2xl border-none shadow-2xl">
+          <DialogContent className="bg-white dark:bg-slate-900 rounded-2xl border-none shadow-2xl dark:shadow-slate-900/50">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold">{editingTaskId ? 'Edit Task' : 'New Task'}</DialogTitle>
+              <DialogTitle className="text-xl font-bold dark:text-white">{editingTaskId ? 'Edit Task' : 'New Task'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-1">
-                <Label className="text-xs text-slate-500 uppercase font-bold">Task Title</Label>
-                <Input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} className="border-slate-200 rounded-lg focus:ring-indigo-500" />
+                <Label className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Task Title</Label>
+                <Input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-indigo-500" />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-slate-500 uppercase font-bold">Description</Label>
-                <Textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} className="border-slate-200 rounded-lg focus:ring-indigo-500" />
+                <Label className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Description</Label>
+                <Textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-indigo-500" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <Select onValueChange={v => setNewTask({ ...newTask, priority: v })}>
-                  <SelectTrigger className="border-slate-200">Priority</SelectTrigger>
-                  <SelectContent className="bg-white">
+                  <SelectTrigger className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white">Priority</SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-900 dark:border-slate-800 dark:text-white">
                     <SelectItem value="LOW">Low</SelectItem>
                     <SelectItem value="MEDIUM">Medium</SelectItem>
                     <SelectItem value="HIGH">High</SelectItem>
                   </SelectContent>
                 </Select>
                 <Select onValueChange={v => setNewTask({ ...newTask, assignedToId: v })}>
-                  <SelectTrigger className="border-slate-200">Assigned To</SelectTrigger>
-                  <SelectContent className="bg-white">
+                  <SelectTrigger className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white">Assigned To</SelectTrigger>
+                  <SelectContent className="bg-white dark:bg-slate-900 dark:border-slate-800 dark:text-white">
                     {members.map(m => <SelectItem key={m.user.id} value={m.user.id}>{m.user.firstName}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -703,7 +694,7 @@ const TaskBoard = ({ projectId, project }) => {
             </div>
             <DialogFooter>
 
-              <Button onClick={handleSaveTask} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 rounded-xl">
+              <Button onClick={handleSaveTask} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20">
                 {editingTaskId ? 'Save Changes' : 'Create Task'}
               </Button>
             </DialogFooter>
@@ -715,44 +706,44 @@ const TaskBoard = ({ projectId, project }) => {
         {['TODO', 'IN_PROGRESS', 'COMPLETED'].map(status => (
           <div key={status} className="flex flex-col gap-4">
             <div className="flex items-center gap-2 px-1">
-              <div className={`w-1.5 h-1.5 rounded-full ${status === 'COMPLETED' ? 'bg-emerald-500' : status === 'IN_PROGRESS' ? 'bg-indigo-500' : 'bg-slate-300'}`} />
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">{status.replace('_', ' ')}</span>
+              <div className={`w-1.5 h-1.5 rounded-full ${status === 'COMPLETED' ? 'bg-emerald-500' : status === 'IN_PROGRESS' ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{status.replace('_', ' ')}</span>
             </div>
 
             <div className="space-y-4">
               {tasks.filter(t => t.status === status).map(task => (
-                <Card key={task.id} className="p-5 border-slate-200/60 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer group bg-white rounded-2xl">
+                <Card key={task.id} className="p-5 border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all cursor-pointer group bg-white dark:bg-slate-900 rounded-2xl">
                   <div className="flex justify-between items-start mb-3">
-                    <Badge className={`px-2 py-0 text-[9px] font-bold border-none ${task.priority === 'HIGH' ? 'bg-rose-50 text-rose-600' :
-                      task.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-600' : 'bg-slate-50 text-slate-600'
+                    <Badge className={`px-2 py-0 text-[9px] font-bold border-none ${task.priority === 'HIGH' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400' :
+                      task.priority === 'MEDIUM' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                       }`}>
                       {task.priority}
                     </Badge>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <button className="text-slate-300 hover:text-slate-600 p-1 rounded-md transition-colors opacity-0 group-hover:opacity-100">
+                        <button className="text-slate-300 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400 p-1 rounded-md transition-colors opacity-0 group-hover:opacity-100">
                           <MoreHorizontal size={14} />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openEditDialog(task)}>
+                      <DropdownMenuContent align="end" className="bg-white dark:bg-slate-900 dark:border-slate-800">
+                        <DropdownMenuItem onClick={() => openEditDialog(task)} className="dark:text-slate-300 dark:focus:bg-slate-800">
                           <Edit className="w-3.5 h-3.5 mr-2" /> Edit Task
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600 focus:bg-red-50" onClick={() => handleDeleteTask(task.id)}>
+                        <DropdownMenuItem className="text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20" onClick={() => handleDeleteTask(task.id)}>
                           <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                  <h4 className="text-sm font-bold text-slate-800 mb-2 leading-snug">{task.title}</h4>
-                  <p className="text-xs text-slate-500 line-clamp-2 mb-4 leading-relaxed">{task.description}</p>
+                  <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2 leading-snug">{task.title}</h4>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">{task.description}</p>
 
                   {task.assignedToName && (
-                    <div className="flex items-center gap-2 pt-3 border-t border-slate-50">
-                      <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[9px] font-bold text-indigo-700">
+                    <div className="flex items-center gap-2 pt-3 border-t border-slate-50 dark:border-slate-800">
+                      <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[9px] font-bold text-indigo-700 dark:text-indigo-400">
                         {task.assignedToName[0]}
                       </div>
-                      <span className="text-[10px] font-bold text-slate-400">{task.assignedToName}</span>
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{task.assignedToName}</span>
                     </div>
                   )}
                 </Card>
@@ -869,31 +860,31 @@ const ChatSection = ({ projectId }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar bg-slate-50/20">
+    <div className="h-full flex flex-col bg-white dark:bg-slate-900 rounded-[32px] border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-8 space-y-6 no-scrollbar bg-slate-50/20 dark:bg-slate-950/20">
         {messages.map((m) => {
           const isMe = m.sender.id === userProfile?.id;
           return (
             <div key={m.id} className={`flex items-start gap-3 group ${isMe ? 'flex-row-reverse' : ''}`}>
               <Avatar className="w-8 h-8 rounded-lg shadow-sm">
-                <AvatarFallback className="bg-white text-indigo-600 text-[10px] font-bold">{m.sender.firstName?.[0]}</AvatarFallback>
+                <AvatarFallback className="bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold">{m.sender.firstName?.[0]}</AvatarFallback>
               </Avatar>
               <div className={`max-w-[65%]`}>
-                {!isMe && <p className="text-[10px] font-bold text-slate-400 mb-1 ml-1">{m.sender.firstName}</p>}
+                {!isMe && <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 mb-1 ml-1">{m.sender.firstName}</p>}
                 <div className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${isMe
                   ? 'bg-indigo-600 text-white rounded-tr-none'
-                  : 'bg-white text-slate-700 border border-slate-100 rounded-tl-none'
+                  : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-100 dark:border-slate-700/50 rounded-tl-none'
                   }`}>
                   {m.content}
                 </div>
                 {isMe && (
                   <div className="flex justify-end mt-1 gap-2 opacity-0 group-hover:opacity-100 transition-opacity px-1">
-                    <button onClick={() => startEdit(m)} className="text-[9px] font-bold text-slate-400 hover:text-indigo-600">Edit</button>
-                    <button onClick={() => handleDeleteMessage(m.id)} className="text-[9px] font-bold text-slate-400 hover:text-red-600">Delete</button>
+                    <button onClick={() => startEdit(m)} className="text-[9px] font-bold text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400">Edit</button>
+                    <button onClick={() => handleDeleteMessage(m.id)} className="text-[9px] font-bold text-slate-400 hover:text-red-600 dark:hover:text-red-400">Delete</button>
                   </div>
                 )}
 
-                <p className={`text-[9px] text-slate-400 mt-1 ${isMe ? 'text-right' : 'text-left'}`}>
+                <p className={`text-[9px] text-slate-400 dark:text-slate-500 mt-1 ${isMe ? 'text-right' : 'text-left'}`}>
                   {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
               </div>
@@ -902,12 +893,12 @@ const ChatSection = ({ projectId }) => {
         })}
       </div>
 
-      <div className="p-6 bg-white border-t border-slate-100">
-        <div className="flex items-center gap-3 bg-slate-50 p-1.5 pl-5 rounded-2xl border border-slate-200">
+      <div className="p-6 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-950/50 p-1.5 pl-5 rounded-2xl border border-slate-200 dark:border-slate-800">
           <input
             type="text"
             placeholder="Type a message..."
-            className="flex-1 bg-transparent border-none h-11 text-sm outline-none text-slate-900"
+            className="flex-1 bg-transparent border-none h-11 text-sm outline-none text-slate-900 dark:text-white placeholder:text-slate-400"
             value={msg}
             onChange={(e) => setMsg(e.target.value)}
             onKeyDown={(e) => {
@@ -916,14 +907,14 @@ const ChatSection = ({ projectId }) => {
             }}
           />
           {editingMessageId && (
-            <Button onClick={cancelEdit} variant="ghost" className="h-11 w-11 rounded-xl p-0 text-slate-400 hover:text-slate-600">
+            <Button onClick={cancelEdit} variant="ghost" className="h-11 w-11 rounded-xl p-0 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
               <span className="text-xs font-bold">X</span>
             </Button>
           )}
           <Button
             onClick={handleSend}
             disabled={!msg.trim()}
-            className="h-11 w-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-100 p-0 transition-all"
+            className="h-11 w-11 rounded-xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 shadow-lg shadow-indigo-100 dark:shadow-indigo-900/20 p-0 transition-all"
           >
             <Send size={18} className="text-white" />
           </Button>
@@ -999,43 +990,43 @@ const TeamSection = ({ projectId, project }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {displayedMembers.map(member => (
-        <Card key={member.id} className="p-5 bg-white border-slate-200 shadow-sm rounded-2xl flex items-center justify-between hover:border-indigo-300 transition-all group">
+        <Card key={member.id} className="p-5 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm rounded-2xl flex items-center justify-between hover:border-indigo-300 dark:hover:border-indigo-700 transition-all group">
           <div className="flex items-center gap-4 overflow-hidden">
-            <Avatar className="h-10 w-10 rounded-xl shadow-sm border border-slate-100 shrink-0">
+            <Avatar className="h-10 w-10 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800 shrink-0">
               <AvatarImage src={member.user.profilePictureUrl} />
-              <AvatarFallback className="bg-slate-50 text-indigo-600 font-bold">{member.user.firstName?.[0]}</AvatarFallback>
+              <AvatarFallback className="bg-slate-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 font-bold">{member.user.firstName?.[0]}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col min-w-0">
-              <h4 className="font-bold text-slate-900 text-sm truncate leading-snug">
+              <h4 className="font-bold text-slate-900 dark:text-white text-sm truncate leading-snug">
                 {member.user.firstName} {member.user.lastName}
               </h4>
-              <Badge className="w-fit bg-slate-50 text-slate-500 text-[9px] uppercase tracking-widest mt-1.5 border-none">
+              <Badge className="w-fit bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 text-[9px] uppercase tracking-widest mt-1.5 border-none">
                 {member.role || 'Member'}
               </Badge>
             </div>
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="text-slate-300 hover:text-slate-600 p-2 rounded-full hover:bg-slate-50 transition-all shrink-0 opacity-0 group-hover:opacity-100">
+              <button className="text-slate-300 hover:text-slate-600 dark:text-slate-600 dark:hover:text-slate-400 p-2 rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-all shrink-0 opacity-0 group-hover:opacity-100">
                 <MoreVertical size={16} />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="bg-white dark:bg-slate-900 dark:border-slate-800">
               {/* If I am Lead, and target is not Lead, I can manage them */}
               {project?.lead?.id === userProfile?.id && member.id !== 'lead' && (
                 <>
-                  <DropdownMenuItem onClick={() => handleUpdateRole(member.user.id || member.userId, 'LEAD')}>
+                  <DropdownMenuItem onClick={() => handleUpdateRole(member.user.id || member.userId, 'LEAD')} className="dark:text-slate-300 dark:focus:bg-slate-800">
                     <CheckCircle2 className="w-3.5 h-3.5 mr-2" /> Make Lead
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600 focus:bg-red-50" onClick={() => handleRemoveMember(member.id || member.userId)}>
+                  <DropdownMenuSeparator className="dark:bg-slate-800" />
+                  <DropdownMenuItem className="text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20" onClick={() => handleRemoveMember(member.id || member.userId)}>
                     <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove Member
                   </DropdownMenuItem>
                 </>
               )}
               {/* If default/member view, allow leaving */}
               {(String(member.user.id) === String(userProfile?.id) && member.role !== 'Team Lead') && (
-                <DropdownMenuItem className="text-red-600 focus:bg-red-50" onClick={handleLeaveProject}>
+                <DropdownMenuItem className="text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20" onClick={handleLeaveProject}>
                   <LogOut className="w-3.5 h-3.5 mr-2" /> Leave Project
                 </DropdownMenuItem>
               )}
@@ -1073,39 +1064,39 @@ const SettingsTab = ({ project, projectId, isProjectLead }) => {
 
   return (
     <div className="max-w-3xl mx-auto space-y-8">
-      <Card className="bg-white border-slate-200 shadow-sm p-10 rounded-[32px]">
-        <h3 className="text-xl font-bold text-slate-900 mb-8">General Settings</h3>
+      <Card className="bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm p-10 rounded-[32px]">
+        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-8">General Settings</h3>
         <div className="space-y-6">
           <div className="space-y-2">
-            <Label className="text-xs font-bold text-slate-500 uppercase">Project Title</Label>
-            <Input value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="border-slate-200 h-12 rounded-xl focus:ring-indigo-500" />
+            <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Project Title</Label>
+            <Input value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white h-12 rounded-xl focus:ring-indigo-500" />
           </div>
           <div className="space-y-2">
-            <Label className="text-xs font-bold text-slate-500 uppercase">Description</Label>
-            <Textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="border-slate-200 rounded-xl min-h-[120px] focus:ring-indigo-500" />
+            <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Description</Label>
+            <Textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-xl min-h-[120px] focus:ring-indigo-500" />
           </div>
 
           <div className="grid grid-cols-2 gap-6 pt-2">
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-500 uppercase">GitHub Repository</Label>
+              <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">GitHub Repository</Label>
               <div className="relative">
                 <Github className="absolute left-3 top-3 text-slate-400" size={16} />
                 <Input
                   value={formData.githubRepo}
                   onChange={e => setFormData({ ...formData, githubRepo: e.target.value })}
-                  className="pl-10 border-slate-200 h-11 rounded-xl focus:ring-indigo-500"
+                  className="pl-10 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white h-11 rounded-xl focus:ring-indigo-500"
                   placeholder="https://github.com/..."
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-bold text-slate-500 uppercase">Live Preview URL</Label>
+              <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Live Preview URL</Label>
               <div className="relative">
                 <Globe className="absolute left-3 top-3 text-slate-400" size={16} />
                 <Input
                   value={formData.demoUrl}
                   onChange={e => setFormData({ ...formData, demoUrl: e.target.value })}
-                  className="pl-10 border-slate-200 h-11 rounded-xl focus:ring-indigo-500"
+                  className="pl-10 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white h-11 rounded-xl focus:ring-indigo-500"
                   placeholder="https://..."
                 />
               </div>
@@ -1113,7 +1104,7 @@ const SettingsTab = ({ project, projectId, isProjectLead }) => {
           </div>
 
           <div className="flex justify-end pt-4">
-            <Button onClick={handleUpdate} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 h-12 font-bold shadow-lg shadow-indigo-100">
+            <Button onClick={handleUpdate} className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8 h-12 font-bold shadow-lg shadow-indigo-100 dark:shadow-indigo-900/20">
               Save Changes
             </Button>
           </div>
@@ -1121,12 +1112,12 @@ const SettingsTab = ({ project, projectId, isProjectLead }) => {
       </Card>
 
       {isProjectLead && (
-        <Card className="bg-rose-50/50 border-rose-100 p-10 rounded-[32px] flex items-center justify-between">
+        <Card className="bg-rose-50/50 dark:bg-rose-900/10 border-rose-100 dark:border-rose-900/20 p-10 rounded-[32px] flex items-center justify-between">
           <div>
-            <h4 className="text-lg font-bold text-rose-900">Danger Zone</h4>
-            <p className="text-sm text-rose-700/70">Permanently delete this project and all data.</p>
+            <h4 className="text-lg font-bold text-rose-900 dark:text-rose-400">Danger Zone</h4>
+            <p className="text-sm text-rose-700/70 dark:text-rose-400/60">Permanently delete this project and all data.</p>
           </div>
-          <Button onClick={handleDelete} variant="destructive" className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-8 h-12 font-bold">
+          <Button onClick={handleDelete} variant="destructive" className="bg-rose-600 hover:bg-rose-700 text-white rounded-xl px-8 h-12 font-bold shadow-lg shadow-rose-200 dark:shadow-none">
             Delete Project
           </Button>
         </Card>

@@ -11,9 +11,9 @@ export default function RequestsPage() {
   const { pendingCount } = useRequests();
 
   return (
-    <div className="min-h-screen bg-[#FDFDFD] pb-20">
+    <div className="min-h-screen bg-[#FDFDFD] dark:bg-[#020617] pb-20">
       {/* HEADER SECTION */}
-      <div className="bg-slate-900 pt-20 pb-28 px-8 relative overflow-hidden">
+      <div className="bg-slate-900 dark:bg-[#0B1120] pt-20 pb-28 px-8 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-[50%] h-full bg-blue-600/10 blur-[120px] rounded-full translate-x-1/2" />
         <div className="max-w-6xl mx-auto relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -34,7 +34,7 @@ export default function RequestsPage() {
         <Tabs defaultValue="invitations" className="space-y-10">
 
           {/* MODERN TAB LIST */}
-          <div className="bg-white/80 backdrop-blur-xl p-2 rounded-[32px] shadow-2xl shadow-slate-200/40 border border-white sticky top-24">
+          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-2 rounded-[32px] shadow-2xl shadow-slate-200/40 dark:shadow-slate-900/40 border border-white dark:border-slate-800 sticky top-24">
             <TabsList className="grid grid-cols-3 bg-transparent h-16 p-0 gap-2">
               {[
                 { id: 'invitations', label: 'My Invitations', icon: <Sparkles size={16} /> },
@@ -44,12 +44,12 @@ export default function RequestsPage() {
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="rounded-[24px] h-full data-[state=active]:bg-slate-900 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-500 font-black text-xs uppercase tracking-widest gap-3"
+                  className="rounded-[24px] h-full data-[state=active]:bg-slate-900 dark:data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-500 font-black text-xs uppercase tracking-widest gap-3 dark:text-slate-400 dark:data-[state=active]:text-white"
                 >
                   {tab.icon}
                   <span className="hidden sm:inline">{tab.label}</span>
                   {tab.id === 'invitations' && pendingCount > 0 && (
-                    <span className="bg-blue-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center ring-4 ring-blue-50">
+                    <span className="bg-blue-600 dark:bg-white dark:text-blue-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center ring-4 ring-blue-50 dark:ring-blue-900/20">
                       {pendingCount}
                     </span>
                   )}

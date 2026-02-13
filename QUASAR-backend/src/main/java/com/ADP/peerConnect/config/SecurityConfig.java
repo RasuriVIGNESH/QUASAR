@@ -68,7 +68,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         // Public endpoints used by the frontend (registration UI, assets, OAuth endpoints)
-        String[] publicStaticEndpoints = new String[] {
+         String[] publicStaticEndpoints = new String[] {
                 "/favicon.ico",
                 "/.well-known/**",
                 "/api/colleges", "/api/colleges/**",

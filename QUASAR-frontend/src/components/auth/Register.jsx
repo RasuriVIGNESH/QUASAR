@@ -29,6 +29,7 @@ export default function Register() {
   });
 
   const [step, setStep] = useState(1);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState(null);
@@ -120,7 +121,10 @@ export default function Register() {
         collegeId: formData.collegeId
       };
       await signup(formData.email, formData.password, userData);
-      navigate('/onboarding');
+      setShowWelcome(true);
+      setTimeout(() => {
+        navigate('/onboarding');
+      }, 2000);
     } catch (err) {
       console.error('Registration error:', err);
       setError(err);
@@ -160,7 +164,6 @@ export default function Register() {
               transition={{ duration: 0.4, ease: "easeInOut" }}
             />
           </div>
-
           {steps.map((s) => (
             <div key={s.id} className="relative z-10 flex flex-col items-center">
               <div
@@ -184,10 +187,11 @@ export default function Register() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
       <div className="absolute top-4 right-4 z-50">
         <ModeToggle />
       </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -195,13 +199,14 @@ export default function Register() {
       >
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
-            <img src="/data/logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+            <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
             <span className="text-2xl font-bold text-slate-900 dark:text-white">Quasar</span>
           </Link>
           <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Create your account</h2>
           <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Join the networking platform for innovators</p>
         </div>
-        <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/50 dark:shadow-black/50 overflow-hidden">
+
+        <Card className="border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-900/60 backdrop-blur-xl shadow-xl shadow-slate-200/50 dark:shadow-black/50 overflow-hidden">
           <CardContent className="p-8">
             <StepProgress currentStep={step} />
 
@@ -341,7 +346,7 @@ export default function Register() {
                           <div className="flex flex-col">
                             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Selected Institute</span>
                             <span className="font-semibold text-slate-900 dark:text-white leading-tight">
-                              {staticData.colleges.find(c => String(c.id) === String(formData.collegeId))?.name}
+                              {staticData.colleges.find(c => String(c.id) === String(formData.collegeId)).name}
                             </span>
                           </div>
                         </motion.div>
@@ -359,20 +364,22 @@ export default function Register() {
                     className="space-y-4"
                   >
                     <div className="space-y-1.5">
-                      <Label htmlFor="password" className="text-slate-700 font-semibold text-sm">Security Password</Label>
+                      <Label htmlFor="password" className="text-slate-700 font-semibold text-sm">Password</Label>
                       <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
                           id="password"
                           name="password"
-                          type={showPassword ? 'text' : 'password'}
+                          type={showPassword ? "text" : "password"}
+                          placeholder="••••••••"
                           value={formData.password}
                           onChange={handleInputChange}
-                          className="pr-10 h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                          className="pl-10 pr-10 h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
@@ -385,7 +392,8 @@ export default function Register() {
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
-                        type={showConfirmPassword ? 'text' : 'password'}
+                        type="password"
+                        placeholder="••••••••"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
                         className="h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
@@ -402,62 +410,56 @@ export default function Register() {
                     type="button"
                     variant="outline"
                     onClick={handleBack}
-                    className="flex-1 h-11 rounded-lg border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 font-semibold text-slate-600 dark:text-slate-300 transition-all"
+                    className="flex-1 h-11 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
                   >
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
+                    <ArrowLeft className="h-4 w-4 mr-2" /> Back
                   </Button>
                 )}
                 <Button
-                  type={step === 3 ? "submit" : "button"}
-                  onClick={step < 3 ? handleNext : undefined}
+                  type="submit"
                   disabled={loading}
-                  className={`flex-[2] h-11 rounded-lg font-bold transition-all duration-200 hover:scale-[1.02] shadow-md shadow-blue-100 ${step === 3 ? "bg-violet-600 hover:bg-violet-700" : "bg-blue-600 hover:bg-blue-700"
-                    } text-white`}
+                  onClick={step < 3 ? (e) => { e.preventDefault(); handleNext(); } : undefined}
+                  className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg shadow-blue-600/20"
                 >
                   {loading ? (
-                    <div className="h-5 w-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : step === 3 ? (
-                    "Complete Registration"
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Creating Account...</span>
+                    </div>
                   ) : (
-                    <span className="flex items-center">
-                      Continue <ArrowRight className="ml-2 h-4 w-4" />
-                    </span>
+                    step === 3 ? (
+                      <div className="flex items-center justify-center gap-2">
+                        <span>Complete Registration</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2">
+                        <span>Continue</span>
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    )
                   )}
                 </Button>
               </div>
             </form>
 
             {step === 1 && (
-              <div className="mt-8 space-y-6">
-                <div className="relative">
+              <div className="mt-8">
+                <div className="relative mb-6">
                   <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100 dark:border-slate-700" /></div>
                   <div className="relative flex justify-center text-xs uppercase tracking-widest"><span className="bg-white dark:bg-slate-900 px-2 text-slate-400 font-bold">Or</span></div>
                 </div>
                 <div className="group relative">
                   <motion.button
                     type="button"
+                    onClick={handleGitHubLogin}
+                    disabled={loading}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="w-full relative overflow-hidden rounded-xl bg-[#24292e] text-white p-3.5 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:bg-[#2f363d] transition-all duration-300"
-                    onClick={handleGitHubLogin}
+                    className="w-full h-11 flex items-center justify-center gap-2 bg-[#24292e] dark:bg-[#333] hover:bg-[#2b3137] text-white rounded-md font-medium transition-all shadow-lg shadow-slate-900/20"
                   >
-                    <motion.div
-                      animate={{ rotate: [0, -10, 10, -10, 0] }}
-                      transition={{
-                        duration: 2,
-                        ease: "easeInOut",
-                        times: [0, 0.2, 0.5, 0.8, 1],
-                        repeat: Infinity,
-                        repeatDelay: 3
-                      }}
-                      className="flex items-center justify-center"
-                    >
-                      <Github className="h-5 w-5" />
-                    </motion.div>
-                    <span className="font-bold text-sm tracking-wide">Sign up with GitHub</span>
-
-                    {/* Shine effect */}
+                    <Github className="h-5 w-5" />
+                    <span>Continue with GitHub</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
                   </motion.button>
                 </div>
@@ -465,9 +467,9 @@ export default function Register() {
             )}
 
             <div className="mt-8 text-center">
-              <p className="text-sm text-slate-500">
-                Already part of the network?{' '}
-                <Link to="/login" className="text-blue-600 font-bold hover:text-blue-700 dark:text-blue-500 dark:hover:text-blue-400 transition-colors">
+              <p className="text-sm text-slate-600 dark:text-slate-400">
+                Already have an account?{' '}
+                <Link to="/login" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
                   Sign in
                 </Link>
               </p>
@@ -479,6 +481,35 @@ export default function Register() {
           By joining, you agree to our Terms of Service and Privacy Policy.
         </p>
       </motion.div>
+
+      {/* Welcome Animation Overlay */}
+      <AnimatePresence>
+        {showWelcome && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex items-center justify-center"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 1.1, opacity: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="text-center"
+            >
+              <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl mx-auto mb-6 shadow-2xl flex items-center justify-center p-2 border border-slate-100 dark:border-slate-800">
+                <img src="/data/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
+              </div>
+              <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+                Welcome to Quasar
+              </h1>
+              <p className="text-lg text-slate-500 dark:text-slate-400">Your journey starts now.</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

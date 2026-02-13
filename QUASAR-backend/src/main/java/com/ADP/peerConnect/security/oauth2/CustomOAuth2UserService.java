@@ -56,25 +56,33 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             throw new BadRequestException("Unsupported OAuth2 provider: " + registrationId);
         }
 
-        GitHubOAuth2UserInfo userInfo = new GitHubOAuth2UserInfo(oauth2User.getAttributes());
+        Map<String, Object> attributes =
+                new HashMap<>(oauth2User.getAttributes());
 
-        // If email is not present in /user response, fetch it via /user/emails using access token
-        if (!StringUtils.hasText(userInfo.getEmail())) {
+        GitHubOAuth2UserInfo userInfo =
+                new GitHubOAuth2UserInfo(attributes);
+
+
+        String email = userInfo.getEmail();
+
+        if (!StringUtils.hasText(email)) {
             logger.info("Primary email not found in /user response. Fetching /user/emails for access token.");
             String accessToken = userRequest.getAccessToken().getTokenValue();
             try {
-                String emailFromApi = fetchPrimaryEmailFromGitHub(accessToken);
-                if (StringUtils.hasText(emailFromApi)) {
-                    userInfo.getAttributes().put("email", emailFromApi);
-                }
+                email = fetchPrimaryEmailFromGitHub(accessToken);
             } catch (Exception ex) {
                 logger.warn("Failed to fetch email from /user/emails: {}", ex.getMessage());
             }
         }
 
-        if (!StringUtils.hasText(userInfo.getEmail())) {
-            throw new BadRequestException("Email not found from GitHub. Make sure 'user:email' scope is requested or user has a public/primary email.");
+        if (!StringUtils.hasText(email)) {
+            throw new BadRequestException(
+                    "Email not found from GitHub. Make sure 'user:email' scope is requested or user has a public/primary email."
+            );
         }
+
+// keep attributes in sync (optional but clean)
+        userInfo.getAttributes().put("email", email);
 
         Optional<User> userOptionalByGithub = Optional.empty();
         if (StringUtils.hasText(userInfo.getId())) {

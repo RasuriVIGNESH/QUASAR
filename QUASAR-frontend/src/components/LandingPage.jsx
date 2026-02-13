@@ -76,7 +76,7 @@ const ProjectCard = ({ project, idx, isMarquee }) => {
   const startDate = project.expectedStartDate ? new Date(project.expectedStartDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD';
 
   return (
-    <Card className={`h-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:shadow-2xl hover:border-blue-200 dark:hover:border-blue-700 transition-all duration-300 overflow-hidden flex flex-col group relative ${isMarquee ? 'w-[350px] md:w-[400px] shrink-0' : ''}`}>
+    <Card className={`h-full bg-white dark:bg-slate-900/40 backdrop-blur-sm border-slate-200 dark:border-slate-800/60 hover:shadow-2xl hover:border-blue-200 dark:hover:border-blue-500/30 transition-all duration-300 overflow-hidden flex flex-col group relative ${isMarquee ? 'w-[350px] md:w-[400px] shrink-0' : ''}`}>
       <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-violet-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
 
       <CardHeader className="pb-3 space-y-3">
@@ -295,7 +295,7 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-white selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900/50 dark:selection:text-blue-100">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] font-sans text-slate-900 dark:text-white selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900/50 dark:selection:text-blue-100">
       {/* Sticky Header */}
       <motion.header
         style={{ backgroundColor: `rgba(255, 255, 255, ${headerBgOpacity})`, boxShadow: headerShadow }}
@@ -304,7 +304,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 relative">
             <Link to="/" className="flex items-center gap-2">
-              <img src="/data/logo.png" alt="Logo" className="h-9 w-9 rounded-lg object-cover" />
+              <img src="/data/Logo.png" alt="Logo" className="h-9 w-9 rounded-lg object-cover" />
               <span className="text-2xl font-bold tracking-tight text-slate-900">
                 <span className="text-blue-600">Quasar</span>
               </span>
@@ -315,7 +315,7 @@ export default function LandingPage() {
               initial={{ y: -100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
-              className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 p-1.5 rounded-full bg-white/70 dark:bg-slate-900/70 backdrop-blur-xl border border-white/40 dark:border-slate-700/50 shadow-lg shadow-black/5 ring-1 ring-black/5"
+              className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 p-1.5 rounded-full bg-white/70 dark:bg-slate-900/40 backdrop-blur-xl border border-white/40 dark:border-slate-700/30 shadow-lg shadow-black/5 ring-1 ring-black/5"
             >
               <div className="flex items-center gap-1 px-2">
                 {['projects', 'features', 'colleges'].map((item) => (
@@ -431,7 +431,7 @@ export default function LandingPage() {
       {/* Featured Projects */}
       {
         (publicData.loading || publicData.projects.length > 0) && (
-          <section id="projects" className="py-24 px-4 bg-slate-50 dark:bg-slate-950">
+          <section id="projects" className="py-24 px-4 bg-slate-50 dark:bg-[#0B1120]">
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
                 <div>
@@ -504,7 +504,7 @@ export default function LandingPage() {
       }
 
       {/* Features Grid */}
-      <section id="features" className="py-24 px-4 bg-white dark:bg-slate-900">
+      <section id="features" className="py-24 px-4 bg-white dark:bg-[#020617]">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">Built for Student Success</h2>
@@ -527,7 +527,7 @@ export default function LandingPage() {
       </section>
 
       {/* Benefits / Social Proof */}
-      <section className="py-24 px-4 bg-slate-50 dark:bg-slate-950">
+      <section className="py-24 px-4 bg-slate-50 dark:bg-[#0B1120]">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <AnimatedSection>
@@ -537,11 +537,21 @@ export default function LandingPage() {
               </h2>
               <div className="space-y-4">
                 {benefits.map((benefit, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800 transition-transform hover:translate-x-2">
+                  <div key={i} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/60 transition-transform hover:translate-x-2">
                     <div className="text-blue-600 dark:text-blue-500 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg">{benefit.icon}</div>
                     <span className="font-semibold text-slate-700 dark:text-slate-200">{benefit.text}</span>
                   </div>
                 ))}
+              </div>
+            </AnimatedSection>
+
+            <AnimatedSection delay={0.2}>
+              <div className="flex items-center justify-center p-8">
+                <img
+                  src="/data/Logo.png"
+                  alt="Quasar Logo"
+                  className="w-80 h-80 md:w-96 md:h-96 object-contain drop-shadow-xl hover:scale-105 transition-transform duration-500"
+                />
               </div>
             </AnimatedSection>
           </div>

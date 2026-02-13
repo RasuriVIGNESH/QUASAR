@@ -36,9 +36,11 @@ import {
   Code,
   ChevronRight,
   ExternalLink,
-  Calendar
+  Calendar,
+  Sun,
+  Moon
 } from 'lucide-react';
-import { ModeToggle } from '@/components/mode-toggle';
+import { useTheme } from 'next-themes';
 import ProjectDetailModal from './discovery/ProjectDetailModal';
 
 // Scroll-triggered section component
@@ -61,6 +63,7 @@ const ScrollSection = ({ children, delay = 0 }) => {
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
+  const { theme, setTheme } = useTheme();
   const { userProfile, logout } = useAuth();
   const { pendingCount } = useRequests();
   const [projectCount, setProjectCount] = useState(0);
@@ -73,6 +76,8 @@ export default function Dashboard() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  /* logic for one-time welcome animation removed */
+
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
   const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.95]);
@@ -249,7 +254,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100/50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900/50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100/50 dark:from-slate-950 dark:via-[#020617] dark:to-slate-900">
       {/* Animated Background */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -275,21 +280,21 @@ export default function Dashboard() {
         style={{ opacity: headerOpacity }}
         className="fixed top-4 left-4 right-4 z-50 mx-auto max-w-7xl"
       >
-        <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-2xl rounded-2xl border border-white/20 dark:border-slate-800/60 shadow-xl shadow-slate-200/50 dark:shadow-black/50 px-6 py-4">
+        <div className="bg-white/80 dark:bg-slate-900/70 backdrop-blur-2xl rounded-2xl border border-white/20 dark:border-slate-800/60 shadow-xl shadow-slate-200/50 dark:shadow-black/50 px-6 py-4">
           <div className="flex items-center justify-between">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
             >
-              <img src="/data/logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+              <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300">
                 Quasar
               </span>
             </motion.div>
 
             <div className="flex items-center gap-3">
-              <ModeToggle />
+
               {userProfile?.isCollegeVerified && (
                 <Badge className="bg-emerald-600 text-white border-0">
                   <motion.div
@@ -300,6 +305,10 @@ export default function Dashboard() {
                   Verified
                 </Badge>
               )}
+
+              <span className="text-sm font-bold text-slate-700 dark:text-slate-200 hidden md:block">
+                {userProfile?.firstName} {userProfile?.lastName}
+              </span>
 
               {pendingCount > 0 && (
                 <motion.button
@@ -314,24 +323,6 @@ export default function Dashboard() {
                   </span>
                 </motion.button>
               )}
-
-              <Link to="/profile">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-blue-600 to-slate-600"
-                >
-                  <div className="w-full h-full rounded-full bg-white p-[2px]">
-                    {userProfile?.profileImage ? (
-                      <img src={userProfile.profileImage} alt="Profile" className="w-full h-full rounded-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center">
-                        <User className="h-4 w-4 text-slate-500" />
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
-              </Link>
 
               <div className="relative">
                 <motion.button
@@ -352,6 +343,18 @@ export default function Dashboard() {
                       className="absolute right-0 mt-2 w-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden"
                     >
                       <button
+                        onClick={() => { navigate('/profile'); setShowMenu(false); }}
+                        className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                      >
+                        {userProfile?.profileImage ? (
+                          <img src={userProfile.profileImage} alt="Profile" className="w-5 h-5 rounded-full object-cover" />
+                        ) : (
+                          <User className="h-4 w-4 text-blue-500" />
+                        )}
+                        <span className="font-medium text-slate-700 dark:text-slate-200">Profile</span>
+                      </button>
+                      <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                      <button
                         onClick={() => { navigate('/requests'); setShowMenu(false); }}
                         className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors"
                       >
@@ -364,6 +367,20 @@ export default function Dashboard() {
                             {pendingCount}
                           </span>
                         )}
+                      </button>
+                      <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                      <button
+                        onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                      >
+                        {theme === 'dark' ? (
+                          <Sun className="h-4 w-4 text-orange-500" />
+                        ) : (
+                          <Moon className="h-4 w-4 text-blue-500" />
+                        )}
+                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                          {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                        </span>
                       </button>
                       <div className="h-px bg-slate-100 dark:bg-slate-800" />
                       <button
@@ -392,24 +409,23 @@ export default function Dashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <div className="flex justify-end mb-6">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-50 to-slate-50 border border-blue-100 shadow-sm">
-                <Clock className="h-4 w-4 text-blue-600" />
-                <span className="text-sm font-semibold text-blue-700">
+            <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
+              <div>
+                <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
+                  Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">{userProfile?.firstName || 'Creator'}</span>
+                </h1>
+                <div className="text-lg md:text-xl font-medium text-slate-600 dark:text-slate-400 leading-tight max-w-3xl">
+                  {loading ? <Skeleton className="h-8 w-3/4 bg-slate-200 rounded-lg" /> : welcomeMessage}
+                </div>
+              </div>
+
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm self-start whitespace-nowrap">
+                <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
                   {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </span>
               </div>
             </div>
-
-            <h1 className="text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-6">
-              Welcome back,{' '}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-700 via-blue-600 to-slate-600">
-                {userProfile?.firstName || "Explorer"}
-              </span>
-            </h1>
-            <p className="text-2xl text-slate-600 dark:text-slate-300 mb-8 max-w-3xl">
-              {loading ? <Skeleton className="h-8 w-3/4 bg-slate-200 rounded-lg" /> : welcomeMessage}
-            </p>
 
             {/* Quick Action Buttons */}
             <div className="flex flex-wrap gap-4">
@@ -417,7 +433,7 @@ export default function Dashboard() {
                 whileHover={{ scale: 1.02, y: -2 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => navigate('/projects/create')}
-                className="px-8 py-4 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200 hover:shadow-xl transition-all flex items-center gap-2"
+                className="px-8 py-4 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-2xl font-bold transition-all flex items-center gap-2"
               >
                 <Plus className="h-5 w-5" />
                 Start New Project
@@ -445,7 +461,7 @@ export default function Dashboard() {
                 onClick={() => navigate(stat.link)}
                 className="cursor-pointer bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/60 hover:shadow-xl transition-all"
               >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-white mb-4 shadow-lg`}>
+                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-white mb-4 shadow-lg shadow-blue-900/20`}>
                   {stat.icon}
                 </div>
                 <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
@@ -462,17 +478,22 @@ export default function Dashboard() {
         </ScrollSection>
 
         {/* Upcoming Events Section */}
-        {upcomingEvents.length > 0 && (
-          <ScrollSection delay={0.1}>
-            <div className="mb-20">
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-2">Upcoming Events</h2>
-                  <p className="text-slate-600 dark:text-slate-400 text-lg">Don't miss out on these opportunities</p>
-                </div>
-
+        <ScrollSection delay={0.1}>
+          <div className="mb-20">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-2">Upcoming Events</h2>
+                <p className="text-slate-600 dark:text-slate-400 text-lg">Don't miss out on these opportunities</p>
               </div>
+            </div>
 
+            {loading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-64 w-full rounded-2xl bg-slate-200 dark:bg-slate-800" />
+                ))}
+              </div>
+            ) : upcomingEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {upcomingEvents.map((event, idx) => (
                   <motion.div
@@ -485,7 +506,7 @@ export default function Dashboard() {
                     onClick={() => navigate(`/events/${event.id}`)}
                     className="cursor-pointer group"
                   >
-                    <Card className="h-full border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl hover:shadow-2xl transition-all duration-500 overflow-hidden relative">
+                    <Card className="h-full border-0 bg-white/80 dark:bg-slate-900/40 backdrop-blur-xl border-t border-white/10 dark:border-slate-700/30 hover:shadow-2xl transition-all duration-500 overflow-hidden relative group-hover:scale-[1.02]">
                       <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-600 to-slate-600" />
                       <CardContent className="p-6 pl-8">
                         <div className="flex justify-between items-start mb-4">
@@ -519,9 +540,21 @@ export default function Dashboard() {
                   </motion.div>
                 ))}
               </div>
-            </div>
-          </ScrollSection>
-        )}
+            ) : (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-16 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm rounded-3xl border border-dashed border-slate-300 dark:border-slate-700"
+              >
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Calendar className="h-8 w-8 text-slate-400 dark:text-slate-500" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">No upcoming events</h3>
+                <p className="text-slate-500 dark:text-slate-400">There are no events scheduled at the moment. Check back later!</p>
+              </motion.div>
+            )}
+          </div>
+        </ScrollSection>
 
         {/* Recommended Projects Section */}
         {recommendedProjects.length > 0 && (
@@ -555,7 +588,7 @@ export default function Dashboard() {
                     onClick={() => { setSelectedProject(project); setIsModalOpen(true); }}
                     className="cursor-pointer group"
                   >
-                    <Card className="h-full border-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl hover:shadow-2xl transition-all duration-500 overflow-hidden">
+                    <Card className="h-full border-0 bg-white/80 dark:bg-slate-900/40 backdrop-blur-xl border-t border-white/10 dark:border-slate-700/30 hover:shadow-2xl transition-all duration-500 overflow-hidden group-hover:scale-[1.02]">
                       <div className={`h-2 bg-gradient-to-r ${project.gradient}`} />
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between mb-4">
@@ -622,7 +655,7 @@ export default function Dashboard() {
                     transition={{ delay: idx * 0.1 }}
                     whileHover={{ x: 5, scale: 1.02 }}
                     onClick={activity.action}
-                    className="cursor-pointer bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-xl p-4 border border-slate-200/60 dark:border-slate-800/60 hover:shadow-lg transition-all"
+                    className="cursor-pointer bg-white/80 dark:bg-slate-900/40 backdrop-blur-xl rounded-xl p-4 border border-slate-200/60 dark:border-slate-800/40 hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-lg transition-all"
                   >
                     <div className="flex items-start gap-4">
                       <div className={`${activity.color} w-10 h-10 rounded-lg flex items-center justify-center text-white shadow-lg flex-shrink-0`}>
@@ -649,7 +682,7 @@ export default function Dashboard() {
                 </Link>
               </div>
 
-              <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-slate-800/60 overflow-hidden">
+              <div className="bg-white/80 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-slate-800/40 overflow-hidden">
                 {trendingSkills.map((skill, idx) => (
                   <motion.div
                     key={idx}

@@ -101,7 +101,7 @@ export default function ProfilePage() {
     const currentAvail = availabilityOptions.find(o => o.value === formData.availabilityStatus);
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC] flex flex-col md:flex-row overflow-hidden font-sans">
+        <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#020617] flex flex-col md:flex-row overflow-hidden font-sans">
 
             {/* --- LEFT SIDE: IDENTITY SIDEBAR --- */}
             <aside className="w-full md:w-[380px] bg-slate-900 flex flex-col items-center justify-center p-10 text-center relative overflow-hidden">
@@ -112,7 +112,7 @@ export default function ProfilePage() {
                 <div className="relative z-10 space-y-6 w-full">
                     {/* Avatar with Status Pulse */}
                     <div className="relative mx-auto w-40 h-40">
-                        <div className={`absolute inset-0 rounded-full border-4 ${currentAvail?.color} opacity-20 animate-ping`} />
+
                         <Avatar className="h-40 w-40 ring-4 ring-white/10 shadow-2xl relative">
                             <AvatarImage src={userProfile?.profilePictureUrl} className="object-cover" />
                             <AvatarFallback className="bg-indigo-600 text-white text-4xl font-black">
@@ -163,18 +163,18 @@ export default function ProfilePage() {
             </aside>
 
             {/* --- RIGHT SIDE: CONTENT FEED --- */}
-            <main className="flex-1 overflow-y-auto bg-[#F8FAFC] p-8 lg:p-16">
+            <main className="flex-1 overflow-y-auto bg-[#F8FAFC] dark:bg-[#020617] p-8 lg:p-16">
                 <div className="max-w-4xl mx-auto">
 
                     {/* Header */}
                     <div className="flex items-center justify-between mb-12">
                         <div>
-                            <h1 className="text-4xl font-black text-slate-900 tracking-tight">Digital Profile</h1>
-                            <p className="text-slate-500 font-medium">Manage your professional presence across Quasar.</p>
+                            <h1 className="text-4xl font-black text-slate-900 dark:text-white tracking-tight">Digital Profile</h1>
+                            <p className="text-slate-500 dark:text-slate-400 font-medium">Manage your professional presence across Quasar.</p>
                         </div>
                         <Button
                             onClick={() => { if (isEditing) handleSave(); else setIsEditing(true); }}
-                            className={`${isEditing ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} rounded-2xl h-12 px-8 font-bold shadow-xl shadow-indigo-200 transition-all`}
+                            className={`${isEditing ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-indigo-600 hover:bg-indigo-700'} rounded-2xl h-12 px-8 font-bold shadow-xl shadow-indigo-200 dark:shadow-indigo-900/20 transition-all`}
                         >
                             {loading ? <Loader2 className="animate-spin" /> : isEditing ? <Save className="mr-2 h-4 w-4" /> : <Edit3 className="mr-2 h-4 w-4" />}
                             {isEditing ? 'Save Identity' : 'Customize Profile'}
@@ -203,86 +203,86 @@ export default function ProfilePage() {
                                 initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                                 className="grid grid-cols-1 md:grid-cols-2 gap-8"
                             >
-                                <Card className="md:col-span-2 border-none shadow-sm rounded-[32px] p-10 bg-white">
+                                <Card className="md:col-span-2 border-none shadow-sm rounded-[32px] p-10 bg-white dark:bg-slate-900">
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Bio & Introduction</h4>
-                                    <p className="text-xl text-slate-700 font-medium leading-relaxed italic">
+                                    <p className="text-xl text-slate-700 dark:text-slate-300 font-medium leading-relaxed italic">
                                         "{userProfile?.bio || "No professional summary provided yet."}"
                                     </p>
                                 </Card>
 
-                                <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white flex flex-col justify-between">
+                                <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white dark:bg-slate-900 flex flex-col justify-between">
                                     <div>
                                         <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Education</h4>
                                         <div className="space-y-4">
                                             <div className="flex items-center gap-4">
-                                                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl"><BookOpen size={20} /></div>
-                                                <div><p className="text-xs text-slate-400 font-bold">Branch</p><p className="font-bold text-slate-800">{userProfile?.branch || 'N/A'}</p></div>
+                                                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl"><BookOpen size={20} /></div>
+                                                <div><p className="text-xs text-slate-400 font-bold">Branch</p><p className="font-bold text-slate-800 dark:text-white">{userProfile?.branch || 'N/A'}</p></div>
                                             </div>
                                             <div className="flex items-center gap-4">
-                                                <div className="p-3 bg-indigo-50 text-indigo-600 rounded-2xl"><GraduationCap size={20} /></div>
-                                                <div><p className="text-xs text-slate-400 font-bold">Graduation Year</p><p className="font-bold text-slate-800">{userProfile?.graduationYear || 'N/A'}</p></div>
+                                                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl"><GraduationCap size={20} /></div>
+                                                <div><p className="text-xs text-slate-400 font-bold">Graduation Year</p><p className="font-bold text-slate-800 dark:text-white">{userProfile?.graduationYear || 'N/A'}</p></div>
                                             </div>
                                         </div>
                                     </div>
                                 </Card>
 
-                                <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white overflow-hidden relative group">
+                                <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white dark:bg-slate-900 overflow-hidden relative group">
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Network Health</h4>
                                     <div className="text-center py-4">
-                                        <div className="text-5xl font-black text-indigo-600 mb-2">{userProfile?.connectionCount || 0}</div>
-                                        <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Global Connections</p>
+                                        <div className="text-5xl font-black text-indigo-600 dark:text-indigo-400 mb-2">{userProfile?.connectionCount || 0}</div>
+                                        <p className="text-slate-500 dark:text-slate-400 font-bold uppercase text-[10px] tracking-widest">Global Connections</p>
                                     </div>
-                                    <Sparkles className="absolute -bottom-4 -right-4 w-24 h-24 text-slate-50 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                                    <Sparkles className="absolute -bottom-4 -right-4 w-24 h-24 text-slate-50 dark:text-slate-800 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                                 </Card>
                             </motion.div>
                         ) : (
                             <motion.div key="edit" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
                                 <Tabs defaultValue="details" className="w-full">
-                                    <TabsList className="bg-slate-100 p-2 rounded-2xl mb-8">
-                                        <TabsTrigger value="details" className="rounded-xl px-8 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">Personal</TabsTrigger>
-                                        <TabsTrigger value="social" className="rounded-xl px-8 font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">Socials</TabsTrigger>
+                                    <TabsList className="bg-slate-100 dark:bg-slate-800 p-2 rounded-2xl mb-8">
+                                        <TabsTrigger value="details" className="rounded-xl px-8 font-bold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 dark:data-[state=active]:text-white dark:text-slate-400 data-[state=active]:shadow-sm">Personal</TabsTrigger>
+                                        <TabsTrigger value="social" className="rounded-xl px-8 font-bold data-[state=active]:bg-white dark:data-[state=active]:bg-slate-700 dark:data-[state=active]:text-white dark:text-slate-400 data-[state=active]:shadow-sm">Socials</TabsTrigger>
                                     </TabsList>
 
                                     <TabsContent value="details" className="space-y-6">
                                         <div className="grid grid-cols-2 gap-6">
                                             <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700 ml-1">First Name</Label>
-                                                <Input name="firstName" value={formData.firstName} onChange={handleInputChange} className="h-14 rounded-2xl bg-white border-slate-200" />
+                                                <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">First Name</Label>
+                                                <Input name="firstName" value={formData.firstName} onChange={handleInputChange} className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white" />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700 ml-1">Last Name</Label>
-                                                <Input name="lastName" value={formData.lastName} onChange={handleInputChange} className="h-14 rounded-2xl bg-white border-slate-200" />
+                                                <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Last Name</Label>
+                                                <Input name="lastName" value={formData.lastName} onChange={handleInputChange} className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white" />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label className="font-bold text-slate-700 ml-1">Bio</Label>
-                                            <Textarea name="bio" value={formData.bio} onChange={handleInputChange} className="rounded-2xl bg-white border-slate-200 min-h-[120px]" />
+                                            <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Bio</Label>
+                                            <Textarea name="bio" value={formData.bio} onChange={handleInputChange} className="rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white min-h-[120px]" />
                                         </div>
                                         <div className="grid grid-cols-3 gap-6">
                                             <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700 ml-1">Availability</Label>
+                                                <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Availability</Label>
                                                 <Select value={formData.availabilityStatus} onValueChange={(v) => handleSelectChange('availabilityStatus', v)}>
-                                                    <SelectTrigger className="h-14 rounded-2xl bg-white"><SelectValue /></SelectTrigger>
-                                                    <SelectContent>
-                                                        {availabilityOptions.map(o => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                                                    <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white"><SelectValue /></SelectTrigger>
+                                                    <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                                                        {availabilityOptions.map(o => <SelectItem key={o.value} value={o.value} className="dark:text-slate-300 dark:focus:bg-slate-700">{o.label}</SelectItem>)}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700 ml-1">Graduation</Label>
+                                                <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Graduation</Label>
                                                 <Select value={formData.graduationYear} onValueChange={(v) => handleSelectChange('graduationYear', v)}>
-                                                    <SelectTrigger className="h-14 rounded-2xl bg-white"><SelectValue /></SelectTrigger>
-                                                    <SelectContent>
-                                                        {graduationYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                                                    <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white"><SelectValue /></SelectTrigger>
+                                                    <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                                                        {graduationYears.map(y => <SelectItem key={y} value={y.toString()} className="dark:text-slate-300 dark:focus:bg-slate-700">{y}</SelectItem>)}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
                                             <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700 ml-1">Branch</Label>
+                                                <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Branch</Label>
                                                 <Select value={formData.branch} onValueChange={(v) => handleSelectChange('branch', v)}>
-                                                    <SelectTrigger className="h-14 rounded-2xl bg-white"><SelectValue /></SelectTrigger>
-                                                    <SelectContent>
-                                                        {branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                                                    <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white"><SelectValue /></SelectTrigger>
+                                                    <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                                                        {branches.map(b => <SelectItem key={b} value={b} className="dark:text-slate-300 dark:focus:bg-slate-700">{b}</SelectItem>)}
                                                     </SelectContent>
                                                 </Select>
                                             </div>
@@ -291,16 +291,16 @@ export default function ProfilePage() {
 
                                     <TabsContent value="social" className="space-y-6">
                                         <div className="space-y-4">
-                                            <Label className="font-bold text-slate-700 ml-1">GitHub Portfolio</Label>
-                                            <Input name="githubUrl" value={formData.githubUrl} onChange={handleInputChange} placeholder="https://github.com/..." className="h-14 rounded-2xl bg-white border-slate-200" />
+                                            <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">GitHub Portfolio</Label>
+                                            <Input name="githubUrl" value={formData.githubUrl} onChange={handleInputChange} placeholder="https://github.com/..." className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white" />
                                         </div>
                                         <div className="space-y-4">
-                                            <Label className="font-bold text-slate-700 ml-1">LinkedIn Profile</Label>
-                                            <Input name="linkedinUrl" value={formData.linkedinUrl} onChange={handleInputChange} placeholder="https://linkedin.com/in/..." className="h-14 rounded-2xl bg-white border-slate-200" />
+                                            <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">LinkedIn Profile</Label>
+                                            <Input name="linkedinUrl" value={formData.linkedinUrl} onChange={handleInputChange} placeholder="https://linkedin.com/in/..." className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white" />
                                         </div>
                                         <div className="space-y-4">
-                                            <Label className="font-bold text-slate-700 ml-1">Personal Website</Label>
-                                            <Input name="portfolioUrl" value={formData.portfolioUrl} onChange={handleInputChange} placeholder="https://..." className="h-14 rounded-2xl bg-white border-slate-200" />
+                                            <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Personal Website</Label>
+                                            <Input name="portfolioUrl" value={formData.portfolioUrl} onChange={handleInputChange} placeholder="https://..." className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white" />
                                         </div>
                                     </TabsContent>
                                 </Tabs>

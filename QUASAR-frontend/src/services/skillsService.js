@@ -216,6 +216,7 @@ class SkillsService {
             // Flattened structure based on validation error feedback
             const requestData = {
                 skillName: skillData.skillName,
+                category: skillData.category || skillData.skill?.category || '',
                 level: skillData.level || 'BEGINNER',
                 experience: String(skillData.experience || skillData.notes || '0'),
                 currentUser: currentUser
@@ -241,16 +242,14 @@ class SkillsService {
             }
 
             const skillsPayload = skillsList.map(s => ({
-                skillName: s.skillName || s.skill?.name || s.name, // handle various shapes
+                skillName: s.skillName || s.skill?.name || s.name,
                 level: s.level || 'BEGINNER',
-                experience: String(s.experience || '0')
+                experience: String(s.experience || '0'),
+                category: s.category || s.skill?.category || ''
             }));
 
-            // Flattened structure based on "skills: Skills list must not be empty" error 
-            // implying 'skills' field is expected at root.
             const payload = {
-                skills: skillsPayload,
-                currentUser: currentUser
+                skills: skillsPayload
             };
 
             console.log('SkillsService: Sending batch request:', payload);

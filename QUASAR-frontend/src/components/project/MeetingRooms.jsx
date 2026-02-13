@@ -122,7 +122,7 @@ export default function MeetingRooms({ projectId, projectName, isProjectLead }) 
 
                             <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                                 <DialogTrigger asChild>
-                                    <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-2xl h-12 px-6 font-bold shadow-xl shadow-indigo-100">
+                                    <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-2xl h-12 px-6 font-bold">
                                         <Plus className="w-4 h-4 mr-2" /> New Room
                                     </Button>
                                 </DialogTrigger>

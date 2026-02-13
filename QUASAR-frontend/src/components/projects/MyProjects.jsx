@@ -183,7 +183,7 @@ const MyProjects = () => {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50 dark:from-[#020617] dark:via-slate-900 dark:to-[#0B1120]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -192,7 +192,7 @@ const MyProjects = () => {
               variant="ghost"
               size="sm"
               onClick={() => navigate('/dashboard')}
-              className="gap-2"
+              className="gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to Dashboard
@@ -201,17 +201,17 @@ const MyProjects = () => {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
-                <FolderOpen className="w-10 h-10 text-blue-600" />
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <FolderOpen className="w-10 h-10 text-blue-600 dark:text-blue-500" />
                 My Projects
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 dark:text-slate-400 mt-2">
                 Manage and track your project portfolio • {projects.length} total projects
               </p>
             </div>
             <Button
               onClick={() => navigate('/projects/create')}
-              className="bg-gradient-to-r from-blue-600 to-slate-600 hover:from-blue-700 hover:to-slate-700 gap-2"
+              className="bg-gradient-to-r from-blue-600 to-slate-600 hover:from-blue-700 hover:to-slate-700 dark:from-blue-600 dark:to-blue-500 text-white gap-2 shadow-lg shadow-blue-500/20"
             >
               <Plus className="w-5 h-5" />
               Create New Project
@@ -220,7 +220,7 @@ const MyProjects = () => {
         </div>
 
         {/* Filters */}
-        <Card className="mb-6 shadow-md border-gray-200">
+        <Card className="mb-6 shadow-md border-gray-200 dark:border-slate-800 dark:bg-slate-900/60 backdrop-blur-xl">
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="relative">
@@ -229,15 +229,15 @@ const MyProjects = () => {
                   placeholder="Search projects..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 bg-white dark:bg-slate-950/50 border-slate-200 dark:border-slate-700 dark:text-white focus:ring-blue-500"
                 />
               </div>
 
               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white dark:bg-slate-950/50 border-slate-200 dark:border-slate-700 dark:text-slate-200">
                   <SelectValue placeholder="Filter by status" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
                   <SelectItem value="ALL">All Statuses</SelectItem>
                   <SelectItem value="RECRUITING">Recruiting</SelectItem>
                   <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
@@ -247,10 +247,10 @@ const MyProjects = () => {
               </Select>
 
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-white dark:bg-slate-950/50 border-slate-200 dark:border-slate-700 dark:text-slate-200">
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="dark:bg-slate-900 dark:border-slate-800">
                   <SelectItem value="ALL">All Categories</SelectItem>
                   {categories.map((category, idx) => (
                     <SelectItem key={category.id || idx} value={category.name}>
@@ -273,46 +273,46 @@ const MyProjects = () => {
 
         {/* Projects Grid */}
         {loading ? (
-          <div className="grid grid-cols-3 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[...Array(6)].map((_, i) => (
-              <Card key={i} className="bg-white border-gray-200 overflow-hidden shadow-sm">
-                <CardHeader className="bg-slate-50 pb-4">
+              <Card key={i} className="bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800 overflow-hidden shadow-sm">
+                <CardHeader className="bg-slate-50 dark:bg-slate-800/50 pb-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-3">
                       <div className="flex items-center gap-2 mb-2">
-                        <Skeleton className="h-5 w-20 rounded bg-slate-200" />
-                        <Skeleton className="h-5 w-24 rounded bg-slate-200" />
-                        <Skeleton className="ml-auto h-4 w-16 bg-slate-200" />
+                        <Skeleton className="h-5 w-20 rounded bg-slate-200 dark:bg-slate-700" />
+                        <Skeleton className="h-5 w-24 rounded bg-slate-200 dark:bg-slate-700" />
+                        <Skeleton className="ml-auto h-4 w-16 bg-slate-200 dark:bg-slate-700" />
                       </div>
-                      <Skeleton className="h-7 w-3/4 bg-slate-200" />
+                      <Skeleton className="h-7 w-3/4 bg-slate-200 dark:bg-slate-700" />
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-6 space-y-4">
                   <div className="flex items-center gap-4 text-sm">
-                    <Skeleton className="h-4 w-24 bg-slate-100" />
-                    <Skeleton className="h-4 w-px bg-slate-200" />
-                    <Skeleton className="h-4 w-32 bg-slate-100" />
+                    <Skeleton className="h-4 w-24 bg-slate-100 dark:bg-slate-800" />
+                    <Skeleton className="h-4 w-px bg-slate-200 dark:bg-slate-700" />
+                    <Skeleton className="h-4 w-32 bg-slate-100 dark:bg-slate-800" />
                   </div>
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100 space-y-3">
-                    <Skeleton className="h-4 w-32 bg-slate-200" />
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 border border-slate-100 dark:border-slate-700 space-y-3">
+                    <Skeleton className="h-4 w-32 bg-slate-200 dark:bg-slate-700" />
                     <div className="grid grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <Skeleton className="h-3 w-16 bg-slate-200" />
-                        <Skeleton className="h-4 w-24 bg-slate-200" />
+                        <Skeleton className="h-3 w-16 bg-slate-200 dark:bg-slate-700" />
+                        <Skeleton className="h-4 w-24 bg-slate-200 dark:bg-slate-700" />
                       </div>
                       <div className="space-y-1">
-                        <Skeleton className="h-3 w-16 bg-slate-200" />
-                        <Skeleton className="h-4 w-24 bg-slate-200" />
+                        <Skeleton className="h-3 w-16 bg-slate-200 dark:bg-slate-700" />
+                        <Skeleton className="h-4 w-24 bg-slate-200 dark:bg-slate-700" />
                       </div>
                     </div>
                   </div>
-                  <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
+                  <div className="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-3 border border-slate-100 dark:border-slate-700">
                     <div className="flex items-center gap-3">
-                      <Skeleton className="h-8 w-8 rounded-full bg-slate-200" />
+                      <Skeleton className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700" />
                       <div className="space-y-1 flex-1">
-                        <Skeleton className="h-4 w-32 bg-slate-200" />
-                        <Skeleton className="h-3 w-20 bg-slate-200" />
+                        <Skeleton className="h-4 w-32 bg-slate-200 dark:bg-slate-700" />
+                        <Skeleton className="h-3 w-20 bg-slate-200 dark:bg-slate-700" />
                       </div>
                     </div>
                   </div>
@@ -321,17 +321,17 @@ const MyProjects = () => {
             ))}
           </div>
         ) : filteredProjects.length === 0 ? (
-          <Card className="text-center py-16 shadow-lg border-gray-200">
+          <Card className="text-center py-16 shadow-lg border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 backdrop-blur-xl">
             <CardContent>
               <div className="flex flex-col items-center gap-4">
-                <div className="p-4 bg-gray-100 rounded-full">
-                  <FolderOpen className="w-12 h-16 text-gray-400" />
+                <div className="p-4 bg-gray-100 dark:bg-slate-800 rounded-full">
+                  <FolderOpen className="w-12 h-16 text-gray-400 dark:text-slate-500" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                     {projects.length === 0 ? 'No Projects Yet' : 'No Projects Found'}
                   </h3>
-                  <p className="text-gray-600 max-w-md mx-auto">
+                  <p className="text-gray-600 dark:text-slate-400 max-w-md mx-auto">
                     {projects.length === 0
                       ? 'Start your journey by creating your first project and collaborating with amazing people'
                       : 'Try adjusting your search terms or filter criteria to find what you\'re looking for'}
@@ -340,7 +340,7 @@ const MyProjects = () => {
                 {projects.length === 0 && (
                   <Button
                     onClick={() => navigate('/projects/create')}
-                    className="mt-4 gap-2"
+                    className="mt-4 gap-2 bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <Plus className="w-5 h-5" />
                     Create Your First Project
@@ -350,33 +350,30 @@ const MyProjects = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-3 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredProjects.map((project) => (
               <Card
                 key={project.id}
-                className="hover:shadow-xl transition-all duration-300 border-gray-200 overflow-hidden group cursor-pointer"
+                className="hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300 border-gray-200 dark:border-slate-800 bg-white dark:bg-slate-900/60 backdrop-blur-sm overflow-hidden group cursor-pointer"
                 onClick={() => navigate(`/projects/${project.id}`)}
               >
-                <CardHeader className="bg-gradient-to-r from-blue-50 to-slate-50 pb-4">
+                <CardHeader className="bg-gradient-to-r from-blue-50 to-slate-50 dark:from-slate-800/50 dark:to-slate-900/50 pb-4 border-b border-slate-100 dark:border-slate-800">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge className={`${getStatusColor(project.status)} border`}>
+                        <Badge className={`${getStatusColor(project.status)} border dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700`}>
                           {project.status.replace('_', ' ')}
                         </Badge>
-                        <Badge variant="outline" className="bg-white">
+                        <Badge variant="outline" className="bg-white dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700">
                           {project.categoryName}
                         </Badge>
-                        <span className="text-xs text-gray-500 ml-auto">
+                        <span className="text-xs text-gray-500 dark:text-slate-500 ml-auto">
                           {getTimeAgo(project.createdAt)}
                         </span>
                       </div>
-                      <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      <CardTitle className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {project.title}
                       </CardTitle>
-                      {/* <CardDescription className="mt-2 text-gray-600 line-clamp-2">
-                        {project.description}
-                      </CardDescription> */}
                     </div>
                   </div>
                 </CardHeader>
@@ -386,77 +383,67 @@ const MyProjects = () => {
                   {/* Team Info */}
                   <div className="flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-2">
-                      <Users className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-700">
-                        <span className="font-semibold text-gray-900">{project.currentTeamSize + 1}</span>
+                      <Users className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                      <span className="text-gray-700 dark:text-slate-300">
+                        <span className="font-semibold text-gray-900 dark:text-white">{project.currentTeamSize + 1}</span>
                         /{project.maxTeamSize} members
                       </span>
                     </div>
-                    <div className="h-4 w-px bg-gray-300"></div>
+                    <div className="h-4 w-px bg-gray-300 dark:bg-slate-700"></div>
                     <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-gray-500" />
-                      <span className="text-gray-700">Created {getTimeAgo(project.createdAt)}</span>
+                      <Clock className="w-4 h-4 text-gray-500 dark:text-slate-400" />
+                      <span className="text-gray-700 dark:text-slate-300">Created {getTimeAgo(project.createdAt)}</span>
                     </div>
                   </div>
 
                   {/* Timeline */}
-                  <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-100 dark:border-blue-900/30">
                     <div className="flex items-center gap-2 mb-2">
-                      <CalendarDays className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-semibold text-blue-900">Project Timeline</span>
+                      <CalendarDays className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span className="text-sm font-semibold text-blue-900 dark:text-blue-200">Project Timeline</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
-                        <p className="text-gray-600 text-xs mb-1">Start Date</p>
-                        <p className="text-gray-900 font-medium">{formatDate(project.expectedStartDate)}</p>
+                        <p className="text-gray-600 dark:text-slate-400 text-xs mb-1">Start Date</p>
+                        <p className="text-gray-900 dark:text-white font-medium">{formatDate(project.expectedStartDate)}</p>
                       </div>
                       <div>
-                        <p className="text-gray-600 text-xs mb-1">End Date</p>
-                        <p className="text-gray-900 font-medium">{formatDate(project.expectedEndDate)}</p>
+                        <p className="text-gray-600 dark:text-slate-400 text-xs mb-1">End Date</p>
+                        <p className="text-gray-900 dark:text-white font-medium">{formatDate(project.expectedEndDate)}</p>
                       </div>
                     </div>
                   </div>
 
-
-
                   {/* Team Lead Info */}
                   {project.lead && (
-                    <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
+                    <div className="bg-gray-50 dark:bg-slate-800/50 rounded-lg p-3 border border-gray-200 dark:border-slate-700">
                       <div className="flex items-start justify-between">
                         <div className="flex items-start gap-3">
-                          <Avatar className="h-10 w-10 border border-slate-200">
+                          <Avatar className="h-10 w-10 border border-slate-200 dark:border-slate-700">
                             <AvatarImage src={project.lead.profilePictureUrl} />
-                            <AvatarFallback className="bg-blue-100 text-blue-700 font-bold">
+                            <AvatarFallback className="bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 font-bold">
                               {project.lead.firstName?.[0]}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-gray-900">
+                              <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                 {project.lead.firstName} {project.lead.lastName}
                               </p>
                               {project.lead.verified && (
-                                <ShieldCheck className="w-4 h-4 text-blue-600" title="Verified User" />
+                                <ShieldCheck className="w-4 h-4 text-blue-600 dark:text-blue-400" title="Verified User" />
                               )}
                               {project.lead.collegeVerified && (
-                                <Badge className="bg-green-100 text-green-800 text-xs py-0 px-1.5">
+                                <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs py-0 px-1.5 border-none">
                                   College Verified
                                 </Badge>
                               )}
                             </div>
-                            <p className="text-xs text-gray-600 mt-0.5">Project Lead</p>
-                            {/* <div className="flex items-center gap-3 mt-2 text-xs text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <GraduationCap className="w-3 h-3" />
-                                <span>{project.lead.branch}</span>
-                              </div>
-                              <span>•</span>
-                              <span>Class of {project.lead.graduationYear}</span>
-                            </div> */}
+                            <p className="text-xs text-gray-600 dark:text-slate-400 mt-0.5">Project Lead</p>
                             {project.lead.email && (
-                              <div className="flex items-center gap-1 mt-1 text-xs text-gray-500">
+                              <div className="flex items-center gap-1 mt-1 text-xs text-gray-500 dark:text-slate-500">
                                 <Mail className="w-3 h-3" />
-                                <span className="truncate">{project.lead.email}</span>
+                                <span className="truncate max-w-[150px]">{project.lead.email}</span>
                               </div>
                             )}
                           </div>
@@ -482,5 +469,6 @@ const MyProjects = () => {
     </div>
   );
 };
+
 
 export default MyProjects;
