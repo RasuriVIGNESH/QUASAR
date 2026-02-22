@@ -16,7 +16,7 @@ public class UserResponse {
     private String firstName;
     private String lastName;
     private String bio;
-//    private CollegeResponse college;    private CollegeResponse college;
+    private CollegeResponse college;
     private String branch;
     private Integer graduationYear;
     private AvailabilityStatus availabilityStatus;
@@ -49,7 +49,7 @@ public class UserResponse {
         this.skills = user.getUserSkills() == null ? null : user.getUserSkills().stream()
                 .map(UserSkillResponse::new)
                 .collect(Collectors.toList());
-//        this.college = user.getCollege() != null ? new CollegeResponse(user.getCollege()) : null;
+        this.college = user.getCollege() != null ? new CollegeResponse(user.getCollege()) : null;
     }
 
     public UserResponse(String id, String email, String firstName, String lastName) {
@@ -168,10 +168,10 @@ public class UserResponse {
     public void setSkills(List<UserSkillResponse> skills) {
         this.skills = skills;
     }
-//    public CollegeResponse getCollege() {
-//        return college;
-//    }
-//    public void setCollege(CollegeResponse college) {
-//        this.college = college;
-//    }
+    public CollegeResponse getCollege() {
+        return college;
+    }
+    public void setCollege(CollegeResponse college) {
+        this.college = college;
+    }
 }

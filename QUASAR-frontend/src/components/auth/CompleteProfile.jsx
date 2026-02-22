@@ -99,22 +99,31 @@ export default function CompleteProfile() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-md w-full space-y-6">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-[#020617] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+            {/* Background blobs */}
+            <div className="absolute -top-[20%] -right-[10%] w-[600px] h-[600px] bg-blue-200/20 dark:bg-blue-900/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-[40%] -left-[10%] w-[500px] h-[500px] bg-indigo-200/20 dark:bg-indigo-900/10 rounded-full blur-[80px] pointer-events-none" />
+
+            <div className="max-w-md w-full space-y-6 relative z-10">
+                {/* Header */}
                 <div className="text-center">
-                    <h2 className="text-3xl font-bold text-gray-900">Complete Your Profile</h2>
-                    <p className="mt-2 text-sm text-gray-600">Please provide a few more details to get started.</p>
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+                        <span className="text-2xl font-bold text-slate-900 dark:text-white">Quasar</span>
+                    </div>
+                    <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Complete Your Profile</h2>
+                    <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Please provide a few more details to get started.</p>
                 </div>
 
-                <Card>
+                <Card className="border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-900/60 backdrop-blur-xl shadow-xl shadow-slate-200/50 dark:shadow-black/50 overflow-hidden">
                     <CardHeader>
-                        <CardTitle>Essential Details</CardTitle>
-                        <CardDescription>Tell us about your academic background</CardDescription>
+                        <CardTitle className="text-slate-900 dark:text-white">Essential Details</CardTitle>
+                        <CardDescription className="dark:text-slate-400">Tell us about your academic background</CardDescription>
                     </CardHeader>
                     <CardContent>
                         {currentUser && (
-                            <div className="flex items-center space-x-4 mb-6 p-4 bg-gray-50 rounded-lg border border-gray-100">
-                                <div className="h-12 w-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">
+                            <div className="flex items-center space-x-4 mb-6 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/60">
+                                <div className="h-12 w-12 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0 ring-2 ring-white dark:ring-slate-800">
                                     {currentUser.profileImage ? (
                                         <img
                                             src={currentUser.profileImage}
@@ -122,16 +131,16 @@ export default function CompleteProfile() {
                                             className="h-full w-full object-cover"
                                         />
                                     ) : (
-                                        <div className="h-full w-full flex items-center justify-center text-gray-500 font-bold text-lg">
+                                        <div className="h-full w-full flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-lg">
                                             {currentUser.firstName?.[0]}{currentUser.lastName?.[0]}
                                         </div>
                                     )}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 truncate">
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
                                         {currentUser.firstName} {currentUser.lastName}
                                     </p>
-                                    <p className="text-sm text-gray-500 truncate">
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 truncate">
                                         {currentUser.email}
                                     </p>
                                 </div>
@@ -144,17 +153,20 @@ export default function CompleteProfile() {
                             </Alert>
                         )}
 
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="college">College <span className="text-red-500">*</span></Label>
+                        <form onSubmit={handleSubmit} className="space-y-5">
+                            {/* College */}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="college" className="text-slate-700 dark:text-white font-semibold text-sm">
+                                    College <span className="text-red-500">*</span>
+                                </Label>
                                 <div className="relative">
-                                    <Building className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
+                                    <Building className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500 z-10" />
                                     <Select
                                         value={formData.collegeId}
                                         onValueChange={(value) => handleSelectChange('collegeId', value)}
                                         disabled={isLoadingStaticData}
                                     >
-                                        <SelectTrigger className="pl-10">
+                                        <SelectTrigger className="pl-10 h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                                             <SelectValue placeholder={isLoadingStaticData ? "Loading..." : "Select your college"} />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -167,16 +179,19 @@ export default function CompleteProfile() {
                                 {fieldErrors.collegeId && <p className="text-xs text-red-500 mt-1">{fieldErrors.collegeId}</p>}
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="graduationYear">Graduation Year (Optional)</Label>
+                            {/* Graduation Year */}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="graduationYear" className="text-slate-700 dark:text-white font-semibold text-sm">
+                                    Graduation Year <span className="text-slate-400 dark:text-slate-500 font-normal">(Optional)</span>
+                                </Label>
                                 <div className="relative">
-                                    <GraduationCap className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
+                                    <GraduationCap className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500 z-10" />
                                     <Select
                                         value={formData.graduationYear}
                                         onValueChange={(value) => handleSelectChange('graduationYear', value)}
                                         disabled={isLoadingStaticData}
                                     >
-                                        <SelectTrigger className="pl-10">
+                                        <SelectTrigger className="pl-10 h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                                             <SelectValue placeholder={isLoadingStaticData ? "Loading..." : "Select year"} />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -188,16 +203,19 @@ export default function CompleteProfile() {
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="branch">Branch/Major (Optional)</Label>
+                            {/* Branch */}
+                            <div className="space-y-1.5">
+                                <Label htmlFor="branch" className="text-slate-700 dark:text-white font-semibold text-sm">
+                                    Branch / Major <span className="text-slate-400 dark:text-slate-500 font-normal">(Optional)</span>
+                                </Label>
                                 <div className="relative">
-                                    <BookOpen className="absolute left-3 top-3 h-4 w-4 text-gray-400 z-10" />
+                                    <BookOpen className="absolute left-3 top-3 h-4 w-4 text-slate-400 dark:text-slate-500 z-10" />
                                     <Select
                                         value={formData.branch}
                                         onValueChange={(value) => handleSelectChange('branch', value)}
                                         disabled={isLoadingStaticData}
                                     >
-                                        <SelectTrigger className="pl-10">
+                                        <SelectTrigger className="pl-10 h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                                             <SelectValue placeholder={isLoadingStaticData ? "Loading..." : "Select branch"} />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -211,7 +229,11 @@ export default function CompleteProfile() {
                                 </div>
                             </div>
 
-                            <Button type="submit" className="w-full mt-6" disabled={loading}>
+                            <Button
+                                type="submit"
+                                className="w-full h-11 mt-6 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm transition-all"
+                                disabled={loading}
+                            >
                                 {loading ? 'Saving...' : 'Continue to Dashboard'}
                             </Button>
                         </form>

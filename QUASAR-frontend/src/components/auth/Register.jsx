@@ -156,7 +156,7 @@ export default function Register() {
     return (
       <div className="mb-10">
         <div className="flex items-center justify-between relative">
-          <div className="absolute top-5 left-0 right-0 h-[2px] bg-slate-200">
+          <div className="absolute top-5 left-0 right-0 h-[2px] bg-slate-200 dark:bg-slate-700">
             <motion.div
               className="h-full bg-blue-600"
               initial={{ width: "0%" }}
@@ -168,15 +168,15 @@ export default function Register() {
             <div key={s.id} className="relative z-10 flex flex-col items-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2 ${s.id === currentStep
-                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 scale-110'
+                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 dark:shadow-none scale-110'
                   : s.id < currentStep
                     ? 'bg-emerald-500 border-emerald-500 text-white'
-                    : 'bg-white border-slate-200 text-slate-400'
+                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'
                   }`}
               >
                 {s.id < currentStep ? <CheckCircle2 className="h-5 w-5" /> : s.icon}
               </div>
-              <span className={`text-xs mt-3 font-bold uppercase tracking-wider ${s.id === currentStep ? 'text-blue-600' : 'text-slate-400'}`}>
+              <span className={`text-xs mt-3 font-bold uppercase tracking-wider ${s.id === currentStep ? 'text-blue-600' : 'text-slate-400 dark:text-slate-500'}`}>
                 {s.label}
               </span>
             </div>
@@ -224,33 +224,33 @@ export default function Register() {
                   >
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label htmlFor="firstName" className="text-slate-700 font-semibold text-sm">First Name</Label>
+                        <Label htmlFor="firstName" className="text-slate-700 dark:text-white font-semibold text-sm">First Name</Label>
                         <Input
                           id="firstName"
                           name="firstName"
                           placeholder="John"
                           value={formData.firstName}
                           onChange={handleInputChange}
-                          className="h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200"
+                          className="h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         />
                         {fieldErrors.firstName && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.firstName}</p>}
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="lastName" className="text-slate-700 font-semibold text-sm">Last Name</Label>
+                        <Label htmlFor="lastName" className="text-slate-700 dark:text-white font-semibold text-sm">Last Name</Label>
                         <Input
                           id="lastName"
                           name="lastName"
                           placeholder="Doe"
                           value={formData.lastName}
                           onChange={handleInputChange}
-                          className="h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200"
+                          className="h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                         />
                         {fieldErrors.lastName && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.lastName}</p>}
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="email" className="text-slate-700 font-semibold text-sm">College Email</Label>
+                      <Label htmlFor="email" className="text-slate-700 dark:text-white font-semibold text-sm">College Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
@@ -288,7 +288,7 @@ export default function Register() {
                   >
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label className="text-slate-700 font-semibold text-sm">Graduation</Label>
+                        <Label className="text-slate-700 dark:text-white font-semibold text-sm">Graduation</Label>
                         <Select onValueChange={(v) => handleSelectChange('graduationYear', v)} value={formData.graduationYear}>
                           <SelectTrigger className="h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                             <SelectValue placeholder="Year" />
@@ -303,7 +303,7 @@ export default function Register() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label className="text-slate-700 font-semibold text-sm">Branch</Label>
+                        <Label className="text-slate-700 dark:text-white font-semibold text-sm">Branch</Label>
                         <Select onValueChange={(v) => handleSelectChange('branch', v)} value={formData.branch}>
                           <SelectTrigger className="h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
                             <SelectValue placeholder="Select" />
@@ -321,7 +321,7 @@ export default function Register() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-slate-700 font-semibold text-sm">Institute</Label>
+                      <Label className="text-slate-700 dark:text-white font-semibold text-sm">Institute</Label>
                       <Select onValueChange={(v) => handleSelectChange('collegeId', v)} value={formData.collegeId || undefined}>
                         <SelectTrigger className="h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 w-full">
                           <SelectValue placeholder="Select" />
@@ -364,7 +364,7 @@ export default function Register() {
                     className="space-y-4"
                   >
                     <div className="space-y-1.5">
-                      <Label htmlFor="password" className="text-slate-700 font-semibold text-sm">Password</Label>
+                      <Label htmlFor="password" className="text-slate-700 dark:text-white font-semibold text-sm">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
@@ -388,7 +388,7 @@ export default function Register() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="confirmPassword" className="text-slate-700 font-semibold text-sm">Confirm Password</Label>
+                      <Label htmlFor="confirmPassword" className="text-slate-700 dark:text-white font-semibold text-sm">Confirm Password</Label>
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
@@ -410,7 +410,7 @@ export default function Register() {
                     type="button"
                     variant="outline"
                     onClick={handleBack}
-                    className="flex-1 h-11 border-slate-200 text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                    className="flex-1 h-11 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" /> Back
                   </Button>

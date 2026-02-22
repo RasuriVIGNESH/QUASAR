@@ -33,8 +33,8 @@ public class College {
     @Column(name = "location", length = 200)
     private String location;
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
     @OneToMany(mappedBy = "college", fetch = FetchType.LAZY)
-    @com.fasterxml.jackson.annotation.JsonManagedReference
     private List<User> users = new ArrayList<>();
 
 

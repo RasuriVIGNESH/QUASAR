@@ -43,7 +43,7 @@ export default function ProjectDiscovery() {
 
   // Filter State
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterByCollege, setFilterByCollege] = useState(false);
+  const [filterByCollege, setFilterByCollege] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [status, setStatus] = useState('ALL');
   const [skillFilter, setSkillFilter] = useState('');
@@ -187,7 +187,7 @@ export default function ProjectDiscovery() {
                   onChange={(e) => setSkillFilter(e.target.value)}
                 />
               </div>
-              <Button onClick={() => { setPage(0); fetchProjects(); }} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-xl transition-all shadow-md shadow-blue-100">
+              <Button onClick={() => { setPage(0); fetchProjects(); }} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 rounded-xl transition-all">
                 Update Results
               </Button>
             </div>

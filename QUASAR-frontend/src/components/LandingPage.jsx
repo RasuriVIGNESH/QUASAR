@@ -547,11 +547,18 @@ export default function LandingPage() {
 
             <AnimatedSection delay={0.2}>
               <div className="flex items-center justify-center p-8">
-                <img
-                  src="/data/Logo.png"
-                  alt="Quasar Logo"
-                  className="w-80 h-80 md:w-96 md:h-96 object-contain drop-shadow-xl hover:scale-105 transition-transform duration-500"
-                />
+                <div className="relative group">
+                  {/* Glow ring */}
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-400/30 to-violet-500/30 blur-2xl scale-110 group-hover:scale-125 transition-transform duration-500" />
+                  {/* Logo container */}
+                  <div className="relative rounded-3xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-2xl p-10 backdrop-blur-sm">
+                    <img
+                      src="/data/Logo.png"
+                      alt="Quasar Logo"
+                      className="w-52 h-52 md:w-64 md:h-64 object-contain hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
+                </div>
               </div>
             </AnimatedSection>
           </div>
@@ -583,7 +590,7 @@ export default function LandingPage() {
           <div className="flex flex-col md:flex-row justify-between items-start mb-16 gap-12">
             <div className="max-w-sm">
               <Link to="/" className="flex items-center gap-2 mb-6">
-                <img src="/data/logo.png" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
+                <img src="/data/Logo.png" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
                 <span className="text-xl font-bold text-slate-900 dark:text-white">Quasar</span>
               </Link>
               <p className="text-slate-500 dark:text-slate-400 leading-relaxed">

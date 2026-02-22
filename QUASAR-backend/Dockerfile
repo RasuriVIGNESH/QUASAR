@@ -24,7 +24,7 @@ FROM eclipse-temurin:23-jre
 WORKDIR /app
 
 # Copy built JAR from build stage
-COPY --from=build /app/target/peerConnect-0.0.1-SNAPSHOT.jar app.jar
+COPY --from=build /app/target/QUASAR-backend-0.0.1-SNAPSHOT.jar app.jar
 
 # Expose Spring Boot port
 EXPOSE 8080

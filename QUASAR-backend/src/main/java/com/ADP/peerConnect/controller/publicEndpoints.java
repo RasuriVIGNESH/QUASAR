@@ -1,6 +1,7 @@
 package com.ADP.peerConnect.controller;
 
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
+import com.ADP.peerConnect.model.dto.response.CollegeResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
 import com.ADP.peerConnect.model.dto.response.SkillResponse;
@@ -23,7 +24,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
-
+import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -82,14 +83,25 @@ public class publicEndpoints {
 
 }
     @GetMapping("/api/colleges")
+    @Transactional(readOnly = true)
     @Operation(summary = "Get all registered colleges", description = "Fetches a list of all available colleges. This is a public endpoint.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "List of colleges retrieved successfully")
     })
-    public ResponseEntity<ApiResponse<List<College>>> getAllColleges() {
+    public ResponseEntity<ApiResponse<List<CollegeResponse>>> getAllColleges() {
+
+        // 1. Fetch the raw entities from the database
         List<College> colleges = collegeService.getAllColleges();
-        ApiResponse<List<College>> response = ApiResponse.success(
-                "Colleges retrieved successfully", colleges);
+
+        // 2. Map the entities to safe DTOs to prevent Jackson from triggering lazy loading errors
+        List<CollegeResponse> collegeResponses = colleges.stream()
+                .map(CollegeResponse::new)
+                .collect(Collectors.toList());
+
+        // 3. Return the DTOs
+        ApiResponse<List<CollegeResponse>> response = ApiResponse.success(
+                "Colleges retrieved successfully", collegeResponses);
+
         return ResponseEntity.ok(response);
     }
 
