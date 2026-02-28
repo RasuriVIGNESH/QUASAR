@@ -109,9 +109,9 @@ public class SkillService implements iSkillService {
     /**
      * Get predefined skills
      */
-    public List<Skill> getPredefinedSkills() {
-        return skillRepository.findByIsPredefinedTrueOrderByNameAsc();
-    }
+//    public List<Skill> getPredefinedSkills() {
+//        return skillRepository.findByIsPredefinedTrueOrderByNameAsc();
+//    }
 
     /**
      * Search skills by name

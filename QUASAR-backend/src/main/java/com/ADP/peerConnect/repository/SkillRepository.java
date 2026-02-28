@@ -31,7 +31,7 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
        Predefined & category
      ------------------------ */
 
-    List<Skill> findByIsPredefinedTrueOrderByNameAsc();
+//     List<Skill> findByIsPredefinedTrueOrderByNameAsc();
 
     Page<Skill> findByCategoryIgnoreCase(String category, Pageable pageable);
 

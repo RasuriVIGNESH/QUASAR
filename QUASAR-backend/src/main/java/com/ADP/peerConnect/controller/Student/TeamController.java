@@ -64,7 +64,7 @@ public class TeamController {
     public ResponseEntity<ApiResponse<ProjectInvitationResponse>> inviteUserToProject(
             @Parameter(description = "Project ID") @PathVariable String projectId,
             @Valid @RequestBody InviteUserRequest inviteRequest,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         ProjectInvitation invitation = teamService.inviteUserToProject(
                 projectId, inviteRequest.getUserId(), inviteRequest.getRole(),
@@ -93,7 +93,7 @@ public class TeamController {
     public ResponseEntity<ApiResponse<ProjectInvitationResponse>> respondToInvitation(
             @Parameter(description = "Invitation ID") @PathVariable Long invitationId,
             @Parameter(description = "Response (ACCEPTED or DECLINED)") @RequestParam InvitationStatus response,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
 
         ProjectInvitation invitation = teamService.respondToInvitation(invitationId, response, currentUser.getId());
         ProjectInvitationResponse invitationResponse = modelMapper.map(invitation, ProjectInvitationResponse.class);
@@ -119,7 +119,7 @@ public class TeamController {
     })
     public ResponseEntity<ApiResponse<Void>> cancelInvitation(
             @Parameter(description = "Invitation ID") @PathVariable Long invitationId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         teamService.cancelInvitation(invitationId, currentUser.getId());
 
@@ -188,7 +188,7 @@ public class TeamController {
     public ResponseEntity<ApiResponse<PagedResponse<ProjectInvitationResponse>>> getPendingInvitations(
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("invitedAt").descending());
         Page<ProjectInvitation> invitations = teamService.getPendingInvitationsForUser(currentUser.getId(), pageable);
@@ -212,7 +212,7 @@ public class TeamController {
     @Operation(summary = "Get project members", description = "Get all members of a project")
     public ResponseEntity<ApiResponse<List<ProjectMemberResponse>>> getProjectMembers(
             @Parameter(description = "Project ID") @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         List<ProjectMemberResponse> memberResponses = teamService.getProjectMembers(projectId, currentUser.getId());
 
         ApiResponse<List<ProjectMemberResponse>> response = ApiResponse.success(
@@ -233,7 +233,7 @@ public class TeamController {
     public ResponseEntity<ApiResponse<Void>> removeMemberFromProject(
             @Parameter(description = "Project ID") @PathVariable String projectId,
             @Parameter(description = "Member user ID") @PathVariable String memberId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
 
         teamService.removeMemberFromProject(projectId, memberId, currentUser.getId());
 
@@ -251,7 +251,7 @@ public class TeamController {
     })
     public ResponseEntity<ApiResponse<Void>> leaveProject(
             @Parameter(description = "Project ID") @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         teamService.leaveProject(projectId, currentUser.getId());
 
@@ -272,7 +272,7 @@ public class TeamController {
             @Parameter(description = "Project ID") @PathVariable String projectId,
             @Parameter(description = "Member user ID") @PathVariable String memberId,
             @Parameter(description = "New role") @RequestParam ProjectRole role,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
 
         ProjectMember member = teamService.updateMemberRole(projectId, memberId, role, currentUser.getId());
         ProjectMemberResponse memberResponse = modelMapper.map(member, ProjectMemberResponse.class);

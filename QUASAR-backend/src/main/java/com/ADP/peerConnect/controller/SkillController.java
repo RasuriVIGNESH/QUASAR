@@ -1,12 +1,11 @@
 package com.ADP.peerConnect.controller;
 
-import com.ADP.peerConnect.model.dto.request.User.CreateSkillRequest;
+
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
 import com.ADP.peerConnect.model.dto.response.SkillResponse;
 import com.ADP.peerConnect.model.entity.Skill;
 import com.ADP.peerConnect.service.Interface.iSkillService;
-import com.ADP.peerConnect.service.Interface.iUserSkillService;
 import com.ADP.peerConnect.util.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -40,32 +40,6 @@ public class SkillController {
     @Autowired
     private ModelMapper modelMapper;
 
-    @Autowired
-    private iUserSkillService userSkillService;
-
-    /**
-     * Create a new skill
-     */
-    @PostMapping
-    @Operation(summary = "Create skill", description = "Create a new skill")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Skill created successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Skill already exists")
-    })
-    public ResponseEntity<ApiResponse<SkillResponse>> createSkill(
-            @Valid @RequestBody CreateSkillRequest createRequest) {
-        
-        Skill skill = skillService.createSkill(createRequest.getName(), createRequest.getCategory());
-        SkillResponse skillResponse = modelMapper.map(skill, SkillResponse.class);
-        
-        ApiResponse<SkillResponse> response = ApiResponse.success(
-            "Skill created successfully", skillResponse);
-        
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-    }
-
-    // New endpoint: count of skills for current user
 
 
     /**
@@ -110,16 +84,13 @@ public class SkillController {
     @ApiResponses(value = {
         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Predefined skills retrieved successfully")
     })
-    public ResponseEntity<ApiResponse<List<SkillResponse>>> getPredefinedSkills() {
-        List<Skill> skills = skillService.getPredefinedSkills();
-        
-        List<SkillResponse> skillResponses = skills.stream()
-            .map(skill -> modelMapper.map(skill, SkillResponse.class))
-            .collect(Collectors.toList());
-        
-        ApiResponse<List<SkillResponse>> response = ApiResponse.success(
-            "Predefined skills retrieved successfully", skillResponses);
-        
+    public ResponseEntity<ApiResponse<Map<String,String>>> getPredefinedSkills() {
+//        List<Skill> skills = skillService.getPredefinedSkills();
+
+        Map<String,String> skills=Constants.PREDEFINED_SKILLS_MAP;
+        ApiResponse< Map<String,String>> response = ApiResponse.success(
+            "Predefined skills retrieved successfully", skills);
+
         return ResponseEntity.ok(response);
     }
     
@@ -128,67 +99,88 @@ public class SkillController {
     /**
      * Get skill by ID
      */
-    @GetMapping("/{skillId}")
-    @Operation(summary = "Get skill by ID", description = "Get skill details by ID")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skill retrieved successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Skill not found")
-    })
-    public ResponseEntity<ApiResponse<SkillResponse>> getSkillById(
-            @Parameter(description = "Skill ID") @PathVariable Long skillId) {
+//    @GetMapping("/{skillId}")
+//    @Operation(summary = "Get skill by ID", description = "Get skill details by ID")
+//    @ApiResponses(value = {
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skill retrieved successfully"),
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Skill not found")
+//    })
+//    public ResponseEntity<ApiResponse<SkillResponse>> getSkillById(
+//            @Parameter(description = "Skill ID") @PathVariable Long skillId) {
+//
+//        Skill skill = skillService.findById(skillId);
+//        SkillResponse skillResponse = modelMapper.map(skill, SkillResponse.class);
+//
+//        ApiResponse<SkillResponse> response = ApiResponse.success(
+//            "Skill retrieved successfully", skillResponse);
+//
+//        return ResponseEntity.ok(response);
+//    }
 
-        Skill skill = skillService.findById(skillId);
-        SkillResponse skillResponse = modelMapper.map(skill, SkillResponse.class);
-        
-        ApiResponse<SkillResponse> response = ApiResponse.success(
-            "Skill retrieved successfully", skillResponse);
-        
-        return ResponseEntity.ok(response);
-    }
-
+    /**
+     * Create a new skill
+     */
+//    @PostMapping
+//    @Operation(summary = "Create skill", description = "Create a new skill")
+//    @ApiResponses(value = {
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Skill created successfully"),
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Skill already exists")
+//    })
+//    public ResponseEntity<ApiResponse<SkillResponse>> createSkill(
+//            @Valid @RequestBody CreateSkillRequest createRequest) {
+//
+//        Skill skill = skillService.createSkill(createRequest.getName(), createRequest.getCategory());
+//        SkillResponse skillResponse = modelMapper.map(skill, SkillResponse.class);
+//
+//        ApiResponse<SkillResponse> response = ApiResponse.success(
+//            "Skill created successfully", skillResponse);
+//
+//        return new ResponseEntity<>(response, HttpStatus.CREATED);
+//    }
 
     /**
      * Update skill
      */
-    @PutMapping("/{skillId}")
-    @Operation(summary = "Update skill", description = "Update skill information")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skill updated successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Skill not found"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Skill name already exists")
-    })
-    public ResponseEntity<ApiResponse<SkillResponse>> updateSkill(
-            @Parameter(description = "Skill ID") @PathVariable Long skillId,
-            @Valid @RequestBody CreateSkillRequest updateRequest) {
-        
-        Skill skill = skillService.updateSkill(skillId, updateRequest.getName(), updateRequest.getCategory());
-        SkillResponse skillResponse = modelMapper.map(skill, SkillResponse.class);
-        
-        ApiResponse<SkillResponse> response = ApiResponse.success(
-            "Skill updated successfully", skillResponse);
-        
-        return ResponseEntity.ok(response);
-    }
+//    @PutMapping("/{skillId}")
+//    @Operation(summary = "Update skill", description = "Update skill information")
+//    @ApiResponses(value = {
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skill updated successfully"),
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Skill not found"),
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Skill name already exists")
+//    })
+//    public ResponseEntity<ApiResponse<SkillResponse>> updateSkill(
+//            @Parameter(description = "Skill ID") @PathVariable Long skillId,
+//            @Valid @RequestBody CreateSkillRequest updateRequest) {
+//
+//        Skill skill = skillService.updateSkill(skillId, updateRequest.getName(), updateRequest.getCategory());
+//        SkillResponse skillResponse = modelMapper.map(skill, SkillResponse.class);
+//
+//        ApiResponse<SkillResponse> response = ApiResponse.success(
+//            "Skill updated successfully", skillResponse);
+//
+//        return ResponseEntity.ok(response);
+//    }
     
     /**
      * Delete skill
      */
-    @DeleteMapping("/{skillId}")
-    @Operation(summary = "Delete skill", description = "Delete a skill (non-predefined only)")
-    @ApiResponses(value = {
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skill deleted successfully"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Skill not found"),
-        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Cannot delete predefined skill")
-    })
-    public ResponseEntity<ApiResponse<Void>> deleteSkill(
-            @Parameter(description = "Skill ID") @PathVariable Long skillId) {
-
-        skillService.deleteSkill(skillId);
-        
-        ApiResponse<Void> response = ApiResponse.success("Skill deleted successfully");
-        
-        return ResponseEntity.ok(response);
-    }
+//    @DeleteMapping("/{skillId}")
+//    @Operation(summary = "Delete skill", description = "Delete a skill (non-predefined only)")
+//    @ApiResponses(value = {
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skill deleted successfully"),
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Skill not found"),
+//        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Cannot delete predefined skill")
+//    })
+//    public ResponseEntity<ApiResponse<Void>> deleteSkill(
+//            @Parameter(description = "Skill ID") @PathVariable Long skillId) {
+//
+//        skillService.deleteSkill(skillId);
+//
+//        ApiResponse<Void> response = ApiResponse.success("Skill deleted successfully");
+//
+//        return ResponseEntity.ok(response);
+//    }
 
 }

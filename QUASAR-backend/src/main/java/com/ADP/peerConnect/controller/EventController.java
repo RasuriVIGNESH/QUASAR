@@ -8,6 +8,7 @@ import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.security.UserPrincipal;
 import com.ADP.peerConnect.service.Impl.EventRegistrationService;
 import com.ADP.peerConnect.service.Impl.EventService;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -47,6 +48,7 @@ public class EventController {
     @PostMapping("/{eventId}/register")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> registerForEvent(@PathVariable Long eventId,
+                                              @Parameter(hidden = true)
                                               @AuthenticationPrincipal UserPrincipal currentUser) {
         EventRegistration reg = registrationService.register(eventId, currentUser.getId());
         return ResponseEntity.ok(new EventResponse(reg.getEvent()));

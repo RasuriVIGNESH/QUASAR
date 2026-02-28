@@ -58,6 +58,7 @@ public class ChatController {
     public ResponseEntity<ApiResponse<ChatMessageResponse>> sendMessage(
             @Parameter(description = "Project ID") @PathVariable String projectId,
             @Valid @RequestBody SendMessageRequest messageRequest,
+            @Parameter(hidden = true)
             @AuthenticationPrincipal UserPrincipal currentUser) {
         
         ChatMessage message = chatService.sendMessage(projectId, currentUser.getId(), messageRequest.getContent());
@@ -84,6 +85,7 @@ public class ChatController {
             @Parameter(description = "Project ID") @PathVariable String projectId,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "50") int size,
+            @Parameter(hidden = true)
             @AuthenticationPrincipal UserPrincipal currentUser) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
@@ -115,7 +117,8 @@ public class ChatController {
     })
     public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> getRecentMessages(
             @Parameter(description = "Project ID") @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         
         List<ChatMessage> messages = chatService.getRecentMessages(projectId, currentUser.getId());
         
@@ -144,7 +147,7 @@ public class ChatController {
             @Parameter(description = "Search query") @RequestParam String query,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
         Page<ChatMessage> messages = chatService.searchMessages(projectId, query, currentUser.getId(), pageable);
@@ -177,7 +180,7 @@ public class ChatController {
             @Parameter(description = "Project ID") @PathVariable String projectId,
             @Parameter(description = "Get messages after this time") @RequestParam 
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime after,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         
         List<ChatMessage> messages = chatService.getMessagesAfter(projectId, after, currentUser.getId());
         
@@ -206,7 +209,7 @@ public class ChatController {
     public ResponseEntity<ApiResponse<ChatMessageResponse>> editMessage(
             @Parameter(description = "Message ID") @PathVariable Long messageId,
             @Valid @RequestBody SendMessageRequest messageRequest,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         
         ChatMessage message = chatService.editMessage(messageId, currentUser.getId(), messageRequest.getContent());
         ChatMessageResponse messageResponse = modelMapper.map(message, ChatMessageResponse.class);
@@ -230,7 +233,7 @@ public class ChatController {
     })
     public ResponseEntity<ApiResponse<Void>> deleteMessage(
             @Parameter(description = "Message ID") @PathVariable Long messageId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         
         chatService.deleteMessage(messageId, currentUser.getId());
         
@@ -251,7 +254,7 @@ public class ChatController {
     })
     public ResponseEntity<ApiResponse<ChatMessageResponse>> getLatestMessage(
             @Parameter(description = "Project ID") @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         
         ChatMessage message = chatService.getLatestMessage(projectId, currentUser.getId());
         
@@ -281,7 +284,7 @@ public class ChatController {
     })
     public ResponseEntity<ApiResponse<Long>> getMessageCount(
             @Parameter(description = "Project ID") @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         
         long count = chatService.getMessageCount(projectId, currentUser.getId());
         

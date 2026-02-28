@@ -39,7 +39,7 @@ public class projectDiscovery {
     public ResponseEntity<PagedResponse<ProjectResponse>> discoverProjects(
             @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
-            @AuthenticationPrincipal UserPrincipal currentUser){
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser){
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Project> projectPage = projectService.discoverProjects(currentUser.getId(), pageable);
@@ -105,7 +105,7 @@ public class projectDiscovery {
             @Parameter(description = "Available only") @RequestParam(defaultValue = "false") boolean availableOnly,
             @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size);
         String currentUserId = currentUser != null ? currentUser.getId() : null;
@@ -142,7 +142,7 @@ public class projectDiscovery {
     public ResponseEntity<PagedResponse<ProjectResponse>> getJoinedProjects(
             @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Project> projects = projectService.findProjectsByMember(currentUser.getId(), pageable);

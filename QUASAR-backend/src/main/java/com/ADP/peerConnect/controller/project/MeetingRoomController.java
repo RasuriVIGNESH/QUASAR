@@ -9,6 +9,7 @@ import com.ADP.peerConnect.model.entity.Note;
 import com.ADP.peerConnect.security.UserPrincipal;
 import com.ADP.peerConnect.service.Impl.MeetingRoomService;
 import com.ADP.peerConnect.service.Interface.iMeetingRoomService;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -38,7 +39,7 @@ public class MeetingRoomController {
     public ResponseEntity<ApiResponse> createMeetingRoom(
             @PathVariable String projectId,
             @Valid @RequestBody CreateMeetingRoomRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             MeetingRoom room = meetingRoomService.createMeetingRoom(projectId, request, currentUser.getId());
             return ResponseEntity.ok(new ApiResponse(true, "Meeting room created successfully", room));
@@ -50,7 +51,7 @@ public class MeetingRoomController {
     @GetMapping("/projects/{projectId}/rooms")
     public ResponseEntity<ApiResponse> getMeetingRooms(
             @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             List<MeetingRoom> rooms = meetingRoomService.getMeetingRoomsByProjectId(projectId, currentUser.getId());
             return ResponseEntity.ok(new ApiResponse(true, "Meeting rooms retrieved successfully", rooms));
@@ -62,7 +63,7 @@ public class MeetingRoomController {
     @DeleteMapping("/rooms/{roomId}")
     public ResponseEntity<ApiResponse> deleteMeetingRoom(
             @PathVariable Long roomId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             meetingRoomService.deleteMeetingRoom(roomId, currentUser.getId());
             return ResponseEntity.ok(new ApiResponse(true, "Meeting room deleted successfully"));
@@ -77,7 +78,7 @@ public class MeetingRoomController {
     public ResponseEntity<ApiResponse> createNote(
             @PathVariable Long roomId,
             @Valid @RequestBody CreateNoteRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Note note = meetingRoomService.createNote(roomId, request, currentUser.getId());
             return ResponseEntity.ok(new ApiResponse(true, "Note created successfully", note));
@@ -89,7 +90,7 @@ public class MeetingRoomController {
     @GetMapping("/rooms/{roomId}/notes")
     public ResponseEntity<ApiResponse> getNotes(
             @PathVariable Long roomId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             List<Note> notes = meetingRoomService.getNotesByRoomId(roomId, currentUser.getId());
             return ResponseEntity.ok(new ApiResponse(true, "Notes retrieved successfully", notes));
@@ -102,7 +103,7 @@ public class MeetingRoomController {
     public ResponseEntity<ApiResponse> updateNote(
             @PathVariable Long noteId,
             @Valid @RequestBody UpdateNoteRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Note note = meetingRoomService.updateNote(noteId, request, currentUser.getId());
             return ResponseEntity.ok(new ApiResponse(true, "Note updated successfully", note));
@@ -114,7 +115,7 @@ public class MeetingRoomController {
     @DeleteMapping("/notes/{noteId}")
     public ResponseEntity<ApiResponse> deleteNote(
             @PathVariable Long noteId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             meetingRoomService.deleteNote(noteId, currentUser.getId());
             return ResponseEntity.ok(new ApiResponse(true, "Note deleted successfully"));

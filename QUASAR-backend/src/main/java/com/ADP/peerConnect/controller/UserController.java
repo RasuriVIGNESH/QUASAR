@@ -77,6 +77,7 @@ public class UserController {
         })
         public ResponseEntity<ApiResponse<UserResponse>> updateProfile(
                         @Valid @RequestBody UpdateUserRequest updateRequest,
+                        @Parameter(hidden = true)
                         @AuthenticationPrincipal UserPrincipal currentUser) {
 
                 User user = userService.findById(currentUser.getId());
@@ -134,6 +135,7 @@ public class UserController {
         })
         public ResponseEntity<ApiResponse<UserResponse>> updateProfilePhoto(
                         @RequestParam("profilePhoto") MultipartFile file,
+                        @Parameter(hidden = true)
                         @AuthenticationPrincipal UserPrincipal currentUser) throws IOException {
 
                 if (file == null || file.isEmpty()) {
@@ -174,6 +176,7 @@ public class UserController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
         })
         public ResponseEntity<ApiResponse<String>> deleteProfilePhoto(
+                        @Parameter(hidden = true)
                         @AuthenticationPrincipal UserPrincipal currentUser) {
 
                 userService.deleteProfilePhoto(currentUser.getId());
@@ -197,6 +200,7 @@ public class UserController {
         public ResponseEntity<ApiResponse<UserSkillResponse>> updateUserSkill(
                         @Parameter(description = "User skill ID") @PathVariable Long skillId,
                         @Valid @RequestBody UpdateUserSkillRequest updateRequest,
+                        @Parameter(hidden = true)
                         @AuthenticationPrincipal UserPrincipal currentUser) {
 
                 UserSkill userSkill = userSkillService.updateUserSkill(
@@ -215,7 +219,8 @@ public class UserController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "skills count retrieved successfully")
         })
         public ResponseEntity<ApiResponse<Long>> getCurrentUserSkillsCount(
-                        @AuthenticationPrincipal com.ADP.peerConnect.security.UserPrincipal currentUser) {
+                        @Parameter(hidden = true)
+                        @AuthenticationPrincipal UserPrincipal currentUser) {
                 long count = userSkillService.getUserSkillCount(currentUser.getId());
                 ApiResponse<Long> response = ApiResponse.success("User skills count retrieved successfully", count);
                 return ResponseEntity.ok(response);
@@ -233,6 +238,7 @@ public class UserController {
         })
         public ResponseEntity<ApiResponse<UserSkillResponse>> addUserSkill(
                         @Valid @RequestBody AddUserSkillRequest skillRequest,
+                        @Parameter(hidden = true)
                         @AuthenticationPrincipal UserPrincipal currentUser) {
 
                 UserSkill userSkill = userSkillService.addUserSkill(
@@ -258,6 +264,7 @@ public class UserController {
         })
         public ResponseEntity<ApiResponse<List<UserSkillResponse>>> addUserSkillsBatch(
                         @Valid @RequestBody AddUserSkillsRequest request,
+                        @Parameter(hidden = true)
                         @AuthenticationPrincipal UserPrincipal currentUser) {
 
                 List<UserSkill> added = userSkillService.addUserSkills(currentUser.getId(), request.getSkills());
@@ -280,6 +287,7 @@ public class UserController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skills retrieved successfully")
         })
         public ResponseEntity<ApiResponse<List<UserSkillResponse>>> getUserSkills(
+                        @Parameter(hidden = true)
                         @AuthenticationPrincipal UserPrincipal currentUser) {
 
                 List<UserSkill> userSkills = userSkillService.getUserSkills(currentUser.getId());
@@ -305,6 +313,7 @@ public class UserController {
         })
         public ResponseEntity<ApiResponse<Void>> removeUserSkill(
                         @Parameter(description = "User skill ID") @PathVariable Long skillId,
+                        @Parameter(hidden = true)
                         @AuthenticationPrincipal UserPrincipal currentUser) {
 
                 userSkillService.removeUserSkill(currentUser.getId(), skillId);
@@ -324,6 +333,7 @@ public class UserController {
         })
         public ResponseEntity<ApiResponse<UserResponse>> updateAvailability(
                         @Parameter(description = "New availability status") @RequestParam AvailabilityStatus status,
+                        @Parameter(hidden = true)
                         @AuthenticationPrincipal UserPrincipal currentUser) {
 
                 User updatedUser = userService.updateAvailabilityStatus(currentUser.getId(), status);

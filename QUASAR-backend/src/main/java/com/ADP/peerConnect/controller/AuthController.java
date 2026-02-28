@@ -8,6 +8,7 @@ import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.security.UserPrincipal;
 import com.ADP.peerConnect.service.Interface.iAuthService;
 import com.ADP.peerConnect.util.Constants;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +41,7 @@ public class AuthController {
 
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         UserResponse userResponse = authService.getCurrentUser(currentUser);
         ApiResponse<UserResponse> response = ApiResponse.success("User information retrieved", userResponse);
         return ResponseEntity.ok(response);

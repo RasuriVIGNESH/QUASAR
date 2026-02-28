@@ -55,7 +55,7 @@ public class ProjectController {
     @PostMapping
     public ResponseEntity<ApiResponse> createProject(
             @Valid @RequestBody CreateProjectRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Project project = projectService.createProject(request, currentUser.getId());
             return ResponseEntity.ok(
@@ -72,7 +72,7 @@ public class ProjectController {
     @GetMapping("/{projectId}")
     public ResponseEntity<ApiResponse> getProject(
             @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Project project = projectService.findById(projectId);
             ProjectResponse response = new ProjectResponse(project);
@@ -92,7 +92,7 @@ public class ProjectController {
     public ResponseEntity<ApiResponse> updateProject(
             @PathVariable String projectId,
             @Valid @RequestBody UpdateProjectRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Project project = projectService.updateProject(projectId, request, currentUser.getId());
             return ResponseEntity.ok(
@@ -109,7 +109,7 @@ public class ProjectController {
     @DeleteMapping("/{projectId}")
     public ResponseEntity<ApiResponse> deleteProject(
             @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             projectService.deleteProject(projectId, currentUser.getId());
             return ResponseEntity.ok(
@@ -127,7 +127,7 @@ public class ProjectController {
     public ResponseEntity<ApiResponse> addMember(
             @PathVariable String projectId,
             @Valid @RequestBody AddMemberRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             // Service method handles 'isLead' authorization
             ProjectMember member = projectService.addMember(
@@ -145,75 +145,7 @@ public class ProjectController {
             );
         }
     }
-
-
-
-//    @Operation(summary = "Update member role", description = "Update the role of a project member. (Project Lead only)")
-//    @PutMapping("/{projectId}/members/{memberId}")
-//    public ResponseEntity<ApiResponse> updateMemberRole(
-//            @PathVariable String projectId,
-//            @PathVariable String memberId,
-//            @Valid @RequestBody UpdateMemberRoleRequest request,
-//            @AuthenticationPrincipal UserPrincipal currentUser) {
-//        try {
-//            // Service method handles 'isLead' authorization
-//            ProjectMember member = projectService.updateMemberRole(
-//                    projectId,
-//                    memberId,
-//                    request.getRole(),
-//                    currentUser.getId()
-//            );
-//            return ResponseEntity.ok(
-//                    new ApiResponse(true, "Member role updated successfully", member)
-//            );
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(
-//                    new ApiResponse(false, e.getMessage())
-//            );
-//        }
-//    }
-
-//    @Operation(summary = "Remove project member", description = "Remove a member from a project. (Project Lead only)")
-//    @DeleteMapping("/{projectId}/members/{memberId}")
-//    public ResponseEntity<ApiResponse> removeMember(
-//            @PathVariable String projectId,
-//            @PathVariable String memberId,
-//            @AuthenticationPrincipal UserPrincipal currentUser) {
-//        try {
-//            // Service method handles 'isLead' authorization
-//            projectService.removeMember(projectId, memberId, currentUser.getId());
-//            return ResponseEntity.ok(
-//                    new ApiResponse(true, "Member removed successfully")
-//            );
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(
-//                    new ApiResponse(false, e.getMessage())
-//            );
-//        }
-//    }
-
-//    @Operation(summary = "Leave project", description = "Allow a current member to leave a project.")
-//    @PostMapping("/{projectId}/leave")
-//    public ResponseEntity<ApiResponse> leaveProject(
-//            @PathVariable String projectId,
-//            @AuthenticationPrincipal UserPrincipal currentUser) {
-//        try {
-//            projectService.leaveProject(projectId, currentUser.getId());
-//            return ResponseEntity.ok(
-//                    new ApiResponse(true, "You have left the project")
-//            );
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body(
-//                    new ApiResponse(false, e.getMessage())
-//            );
-//        }
-//    }
-
     // ===== ADDITIONAL DISCOVERY ENDPOINTS =====
-
-
-
-
 
     @Operation(summary = "Get my projects")
     @GetMapping("/my-projects")
@@ -221,7 +153,7 @@ public class ProjectController {
             // Make sure these two parameters are in your method signature
             @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size);
 
@@ -248,18 +180,6 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    // New endpoint: count of projects for current user
-//    @Operation(summary = "Get my projects count")
-//    @GetMapping("/my-projects/count")
-//    public ResponseEntity<ApiResponse<Long>> getMyProjectsCount(
-//            @AuthenticationPrincipal UserPrincipal currentUser) {
-//        long count = projectService.countProjectsForUser(currentUser.getId());
-//        ApiResponse<Long> response = ApiResponse.success("Projects count retrieved successfully", count);
-//        return ResponseEntity.ok(response);
-//    }
-
-
-
 
     // ===== PROJECT INVITATION ENDPOINTS =====
 
@@ -268,7 +188,7 @@ public class ProjectController {
     public ResponseEntity<ApiResponse> sendInvitation(
             @PathVariable String projectId,
             @Valid @RequestBody SendInvitationRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             ProjectInvitation invitation = projectInvitationService.sendInvitation(
                     projectId, request.getInvitedUserId(), request.getMessage(),
@@ -291,7 +211,7 @@ public class ProjectController {
     public ResponseEntity<ApiResponse> createTask(
             @PathVariable String projectId,
             @Valid @RequestBody CreateTaskRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Task task = taskService.createTask(projectId, request, currentUser.getId());
             return ResponseEntity.ok(
@@ -308,7 +228,7 @@ public class ProjectController {
     @GetMapping("/{projectId}/tasks")
     public ResponseEntity<List<TaskResponse>> getProjectTasks(
             @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             List<Task> tasks = taskService.getProjectTasks(projectId);
             return ResponseEntity.ok(tasks.stream()
@@ -325,7 +245,7 @@ public class ProjectController {
             @PathVariable String projectId,
             @PathVariable Long taskId,
             @Valid @RequestBody UpdateTaskRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Task task = taskService.updateTask(taskId, request, currentUser.getId());
             return ResponseEntity.ok(
@@ -343,7 +263,7 @@ public class ProjectController {
     public ResponseEntity<ApiResponse> deleteTask(
             @PathVariable String projectId,
             @PathVariable Long taskId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             taskService.deleteTask(taskId, currentUser.getId());
             return ResponseEntity.ok(
@@ -362,7 +282,7 @@ public class ProjectController {
             @PathVariable String projectId,
             @PathVariable Long taskId,
             @RequestBody ToggleTaskRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Task task = taskService.toggleTaskCompletion(taskId, request.isCompleted(), currentUser.getId());
             return ResponseEntity.ok(

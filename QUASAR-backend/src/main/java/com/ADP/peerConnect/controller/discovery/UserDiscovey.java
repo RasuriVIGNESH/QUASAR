@@ -117,7 +117,7 @@ public class UserDiscovey {
             @Parameter(description = "Filter by availability status") @RequestParam(required = false) AvailabilityStatus availabilityStatus,
             @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = "20") int size,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Sort sort = Sort.by("firstName").ascending();
         Pageable pageable = PageRequest.of(page, size, sort);

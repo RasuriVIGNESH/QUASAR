@@ -9,6 +9,7 @@ import com.ADP.peerConnect.security.UserPrincipal;
 import com.ADP.peerConnect.service.Interface.iProjectInvitationService;
 import com.ADP.peerConnect.service.Interface.iProjectJoinRequestService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -36,7 +37,7 @@ public class JoinRequestController {
     public ResponseEntity<ApiResponse> sendJoinRequest(
             @PathVariable String projectId,
             @Valid @RequestBody SendJoinRequestRequest request,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         var savedRequest = joinRequestService.sendJoinRequest(projectId, currentUser.getId(), request.getMessage());
         return ResponseEntity.ok(new ApiResponse(true, "Join request sent successfully.", new ProjectJoinRequestResponse(savedRequest)));
     }
@@ -45,7 +46,7 @@ public class JoinRequestController {
     @Operation(summary = "Accept a join request (Lead only)")
     public ResponseEntity<ApiResponse> acceptJoinRequest(
             @PathVariable Long requestId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         joinRequestService.acceptJoinRequest(requestId, currentUser.getId());
         return ResponseEntity.ok(new ApiResponse(true, "Join request accepted."));
     }
@@ -54,7 +55,7 @@ public class JoinRequestController {
     @Operation(summary = "Reject a join request (Lead only)")
     public ResponseEntity<ApiResponse> rejectJoinRequest(
             @PathVariable Long requestId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         joinRequestService.rejectJoinRequest(requestId, currentUser.getId());
         return ResponseEntity.ok(new ApiResponse(true, "Join request rejected."));
     }
@@ -63,7 +64,7 @@ public class JoinRequestController {
     @Operation(summary = "Cancel a sent join request (requester only)")
     public ResponseEntity<ApiResponse> cancelJoinRequest(
             @PathVariable Long requestId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         joinRequestService.cancelJoinRequest(requestId, currentUser.getId());
         return ResponseEntity.ok(new ApiResponse(true, "Join request canceled."));
     }
@@ -73,7 +74,7 @@ public class JoinRequestController {
     public ResponseEntity<List<ProjectInvitationResponse>> getReceivedInvitationsPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
 
         try {
             Pageable pageable = PageRequest.of(page, size);
@@ -91,7 +92,7 @@ public class JoinRequestController {
     @Operation(summary = "Get all join requests for a project (Lead only)")
     public ResponseEntity<List<ProjectJoinRequestResponse>> getProjectJoinRequests(
             @PathVariable String projectId,
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         List<ProjectJoinRequestResponse> response = joinRequestService.getProjectJoinRequests(projectId, currentUser.getId())
                 .stream().map(ProjectJoinRequestResponse::new).collect(Collectors.toList());
         return ResponseEntity.ok(response);
@@ -100,7 +101,7 @@ public class JoinRequestController {
     @GetMapping("/join-requests/my-requests")
     @Operation(summary = "Get all join requests sent by the current user")
     public ResponseEntity<List<ProjectJoinRequestResponse>> getMyJoinRequests(
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         List<ProjectJoinRequestResponse> response = joinRequestService.getUserJoinRequests(currentUser.getId())
                 .stream().map(ProjectJoinRequestResponse::new).collect(Collectors.toList());
         return ResponseEntity.ok(response);

@@ -12,7 +12,7 @@ public interface iSkillService {
     public Skill findOrCreateSkill(String name);
     public Skill findById(Long id) ;
     public Page<Skill> findAll(Pageable pageable);
-    public List<Skill> getPredefinedSkills() ;
+//    public List<Skill> getPredefinedSkills() ;
     public Page<Skill> searchByName(String name, Pageable pageable);
     public Page<Skill> findByCategory(String category, Pageable pageable);
     public List<String> getAllCategories() ;

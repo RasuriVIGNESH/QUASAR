@@ -10,19 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import java.util.Arrays;
 import java.util.List;
 
+
 public class RoleManagement {
-
-
-//    @PutMapping("/{projectId}/members/{memberId}/role")
-//    @Operation(summary = "Update member role", description = "Update the role of a project member. (Project Lead only)")
-//    public ResponseEntity<ApiResponse<>> updateMemberRole(@PathVariable String projectId,){
-//            @PathVariable String memberId,
-//            @Valid @RequestBody UpdateMemberRoleRequest request,
-//            @AuthenticationPrincipal UserPrincipal currentUser) {
-//        ApiResponse<> response=  ApiResponse.success("Member role updated successfully", projectService.updateMemberRole());
-//        return null;
-//
-//    }
 
     @GetMapping("/TeamRoles")
     @Operation(summary = "Get predefined Roles", description = "Get list of Team Roles")

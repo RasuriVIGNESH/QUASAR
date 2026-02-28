@@ -7,6 +7,7 @@ import com.ADP.peerConnect.service.Interface.iProjectService;
 import com.ADP.peerConnect.service.Interface.iUserService;
 import com.ADP.peerConnect.service.Interface.iUserSkillService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -31,7 +32,7 @@ public class DashboardController {
     @Operation(summary = "Get dashboard counts")
     @GetMapping("/counts")
     public ResponseEntity<ApiResponse<DashboardCountsResponse>> getDashboardCounts(
-            @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         long projectsCount = projectService.countProjectsForUser(currentUser.getId());
         long skillsCount = userSkillService.getUserSkillCount(currentUser.getId());
 
