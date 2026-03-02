@@ -36,6 +36,7 @@ import ServerError from './components/common/ServerError';
 import NotFound from './components/common/NotFound';
 
 import { Toaster } from '@/components/ui/sonner';
+import AnimatedBackground from './components/common/AnimatedBackground';
 
 
 
@@ -45,7 +46,8 @@ function App() {
     <Router>
       <AuthProvider>
         <RequestProvider>
-          <div className="App">
+          <div className="App" style={{ position: 'relative', minHeight: '100vh' }}>
+            <AnimatedBackground />
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LandingPage />} />

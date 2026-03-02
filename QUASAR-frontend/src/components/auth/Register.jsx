@@ -158,7 +158,7 @@ export default function Register() {
         <div className="flex items-center justify-between relative">
           <div className="absolute top-5 left-0 right-0 h-[2px] bg-slate-200 dark:bg-slate-700">
             <motion.div
-              className="h-full bg-blue-600"
+              className="h-full" style={{ background: 'var(--indigo-primary)' }}
               initial={{ width: "0%" }}
               animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -168,15 +168,21 @@ export default function Register() {
             <div key={s.id} className="relative z-10 flex flex-col items-center">
               <div
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2 ${s.id === currentStep
-                  ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 dark:shadow-none scale-110'
+                  ? 'text-white scale-110'
                   : s.id < currentStep
-                    ? 'bg-emerald-500 border-emerald-500 text-white'
-                    : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'
+                    ? 'text-white'
+                    : ''
                   }`}
+                style={s.id === currentStep
+                  ? { background: 'var(--indigo-primary)', borderColor: 'var(--indigo-primary)', boxShadow: 'var(--shadow-glow-indigo)' }
+                  : s.id < currentStep
+                    ? { background: 'var(--success)', borderColor: 'var(--success)' }
+                    : { background: 'var(--surface-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                }
               >
                 {s.id < currentStep ? <CheckCircle2 className="h-5 w-5" /> : s.icon}
               </div>
-              <span className={`text-xs mt-3 font-bold uppercase tracking-wider ${s.id === currentStep ? 'text-blue-600' : 'text-slate-400 dark:text-slate-500'}`}>
+              <span className={`text-xs mt-3 font-bold uppercase tracking-wider`} style={{ color: s.id === currentStep ? 'var(--indigo-primary)' : 'var(--text-muted)' }}>
                 {s.label}
               </span>
             </div>
@@ -187,7 +193,7 @@ export default function Register() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
+    <div className="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative" style={{ background: 'var(--bg-primary)' }}>
       <div className="absolute top-4 right-4 z-50">
         <ModeToggle />
       </div>
@@ -200,13 +206,13 @@ export default function Register() {
         <div className="text-center">
           <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
             <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
-            <span className="text-2xl font-bold text-slate-900 dark:text-white">Quasar</span>
+            <span className="text-2xl font-bold" style={{ color: 'var(--text-bright)' }}>Quasar</span>
           </Link>
-          <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Create your account</h2>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Join the networking platform for innovators</p>
+          <h2 className="text-3xl font-extrabold" style={{ color: 'var(--text-bright)' }}>Create your account</h2>
+          <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>Join the networking platform for innovators</p>
         </div>
 
-        <Card className="border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-900/60 backdrop-blur-xl shadow-xl shadow-slate-200/50 dark:shadow-black/50 overflow-hidden">
+        <Card className="glass-surface overflow-hidden" style={{ boxShadow: 'var(--shadow-float)', border: '1px solid var(--border-subtle)' }}>
           <CardContent className="p-8">
             <StepProgress currentStep={step} />
 
@@ -419,7 +425,7 @@ export default function Register() {
                   type="submit"
                   disabled={loading}
                   onClick={step < 3 ? (e) => { e.preventDefault(); handleNext(); } : undefined}
-                  className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow-lg shadow-blue-600/20"
+                  className="flex-1 h-11 text-white font-semibold hover-spring" style={{ background: 'linear-gradient(135deg, var(--indigo-primary), var(--violet))', boxShadow: 'var(--shadow-button)' }}
                 >
                   {loading ? (
                     <div className="flex items-center gap-2">
@@ -490,7 +496,7 @@ export default function Register() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex items-center justify-center"
+            className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -502,7 +508,7 @@ export default function Register() {
               <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl mx-auto mb-6 shadow-2xl flex items-center justify-center p-2 border border-slate-100 dark:border-slate-800">
                 <img src="/data/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
               </div>
-              <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+              <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight" style={{ color: 'var(--text-bright)' }}>
                 Welcome to Quasar
               </h1>
               <p className="text-lg text-slate-500 dark:text-slate-400">Your journey starts now.</p>

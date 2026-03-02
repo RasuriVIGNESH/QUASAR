@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -31,6 +31,8 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { projectService } from '@/services/projectService';
 import { skillsService } from '@/services/skillsService';
 import { dataService } from '@/services/dataService';
+import MagneticButton from './common/MagneticButton';
+import TiltCard from './common/TiltCard';
 
 // Standardized Animated Section
 const AnimatedSection = ({ children, delay = 0 }) => {
@@ -295,18 +297,17 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] font-sans text-slate-900 dark:text-white selection:bg-blue-100 selection:text-blue-900 dark:selection:bg-blue-900/50 dark:selection:text-blue-100">
+    <div className="min-h-screen font-sans selection:bg-blue-100 selection:text-blue-900" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Sticky Header */}
       <motion.header
-        style={{ backgroundColor: `rgba(255, 255, 255, ${headerBgOpacity})`, boxShadow: headerShadow }}
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md border-b border-transparent transition-colors duration-300"
+        className="fixed top-0 left-0 right-0 z-50 glass-header"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20 relative">
             <Link to="/" className="flex items-center gap-2">
               <img src="/data/Logo.png" alt="Logo" className="h-9 w-9 rounded-lg object-cover" />
-              <span className="text-2xl font-bold tracking-tight text-slate-900">
-                <span className="text-blue-600">Quasar</span>
+              <span className="text-2xl font-bold tracking-tight">
+                <span className="text-gradient-indigo">Quasar</span>
               </span>
             </Link>
 
@@ -315,20 +316,20 @@ export default function LandingPage() {
               initial={{ y: -100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
-              className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 p-1.5 rounded-full bg-white/70 dark:bg-slate-900/40 backdrop-blur-xl border border-white/40 dark:border-slate-700/30 shadow-lg shadow-black/5 ring-1 ring-black/5"
+              className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 p-1.5 rounded-full glass-surface" style={{ boxShadow: 'var(--shadow-card)' }}
             >
               <div className="flex items-center gap-1 px-2">
                 {['projects', 'features', 'colleges'].map((item) => (
                   <button
                     key={item}
                     onClick={() => scrollTo(item)}
-                    className="relative px-4 py-2 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all rounded-full hover:bg-white/80 dark:hover:bg-slate-800 capitalize"
+                    className="relative px-4 py-2 text-sm font-semibold hover-spring rounded-full capitalize" style={{ color: 'var(--text-secondary)' }}
                   >
                     {item === 'projects' ? 'Latest Projects' : item}
                   </button>
                 ))}
               </div>
-              <div className="pl-2 border-l border-slate-200 dark:border-slate-700 ml-2">
+              <div className="pl-2 border-l ml-2" style={{ borderColor: 'var(--border-subtle)' }}>
                 <ModeToggle />
               </div>
             </motion.nav>
@@ -352,7 +353,7 @@ export default function LandingPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="md:hidden bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 py-6 space-y-4"
+              className="md:hidden glass-surface px-4 py-6 space-y-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}
             >
               <button onClick={() => scrollTo('projects')} className="block w-full text-left font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400">Latest Projects</button>
               <button onClick={() => scrollTo('features')} className="block w-full text-left font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400">Features</button>
@@ -374,25 +375,25 @@ export default function LandingPage() {
             {/* <Badge className="mb-6 px-4 py-1 bg-blue-50 text-blue-700 border-blue-100 rounded-full font-medium">
               🚀 Join 1,200+ students building the future
             </Badge> */}
-            <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-8">
+            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8" style={{ color: 'var(--text-bright)' }}>
               Connect. Collaborate. <br />
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400">
+              <span className="text-gradient-indigo">
                 Create Together.
               </span>
             </h1>
-            <p className="text-lg md:text-xl text-slate-600 dark:text-slate-300 mb-10 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl mb-10 max-w-3xl mx-auto leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               The ultimate professional networking platform for college students.
               Find your perfect project partners based on complementary skills and shared interests.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Link to="/register">
-                <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 rounded-full shadow-lg transition-all duration-200 hover:scale-105">
+                <Button size="lg" className="text-white text-lg px-8 py-6 rounded-full shadow-lg transition-all duration-200 hover:scale-105 hover-spring" style={{ background: 'linear-gradient(135deg, var(--indigo-primary), var(--violet))', boxShadow: 'var(--shadow-button)' }}>
                   Join Quasar
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
               <Link to="/login">
-                <Button size="lg" variant="outline" className="text-lg px-8 py-6 rounded-full border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white hover:bg-white dark:hover:bg-slate-800 hover:border-blue-300 transition-all">
+                <Button size="lg" variant="outline" className="text-lg px-8 py-6 rounded-full glass-surface hover-spring" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}>
                   Sign In
                 </Button>
               </Link>
@@ -402,7 +403,7 @@ export default function LandingPage() {
       </section >
 
       {/* Stats Section */}
-      < section className="py-12 bg-white dark:bg-slate-900 border-y border-slate-200 dark:border-slate-800" >
+      <section className="py-12 border-y" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-subtle)' }}>
         <div className="max-w-7xl mx-auto px-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {[
@@ -413,13 +414,9 @@ export default function LandingPage() {
             ].map((stat, i) => (
               <div key={i} className="text-center group flex flex-col items-center">
                 <div className="h-10 mb-1 flex items-center justify-center">
-                  {publicData.loading ? (
-                    <Skeleton className="h-8 w-24 bg-slate-200 dark:bg-slate-800" />
-                  ) : (
-                    <div className="text-3xl md:text-4xl font-bold text-blue-600 dark:text-blue-500 group-hover:scale-110 transition-transform duration-300">
-                      {stat.value}
-                    </div>
-                  )}
+                  <div className="text-3xl md:text-4xl font-bold group-hover:scale-110 transition-transform duration-300" style={{ color: 'var(--indigo-primary)' }}>
+                    {stat.value}
+                  </div>
                 </div>
                 <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</div>
               </div>
@@ -430,13 +427,13 @@ export default function LandingPage() {
 
       {/* Featured Projects */}
       {
-        (publicData.loading || publicData.projects.length > 0) && (
-          <section id="projects" className="py-24 px-4 bg-slate-50 dark:bg-[#0B1120]">
+        publicData.projects.length > 0 && (
+          <section id="projects" className="py-24 px-4" style={{ background: 'var(--bg-primary)' }}>
             <div className="max-w-7xl mx-auto">
               <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
                 <div>
-                  <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">Latest Projects</h2>
-                  <p className="text-slate-600 dark:text-slate-400">Discover what's being built by students right now.</p>
+                  <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--text-bright)' }}>Latest Projects</h2>
+                  <p style={{ color: 'var(--text-secondary)' }}>Discover what's being built by students right now.</p>
                 </div>
                 <Link to="/login">
                   <Button variant="link" className="text-blue-600 dark:text-blue-400 font-semibold p-0 flex items-center gap-1">
@@ -445,34 +442,7 @@ export default function LandingPage() {
                 </Link>
               </div>
 
-              {publicData.loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {[...Array(3)].map((_, i) => (
-                    <Card key={i} className="h-80 bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-6 space-y-4">
-                      <div className="flex justify-between items-start">
-                        <div className="space-y-2 w-full">
-                          <Skeleton className="h-5 w-20 rounded-full bg-slate-100 dark:bg-slate-800" />
-                          <Skeleton className="h-6 w-3/4 rounded bg-slate-100 dark:bg-slate-800" />
-                        </div>
-                        <Skeleton className="h-5 w-16 rounded-full bg-slate-100 dark:bg-slate-800" />
-                      </div>
-                      <div className="space-y-2">
-                        <Skeleton className="h-4 w-full bg-slate-100 dark:bg-slate-800" />
-                        <Skeleton className="h-4 w-5/6 bg-slate-100 dark:bg-slate-800" />
-                      </div>
-                      <div className="flex gap-2">
-                        <Skeleton className="h-6 w-16 rounded bg-slate-100 dark:bg-slate-800" />
-                        <Skeleton className="h-6 w-16 rounded bg-slate-100 dark:bg-slate-800" />
-                        <Skeleton className="h-6 w-16 rounded bg-slate-100 dark:bg-slate-800" />
-                      </div>
-                      <div className="mt-auto pt-4 border-t border-slate-50 dark:border-slate-800 flex items-center gap-3">
-                        <Skeleton className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800" />
-                        <Skeleton className="h-4 w-24 rounded bg-slate-100 dark:bg-slate-800" />
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : publicData.projects.length > 3 ? (
+              {publicData.projects.length > 3 ? (
                 <div className="w-full py-8 md:py-12 relative">
                   {/* Fade gradients for marquee edges */}
                   <div className="absolute left-0 top-0 bottom-0 w-8 md:w-32 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent z-10 pointer-events-none" />
@@ -504,40 +474,40 @@ export default function LandingPage() {
       }
 
       {/* Features Grid */}
-      <section id="features" className="py-24 px-4 bg-white dark:bg-[#020617]">
+      <section id="features" className="py-24 px-4" style={{ background: 'var(--bg-secondary)' }}>
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-6">Built for Student Success</h2>
-            <p className="text-slate-600 dark:text-slate-400 max-w-2xl mx-auto text-lg">
+            <h2 className="text-3xl md:text-5xl font-bold mb-6" style={{ color: 'var(--text-bright)' }}>Built for Student Success</h2>
+            <p className="max-w-2xl mx-auto text-lg" style={{ color: 'var(--text-secondary)' }}>
               Everything you need to find a team, grow your network, and build an impressive portfolio.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, idx) => (
-              <div key={idx} className="p-8 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 hover:border-blue-200 dark:hover:border-blue-700 transition-all duration-300 hover:shadow-md group">
+              <TiltCard key={idx} className="p-8 rounded-2xl glass-surface hover-spring card-hover-lift" style={{ border: '1px solid var(--border-subtle)' }}>
                 <div className={`${feature.bgColor} ${feature.color} w-12 h-12 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
                   {feature.icon}
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-3">{feature.title}</h3>
-                <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-sm">{feature.description}</p>
-              </div>
+                <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--text-bright)' }}>{feature.title}</h3>
+                <p className="leading-relaxed text-sm" style={{ color: 'var(--text-secondary)' }}>{feature.description}</p>
+              </TiltCard>
             ))}
           </div>
         </div>
       </section>
 
       {/* Benefits / Social Proof */}
-      <section className="py-24 px-4 bg-slate-50 dark:bg-[#0B1120]">
+      <section className="py-24 px-4" style={{ background: 'var(--bg-primary)' }}>
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <AnimatedSection>
-              <h2 className="text-4xl font-bold text-slate-900 dark:text-white mb-8 leading-tight">
+              <h2 className="text-4xl font-bold mb-8 leading-tight" style={{ color: 'var(--text-bright)' }}>
                 Why thousands of students <br />
-                <span className="text-blue-600 dark:text-blue-500">trust Quasar</span>
+                <span className="text-gradient-indigo">trust Quasar</span>
               </h2>
               <div className="space-y-4">
                 {benefits.map((benefit, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 bg-white dark:bg-slate-900/50 rounded-xl shadow-sm border border-slate-200/60 dark:border-slate-800/60 transition-transform hover:translate-x-2">
+                  <div key={i} className="flex items-center gap-4 p-4 glass-surface rounded-xl hover-spring card-hover-lift" style={{ border: '1px solid var(--border-subtle)' }}>
                     <div className="text-blue-600 dark:text-blue-500 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg">{benefit.icon}</div>
                     <span className="font-semibold text-slate-700 dark:text-slate-200">{benefit.text}</span>
                   </div>
@@ -548,14 +518,14 @@ export default function LandingPage() {
             <AnimatedSection delay={0.2}>
               <div className="flex items-center justify-center p-8">
                 <div className="relative group">
-                  {/* Glow ring */}
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-400/30 to-violet-500/30 blur-2xl scale-110 group-hover:scale-125 transition-transform duration-500" />
-                  {/* Logo container */}
-                  <div className="relative rounded-3xl bg-white/80 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 shadow-2xl p-10 backdrop-blur-sm">
+                  {/* Glow ring - Hidden in dark mode for aesthetics */}
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-400/30 to-violet-500/30 blur-2xl scale-110 group-hover:scale-125 transition-transform duration-500 dark:opacity-0" />
+                  {/* Floating Logo without box */}
+                  <div className="relative p-4 md:p-8">
                     <img
                       src="/data/Logo.png"
                       alt="Quasar Logo"
-                      className="w-52 h-52 md:w-64 md:h-64 object-contain hover:scale-105 transition-transform duration-500"
+                      className="w-52 h-52 md:w-64 md:h-64 object-contain filter drop-shadow-[0_0_40px_rgba(99,102,241,0.2)] dark:drop-shadow-[0_0_20px_rgba(255,255,255,0.02)] hover:scale-110 transition-all duration-700 card-float"
                     />
                   </div>
                 </div>
@@ -568,7 +538,7 @@ export default function LandingPage() {
       {/* Institutional Trust */}
       {
         publicData.colleges.length > 0 && (
-          <section id="colleges" className="py-16 px-4 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800">
+          <section id="colleges" className="py-16 px-4" style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-subtle)' }}>
             <div className="max-w-7xl mx-auto text-center">
               <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] mb-10">Trusted by students from</p>
               <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 grayscale opacity-60 dark:opacity-40">
@@ -585,22 +555,22 @@ export default function LandingPage() {
       }
 
       {/* Footer */}
-      <footer className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 pt-20 pb-10 px-4">
+      <footer className="pt-20 pb-10 px-4" style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-subtle)' }}>
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-start mb-16 gap-12">
             <div className="max-w-sm">
               <Link to="/" className="flex items-center gap-2 mb-6">
                 <img src="/data/Logo.png" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
-                <span className="text-xl font-bold text-slate-900 dark:text-white">Quasar</span>
+                <span className="text-xl font-bold" style={{ color: 'var(--text-bright)' }}>Quasar</span>
               </Link>
-              <p className="text-slate-500 dark:text-slate-400 leading-relaxed">
+              <p className="leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                 The leading collaboration platform for college students to connect, share skills, and build a professional portfolio together.
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-12 sm:gap-24">
               <div>
-                <h4 className="font-bold text-slate-900 dark:text-white mb-6">Platform</h4>
+                <h4 className="font-bold mb-6" style={{ color: 'var(--text-bright)' }}>Platform</h4>
                 <ul className="space-y-4 text-slate-600 dark:text-slate-400">
                   <li><Link to="/login" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Sign In</Link></li>
                   <li><Link to="/register" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Register</Link></li>
@@ -608,7 +578,7 @@ export default function LandingPage() {
                 </ul>
               </div>
               <div>
-                <h4 className="font-bold text-slate-900 dark:text-white mb-6">Support</h4>
+                <h4 className="font-bold mb-6" style={{ color: 'var(--text-bright)' }}>Support</h4>
                 <ul className="space-y-4 text-slate-600 dark:text-slate-400">
                   <li><Link to="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Help Center</Link></li>
                   <li><Link to="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
@@ -618,7 +588,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          <div className="pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-slate-500 dark:text-slate-400 font-medium">
+          <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium" style={{ borderTop: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
             <p>© 2025 Quasar. Built with ❤️ for students.</p>
             <div className="flex gap-6">
               <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Twitter</a>
@@ -638,7 +608,7 @@ export default function LandingPage() {
             exit={{ opacity: 0, scale: 0.8 }}
             whileHover={{ scale: 1.1 }}
             onClick={scrollToTop}
-            className="fixed bottom-8 right-8 z-50 p-3 bg-blue-600 text-white rounded-full shadow-xl hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="fixed bottom-8 right-8 z-50 p-3 text-white rounded-full shadow-xl focus:outline-none hover-spring" style={{ background: 'var(--indigo-primary)', boxShadow: 'var(--shadow-glow-indigo)' }}
             aria-label="Scroll to top"
           >
             <ArrowUp className="h-6 w-6" />

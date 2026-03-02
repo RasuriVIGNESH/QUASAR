@@ -42,6 +42,8 @@ import {
 } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import ProjectDetailModal from './discovery/ProjectDetailModal';
+import MagneticButton from './common/MagneticButton';
+import TiltCard from './common/TiltCard';
 
 // Scroll-triggered section component
 const ScrollSection = ({ children, delay = 0 }) => {
@@ -60,7 +62,6 @@ const ScrollSection = ({ children, delay = 0 }) => {
   );
 };
 
-import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
   const { theme, setTheme } = useTheme();
@@ -254,33 +255,16 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100/50 dark:from-slate-950 dark:via-[#020617] dark:to-slate-900">
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3]
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          className="absolute top-0 left-0 w-[800px] h-[800px] bg-gradient-to-br from-blue-200/20 to-transparent rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.2, 0.4, 0.2]
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-          className="absolute bottom-0 right-0 w-[700px] h-[700px] bg-gradient-to-br from-slate-200/20 to-transparent rounded-full blur-3xl"
-        />
-      </div>
+      {/* Background handled by global AnimatedBackground */}
 
       {/* Floating Header */}
       <motion.header
         style={{ opacity: headerOpacity }}
         className="fixed top-4 left-4 right-4 z-50 mx-auto max-w-7xl"
       >
-        <div className="bg-white/80 dark:bg-slate-900/70 backdrop-blur-2xl rounded-2xl border border-white/20 dark:border-slate-800/60 shadow-xl shadow-slate-200/50 dark:shadow-black/50 px-6 py-4">
+        <div className="glass-header rounded-2xl px-6 py-4" style={{ boxShadow: 'var(--shadow-card)' }}>
           <div className="flex items-center justify-between">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -288,7 +272,7 @@ export default function Dashboard() {
               className="flex items-center gap-3"
             >
               <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
-              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-slate-100 dark:to-slate-300">
+              <span className="text-xl font-bold text-gradient-indigo">
                 Quasar
               </span>
             </motion.div>
@@ -296,7 +280,7 @@ export default function Dashboard() {
             <div className="flex items-center gap-3">
 
               {userProfile?.isCollegeVerified && (
-                <Badge className="bg-emerald-600 text-white border-0">
+                <Badge className="border-0" style={{ background: 'var(--success)', color: 'white' }}>
                   <motion.div
                     animate={{ scale: [1, 1.2, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
@@ -306,7 +290,7 @@ export default function Dashboard() {
                 </Badge>
               )}
 
-              <span className="text-sm font-bold text-slate-700 dark:text-slate-200 hidden md:block">
+              <span className="text-sm font-bold hidden md:block" style={{ color: 'var(--text-primary)' }}>
                 {userProfile?.firstName} {userProfile?.lastName}
               </span>
 
@@ -315,10 +299,10 @@ export default function Dashboard() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => navigate('/requests')}
-                  className="relative p-2 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors"
+                  className="relative p-2 rounded-xl hover-spring glass-surface hover:glass-surface-hover"
                 >
-                  <Bell className="h-5 w-5 text-blue-600" />
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs font-bold flex items-center justify-center">
+                  <Bell className="h-5 w-5" style={{ color: 'var(--indigo-primary)' }} />
+                  <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-white text-xs font-bold flex items-center justify-center" style={{ background: 'var(--error)' }}>
                     {pendingCount}
                   </span>
                 </motion.button>
@@ -329,9 +313,9 @@ export default function Dashboard() {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowMenu(!showMenu)}
-                  className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 transition-colors"
+                  className="p-2 rounded-xl hover-spring glass-surface hover:glass-surface-hover"
                 >
-                  <Menu className="h-5 w-5 text-slate-600" />
+                  <Menu className="h-5 w-5" style={{ color: 'var(--text-secondary)' }} />
                 </motion.button>
 
                 <AnimatePresence>
@@ -340,30 +324,30 @@ export default function Dashboard() {
                       initial={{ opacity: 0, y: 10, scale: 0.95 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute right-0 mt-2 w-56 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden"
+                      className="absolute right-0 mt-2 w-56 glass-surface rounded-xl overflow-hidden" style={{ boxShadow: 'var(--shadow-float)', border: '1px solid var(--border-subtle)' }}
                     >
                       <button
                         onClick={() => { navigate('/profile'); setShowMenu(false); }}
-                        className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                        className="w-full px-4 py-3 text-left hover-spring flex items-center gap-2" style={{ color: 'var(--text-primary)' }}
                       >
                         {userProfile?.profileImage ? (
                           <img src={userProfile.profileImage} alt="Profile" className="w-5 h-5 rounded-full object-cover" />
                         ) : (
                           <User className="h-4 w-4 text-blue-500" />
                         )}
-                        <span className="font-medium text-slate-700 dark:text-slate-200">Profile</span>
+                        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Profile</span>
                       </button>
-                      <div className="h-px bg-slate-100 dark:bg-slate-800" />
+                      <div className="h-px" style={{ background: 'var(--border-subtle)' }} />
                       <button
                         onClick={() => { navigate('/requests'); setShowMenu(false); }}
-                        className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-slate-800 flex items-center justify-between transition-colors"
+                        className="w-full px-4 py-3 text-left hover-spring flex items-center justify-between"
                       >
                         <div className="flex items-center gap-2">
                           <Mail className="h-4 w-4 text-blue-500" />
-                          <span className="font-medium text-slate-700 dark:text-slate-200">Requests</span>
+                          <span className="font-medium" style={{ color: 'var(--text-primary)' }}>Requests</span>
                         </div>
                         {pendingCount > 0 && (
-                          <span className="px-2 py-0.5 bg-blue-600 text-white text-xs font-bold rounded-full">
+                          <span className="px-2 py-0.5 text-white text-xs font-bold rounded-full" style={{ background: 'var(--indigo-primary)' }}>
                             {pendingCount}
                           </span>
                         )}
@@ -371,21 +355,21 @@ export default function Dashboard() {
                       <div className="h-px bg-slate-100 dark:bg-slate-800" />
                       <button
                         onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                        className="w-full px-4 py-3 text-left hover:bg-blue-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
+                        className="w-full px-4 py-3 text-left hover-spring flex items-center gap-2"
                       >
                         {theme === 'dark' ? (
                           <Sun className="h-4 w-4 text-orange-500" />
                         ) : (
                           <Moon className="h-4 w-4 text-blue-500" />
                         )}
-                        <span className="font-medium text-slate-700 dark:text-slate-200">
+                        <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                           {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
                         </span>
                       </button>
                       <div className="h-px bg-slate-100 dark:bg-slate-800" />
                       <button
                         onClick={() => { setShowLogoutConfirm(true); setShowMenu(false); }}
-                        className="w-full px-4 py-3 text-left hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+                        className="w-full px-4 py-3 text-left hover-spring flex items-center gap-2"
                       >
                         <LogOut className="h-4 w-4 text-red-500" />
                         <span className="font-medium text-red-600 dark:text-red-400">Sign Out</span>
@@ -411,17 +395,17 @@ export default function Dashboard() {
           >
             <div className="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
               <div>
-                <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">
-                  Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600">{userProfile?.firstName || 'Creator'}</span>
+                <h1 className="text-3xl md:text-4xl font-black mb-2 tracking-tight" style={{ color: 'var(--text-bright)' }}>
+                  Welcome back, <span className="text-gradient-indigo">{userProfile?.firstName || 'Creator'}</span>
                 </h1>
-                <div className="text-lg md:text-xl font-medium text-slate-600 dark:text-slate-400 leading-tight max-w-3xl">
-                  {loading ? <Skeleton className="h-8 w-3/4 bg-slate-200 rounded-lg" /> : welcomeMessage}
+                <div className="text-lg md:text-xl font-medium leading-tight max-w-3xl" style={{ color: 'var(--text-secondary)' }}>
+                  {loading ? "Ready to start your journey? Create your first project today!" : welcomeMessage}
                 </div>
               </div>
 
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm self-start whitespace-nowrap">
-                <Clock className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span className="text-sm font-medium text-slate-600 dark:text-slate-300">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-surface self-start whitespace-nowrap">
+                <Clock className="h-4 w-4" style={{ color: 'var(--indigo-primary)' }} />
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                   {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
                 </span>
               </div>
@@ -429,24 +413,28 @@ export default function Dashboard() {
 
             {/* Quick Action Buttons */}
             <div className="flex flex-wrap gap-4">
-              <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/projects/create')}
-                className="px-8 py-4 bg-gradient-to-r from-blue-700 to-blue-600 text-white rounded-2xl font-bold transition-all flex items-center gap-2"
-              >
-                <Plus className="h-5 w-5" />
-                Start New Project
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => navigate('/discover/projects')}
-                className="px-8 py-4 bg-white dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-2xl font-bold hover:border-blue-200 hover:bg-blue-50 dark:hover:bg-slate-800 transition-all flex items-center gap-2"
-              >
-                <Search className="h-5 w-5" />
-                Explore Projects
-              </motion.button>
+              <MagneticButton>
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/projects/create')}
+                  className="px-8 py-4 text-white rounded-2xl font-bold transition-all flex items-center gap-2 hover-spring"
+                  style={{ background: 'linear-gradient(135deg, var(--indigo-primary), var(--violet))', boxShadow: 'var(--shadow-button)' }}
+                >
+                  <Plus className="h-5 w-5" />
+                  Start New Project
+                </motion.button>
+              </MagneticButton>
+              <MagneticButton>
+                <motion.button
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => navigate('/discover/projects')}
+                  className="px-8 py-4 glass-surface border rounded-2xl font-bold hover-spring flex items-center gap-2"
+                  style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
+                >
+                  <Search className="h-5 w-5" />
+                  Explore Projects
+                </motion.button>
+              </MagneticButton>
             </div>
           </motion.div>
         </motion.section>
@@ -455,24 +443,23 @@ export default function Dashboard() {
         <ScrollSection>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-20">
             {quickStats.map((stat, idx) => (
-              <motion.div
-                key={idx}
-                whileHover={{ y: -5, scale: 1.02 }}
-                onClick={() => navigate(stat.link)}
-                className="cursor-pointer bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-200/60 dark:border-slate-800/60 hover:shadow-xl transition-all"
-              >
-                <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center text-white mb-4 shadow-lg shadow-blue-900/20`}>
-                  {stat.icon}
-                </div>
-                <div className="text-3xl font-black text-slate-900 dark:text-white mb-1">
-                  {loading ? (
-                    <Skeleton className="h-9 w-16 bg-slate-200 rounded-md" />
-                  ) : (
-                    stat.value
-                  )}
-                </div>
-                <div className="text-sm text-slate-600 dark:text-slate-400 font-medium">{stat.label}</div>
-              </motion.div>
+              <div key={idx} onClick={() => navigate(stat.link)} className="cursor-pointer" role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && navigate(stat.link)}>
+                <TiltCard>
+                  <motion.div
+                    whileHover={{ y: -5 }}
+                    className="glass-surface rounded-2xl p-6 card-hover-lift hover-spring"
+                    style={{ border: '1px solid var(--border-subtle)' }}
+                  >
+                    <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white mb-4" style={{ background: 'linear-gradient(135deg, var(--indigo-primary), var(--violet))', boxShadow: 'var(--shadow-glow-indigo)' }}>
+                      {stat.icon}
+                    </div>
+                    <div className="text-3xl font-black mb-1" style={{ color: 'var(--text-bright)' }}>
+                      {loading ? "..." : stat.value}
+                    </div>
+                    <div className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>{stat.label}</div>
+                  </motion.div>
+                </TiltCard>
+              </div>
             ))}
           </div>
         </ScrollSection>
@@ -482,17 +469,13 @@ export default function Dashboard() {
           <div className="mb-20">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-2">Upcoming Events</h2>
-                <p className="text-slate-600 dark:text-slate-400 text-lg">Don't miss out on these opportunities</p>
+                <h2 className="text-4xl font-black mb-2" style={{ color: 'var(--text-bright)' }}>Upcoming Events</h2>
+                <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>Don't miss out on these opportunities</p>
               </div>
             </div>
 
             {loading ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-64 w-full rounded-2xl bg-slate-200 dark:bg-slate-800" />
-                ))}
-              </div>
+              <div className="h-64 flex items-center justify-center text-slate-500">Loading events...</div>
             ) : upcomingEvents.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {upcomingEvents.map((event, idx) => (
@@ -506,8 +489,8 @@ export default function Dashboard() {
                     onClick={() => navigate(`/events/${event.id}`)}
                     className="cursor-pointer group"
                   >
-                    <Card className="h-full border-0 bg-white/80 dark:bg-slate-900/40 backdrop-blur-xl border-t border-white/10 dark:border-slate-700/30 hover:shadow-2xl transition-all duration-500 overflow-hidden relative group-hover:scale-[1.02]">
-                      <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-blue-600 to-slate-600" />
+                    <Card className="h-full border-0 glass-surface card-hover-lift hover-spring overflow-hidden relative group-hover:scale-[1.02]" style={{ boxShadow: 'var(--shadow-card)' }}>
+                      <div className="absolute top-0 left-0 w-1 h-full" style={{ background: 'linear-gradient(to bottom, var(--indigo-primary), var(--violet))' }} />
                       <CardContent className="p-6 pl-8">
                         <div className="flex justify-between items-start mb-4">
                           <div className="bg-blue-50 dark:bg-blue-900/30 p-2 rounded-lg text-blue-600 dark:text-blue-400">
@@ -521,11 +504,11 @@ export default function Dashboard() {
                           </Badge>
                         </div>
 
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-blue-600 transition-colors">
+                        <h3 className="text-xl font-bold mb-2 hover-spring" style={{ color: 'var(--text-bright)' }}>
                           {event.name}
                         </h3>
 
-                        <p className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-2">
+                        <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
                           {event.description}
                         </p>
 
@@ -544,7 +527,7 @@ export default function Dashboard() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center py-16 bg-white/40 dark:bg-slate-900/40 backdrop-blur-sm rounded-3xl border border-dashed border-slate-300 dark:border-slate-700"
+                className="text-center py-16 glass-surface rounded-3xl" style={{ border: '1px dashed var(--border-medium)' }}
               >
                 <div className="w-16 h-16 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Calendar className="h-8 w-8 text-slate-400 dark:text-slate-500" />
@@ -562,13 +545,13 @@ export default function Dashboard() {
             <div className="mb-20">
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-2">Recommended Projects</h2>
-                  <p className="text-slate-600 dark:text-slate-400 text-lg">Join exciting collaborations matching your skills</p>
+                  <h2 className="text-4xl font-black mb-2" style={{ color: 'var(--text-bright)' }}>Recommended Projects</h2>
+                  <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>Join exciting collaborations matching your skills</p>
                 </div>
                 <Link to="/discover/recommendations">
                   <motion.button
                     whileHover={{ x: 5 }}
-                    className="flex items-center gap-2 text-blue-600 font-bold hover:text-blue-700"
+                    className="flex items-center gap-2 font-bold hover-spring" style={{ color: 'var(--indigo-primary)' }}
                   >
                     View All
                     <ChevronRight className="h-5 w-5" />
@@ -588,11 +571,11 @@ export default function Dashboard() {
                     onClick={() => { setSelectedProject(project); setIsModalOpen(true); }}
                     className="cursor-pointer group"
                   >
-                    <Card className="h-full border-0 bg-white/80 dark:bg-slate-900/40 backdrop-blur-xl border-t border-white/10 dark:border-slate-700/30 hover:shadow-2xl transition-all duration-500 overflow-hidden group-hover:scale-[1.02]">
-                      <div className={`h-2 bg-gradient-to-r ${project.gradient}`} />
+                    <Card className="h-full border-0 glass-surface card-hover-lift hover-spring overflow-hidden group-hover:scale-[1.02]" style={{ boxShadow: 'var(--shadow-card)' }}>
+                      <div className="h-2" style={{ background: 'linear-gradient(to right, var(--indigo-primary), var(--violet))' }} />
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between mb-4">
-                          <div className={`p-3 rounded-xl bg-gradient-to-br ${project.gradient} text-white shadow-lg`}>
+                          <div className="p-3 rounded-xl text-white shadow-lg" style={{ background: 'linear-gradient(135deg, var(--indigo-primary), var(--violet))' }}>
                             <GitBranch className="h-5 w-5" />
                           </div>
                           <div className="flex items-center gap-1 text-slate-600 text-sm">
@@ -601,23 +584,23 @@ export default function Dashboard() {
                           </div>
                         </div>
 
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-slate-100 mb-2 group-hover:text-blue-600 transition-colors">
+                        <h3 className="text-xl font-bold mb-2 hover-spring" style={{ color: 'var(--text-bright)' }}>
                           {project.title}
                         </h3>
-                        <p className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-2">
+                        <p className="text-sm mb-4 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
                           {project.description}
                         </p>
 
                         <div className="flex flex-wrap gap-2 mb-4">
                           {project.skills.slice(0, 3).map((skill, i) => (
-                            <span key={i} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-semibold">
+                            <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold" style={{ background: 'rgba(99, 102, 241, 0.1)', color: 'var(--indigo-soft)' }}>
                               {skill}
                             </span>
                           ))}
                         </div>
 
                         <motion.div
-                          className="flex items-center gap-2 text-blue-600 font-bold text-sm group-hover:gap-3 transition-all"
+                          className="flex items-center gap-2 font-bold text-sm group-hover:gap-3 transition-all" style={{ color: 'var(--indigo-primary)' }}
                           whileHover={{ x: 5 }}
                         >
                           Learn More
@@ -639,8 +622,8 @@ export default function Dashboard() {
             {/* Recent Activity */}
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white">Recent Activity</h2>
-                <Link to="/activity" className="text-blue-600 font-bold text-sm hover:text-blue-700">
+                <h2 className="text-3xl font-black" style={{ color: 'var(--text-bright)' }}>Recent Activity</h2>
+                <Link to="/activity" className="font-bold text-sm hover-spring" style={{ color: 'var(--indigo-primary)' }}>
                   View All
                 </Link>
               </div>
@@ -655,14 +638,14 @@ export default function Dashboard() {
                     transition={{ delay: idx * 0.1 }}
                     whileHover={{ x: 5, scale: 1.02 }}
                     onClick={activity.action}
-                    className="cursor-pointer bg-white/80 dark:bg-slate-900/40 backdrop-blur-xl rounded-xl p-4 border border-slate-200/60 dark:border-slate-800/40 hover:bg-white dark:hover:bg-slate-800/60 hover:shadow-lg transition-all"
+                    className="cursor-pointer glass-surface rounded-xl p-4 card-hover-lift hover-spring" style={{ border: '1px solid var(--border-subtle)' }}
                   >
                     <div className="flex items-start gap-4">
                       <div className={`${activity.color} w-10 h-10 rounded-lg flex items-center justify-center text-white shadow-lg flex-shrink-0`}>
                         {activity.icon}
                       </div>
                       <div className="flex-grow min-w-0">
-                        <p className="font-bold text-slate-900 dark:text-slate-100 mb-1">{activity.title}</p>
+                        <p className="font-bold mb-1" style={{ color: 'var(--text-bright)' }}>{activity.title}</p>
                         <p className="text-sm text-slate-600 dark:text-slate-400 truncate">{activity.user}</p>
                         <p className="text-xs text-slate-400 mt-1">{activity.time}</p>
                       </div>
@@ -676,13 +659,13 @@ export default function Dashboard() {
             {/* Trending Skills */}
             <div>
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white">Trending Skills</h2>
-                <Link to="/discover/skills" className="text-blue-600 font-bold text-sm hover:text-blue-700">
+                <h2 className="text-3xl font-black" style={{ color: 'var(--text-bright)' }}>Trending Skills</h2>
+                <Link to="/discover/skills" className="font-bold text-sm hover-spring" style={{ color: 'var(--indigo-primary)' }}>
                   Explore
                 </Link>
               </div>
 
-              <div className="bg-white/80 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-slate-200/60 dark:border-slate-800/40 overflow-hidden">
+              <div className="glass-surface rounded-2xl overflow-hidden" style={{ border: '1px solid var(--border-subtle)' }}>
                 {trendingSkills.map((skill, idx) => (
                   <motion.div
                     key={idx}
@@ -692,7 +675,7 @@ export default function Dashboard() {
                     transition={{ delay: idx * 0.05 }}
                     whileHover={{ x: 5, backgroundColor: 'rgba(37, 99, 235, 0.05)' }}
                     onClick={() => navigate(`/skills/${skill.name}`)}
-                    className="cursor-pointer px-6 py-4 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-all"
+                    className="cursor-pointer px-6 py-4 last:border-0 hover-spring" style={{ borderBottom: '1px solid var(--border-subtle)' }}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4 flex-grow">
@@ -700,7 +683,7 @@ export default function Dashboard() {
                           {skill.icon}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 dark:text-slate-100">{skill.name}</p>
+                          <p className="font-bold" style={{ color: 'var(--text-bright)' }}>{skill.name}</p>
                           <p className="text-sm text-slate-500 dark:text-slate-400">{skill.count} students</p>
                         </div>
                       </div>
@@ -774,7 +757,7 @@ export default function Dashboard() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-xl"
+              className="absolute inset-0 glass-modal-overlay"
               onClick={() => setShowLogoutConfirm(false)}
             />
             <motion.div
@@ -782,30 +765,30 @@ export default function Dashboard() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 40 }}
               transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden"
+              className="relative w-full max-w-md rounded-3xl overflow-hidden glass-surface" style={{ boxShadow: 'var(--shadow-float)' }}
             >
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-violet-500" />
-              <div className="p-10 text-center dark:bg-slate-900">
+              <div className="absolute top-0 left-0 right-0 h-1" style={{ background: 'linear-gradient(to right, var(--indigo-primary), var(--violet))' }} />
+              <div className="p-10 text-center">
                 <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <LogOut className="h-10 w-10 text-red-500" />
                 </div>
 
-                <h3 className="text-3xl font-black text-slate-900 dark:text-white mb-3">Sign Out?</h3>
-                <p className="text-slate-600 dark:text-slate-400 text-lg mb-8">
+                <h3 className="text-3xl font-black mb-3" style={{ color: 'var(--text-bright)' }}>Sign Out?</h3>
+                <p className="text-lg mb-8" style={{ color: 'var(--text-secondary)' }}>
                   We'll miss you! Come back soon to continue your journey.
                 </p>
 
                 <div className="space-y-3">
                   <Button
                     onClick={handleLogout}
-                    className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-2xl h-14 text-lg font-bold shadow-xl"
+                    className="w-full text-white rounded-2xl h-14 text-lg font-bold hover-spring" style={{ background: 'var(--indigo-primary)', boxShadow: 'var(--shadow-button)' }}
                   >
                     Yes, Sign Out
                   </Button>
                   <Button
                     variant="ghost"
                     onClick={() => setShowLogoutConfirm(false)}
-                    className="w-full text-slate-600 hover:text-slate-900 hover:bg-slate-50 h-14 text-lg rounded-2xl font-semibold"
+                    className="w-full h-14 text-lg rounded-2xl font-semibold hover-spring" style={{ color: 'var(--text-secondary)' }}
                   >
                     Stay Logged In
                   </Button>

@@ -11,6 +11,7 @@ import { Eye, EyeOff, Mail, Lock, Sparkles, ArrowRight, Github } from 'lucide-re
 import { ModeToggle } from '@/components/mode-toggle';
 import { toast } from "sonner";
 import ValidationAlert from '@/components/common/ValidationAlert';
+import MagneticButton from '@/components/common/MagneticButton';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -57,31 +58,12 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 dark:from-slate-950 dark:via-[#020617] dark:to-blue-950/30 overflow-hidden relative">
+    <div className="min-h-screen overflow-hidden relative" style={{ background: 'var(--bg-primary)' }}>
       <div className="absolute top-4 right-4 z-50">
         <ModeToggle />
       </div>
       {/* Animated Background */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-            rotate: [0, 90, 0]
-          }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-          className="absolute -top-1/2 -left-1/4 w-[1000px] h-[1000px] bg-gradient-to-br from-blue-200/40 to-transparent rounded-full blur-3xl"
-        />
-        <motion.div
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.2, 0.4, 0.2],
-            rotate: [0, -90, 0]
-          }}
-          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-          className="absolute -bottom-1/2 -right-1/4 w-[900px] h-[900px] bg-gradient-to-br from-slate-200/40 to-transparent rounded-full blur-3xl"
-        />
-      </div>
+      {/* Background handled by global AnimatedBackground */}
 
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md w-full space-y-8">
@@ -89,25 +71,25 @@ export default function Login() {
           <div className="text-center">
             <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
               <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
-              <span className="text-2xl font-bold text-slate-900 dark:text-white">Quasar</span>
+              <span className="text-2xl font-bold" style={{ color: 'var(--text-bright)' }}>Quasar</span>
             </Link>
-            <h2 className="mt-6 text-4xl font-black text-slate-900 dark:text-white">
+            <h2 className="mt-6 text-4xl font-black" style={{ color: 'var(--text-bright)' }}>
               Welcome back
             </h2>
-            <p className="mt-2 text-lg text-slate-600 dark:text-slate-400">
+            <p className="mt-2 text-lg" style={{ color: 'var(--text-secondary)' }}>
               Sign in to continue your journey
             </p>
           </div>
 
           {/* Form Card */}
           <div>
-            <Card className="border-0 bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl shadow-2xl shadow-slate-200/50 dark:shadow-black/50 border-t border-white/20 dark:border-white/5">
+            <Card className="border-0 glass-surface" style={{ boxShadow: 'var(--shadow-float)' }}>
               <CardContent className="p-8">
                 <ValidationAlert error={error} />
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Email Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 font-semibold">
+                    <Label htmlFor="email" className="font-semibold" style={{ color: 'var(--text-secondary)' }}>
                       Email Address
                     </Label>
                     <div className="relative group">
@@ -118,7 +100,8 @@ export default function Login() {
                         placeholder="Enter your email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-12 h-12 rounded-xl border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-blue-500 transition-all"
+                        className="pl-12 h-12 rounded-xl input-focus-glow"
+                        style={{ background: 'var(--surface-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
                         required
                       />
                     </div>
@@ -126,7 +109,7 @@ export default function Login() {
 
                   {/* Password Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-semibold">
+                    <Label htmlFor="password" className="font-semibold" style={{ color: 'var(--text-secondary)' }}>
                       Password
                     </Label>
                     <div className="relative group">
@@ -137,7 +120,8 @@ export default function Login() {
                         placeholder="Enter your password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-12 pr-12 h-12 rounded-xl border-2 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:border-blue-500 transition-all"
+                        className="pl-12 pr-12 h-12 rounded-xl input-focus-glow"
+                        style={{ background: 'var(--surface-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
                         required
                       />
                       <motion.button
@@ -156,7 +140,7 @@ export default function Login() {
                   <div className="flex justify-end">
                     <Link
                       to="/forgot-password"
-                      className="text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                      className="text-sm font-semibold transition-colors hover-spring" style={{ color: 'var(--indigo-primary)' }}
                     >
                       Forgot password?
                     </Link>
@@ -170,7 +154,8 @@ export default function Login() {
                     >
                       <Button
                         type="submit"
-                        className="w-full h-12 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2"
+                        className="w-full h-12 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 hover-spring"
+                        style={{ background: 'linear-gradient(135deg, var(--indigo-primary), var(--violet))', boxShadow: 'var(--shadow-button)' }}
                         disabled={loading}
                       >
                         {loading ? (
@@ -196,7 +181,7 @@ export default function Login() {
                     <div className="w-full border-t border-slate-200 dark:border-slate-700" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-white dark:bg-slate-900 text-slate-500 font-medium">Or continue with</span>
+                    <span className="px-4 text-sm font-medium" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>Or continue with</span>
                   </div>
                 </div>
 
@@ -267,7 +252,7 @@ export default function Login() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed inset-0 z-[100] bg-white dark:bg-slate-950 flex items-center justify-center"
+            className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -279,7 +264,7 @@ export default function Login() {
               <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl mx-auto mb-6 shadow-2xl flex items-center justify-center p-2 border border-slate-100 dark:border-slate-800">
                 <img src="/data/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
               </div>
-              <h1 className="text-4xl md:text-6xl font-black text-slate-900 dark:text-white mb-4 tracking-tight">
+              <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight" style={{ color: 'var(--text-bright)' }}>
                 Welcome back
               </h1>
               <p className="text-lg text-slate-500 dark:text-slate-400">Taking you to your dashboard...</p>
