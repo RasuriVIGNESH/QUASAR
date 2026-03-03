@@ -1,4 +1,4 @@
-package com.ADP.peerConnect.controller;
+package com.ADP.peerConnect.controller.project;
 
 import com.ADP.peerConnect.model.dto.request.SendMessageRequest;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
  */
 @RestController
 @RequestMapping(Constants.CHAT_BASE_PATH)
+@PreAuthorize("hasRole('STUDENT')")
 @Tag(name = "Chat Management", description = "Chat and messaging APIs")
 public class ChatController {
     

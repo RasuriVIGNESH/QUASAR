@@ -3,6 +3,7 @@ package com.ADP.peerConnect.model.dto.response;
 import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.model.entity.UserSkill;
 import com.ADP.peerConnect.model.enums.AvailabilityStatus;
+import com.ADP.peerConnect.model.enums.Role;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import java.util.List;
@@ -17,6 +18,7 @@ public class UserResponse {
     private String lastName;
     private String bio;
     private CollegeResponse college;
+    private Role role;
     private String branch;
     private Integer graduationYear;
     private AvailabilityStatus availabilityStatus;
@@ -39,6 +41,7 @@ public class UserResponse {
         this.email = user.getEmail();
         this.availabilityStatus = user.getAvailabilityStatus();
         this.bio = user.getBio();
+        this.role= user.getRole();
         this.branch = user.getBranch();
         this.githubUrl = user.getGithubUrl();
         this.graduationYear = user.getGraduationYear();
@@ -76,6 +79,12 @@ public class UserResponse {
     }
     public String getBio() {
         return bio;
+    }
+    public Role getRole() {
+        return role;
+    }
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public void setBio(String bio) {

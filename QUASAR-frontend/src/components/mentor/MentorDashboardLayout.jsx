@@ -5,18 +5,15 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import {
     LayoutDashboard,
-    Calendar,
     Users,
-    Briefcase,
     LogOut,
     Menu,
     X,
-    ShieldAlert,
     GraduationCap
 } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
 
-export default function AdminDashboardLayout() {
+export default function MentorDashboardLayout() {
     const { userProfile, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -49,11 +46,8 @@ export default function AdminDashboardLayout() {
     };
 
     const menuItems = [
-        { path: '/admin/overview', label: 'Overview', icon: <LayoutDashboard /> },
-        { path: '/admin/events', label: 'Events', icon: <Calendar /> },
-        { path: '/admin/users', label: 'Users', icon: <Users /> },
-        { path: '/admin/projects', label: 'Projects', icon: <Briefcase /> },
-        { path: '/admin/mentors', label: 'Mentors', icon: <GraduationCap /> },
+        { path: '/mentor/overview', label: 'Overview', icon: <LayoutDashboard /> },
+        { path: '/mentor/students', label: 'Students', icon: <Users /> },
     ];
 
     return (
@@ -81,11 +75,11 @@ export default function AdminDashboardLayout() {
                 <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-white shadow-lg">
-                            <ShieldAlert className="w-6 h-6" />
+                            <GraduationCap className="w-6 h-6" />
                         </div>
                         <div>
-                            <h1 className="font-bold text-xl text-slate-900 dark:text-white leading-none">Admin</h1>
-                            <span className="text-xs text-slate-500 font-medium">Control Panel</span>
+                            <h1 className="font-bold text-xl text-slate-900 dark:text-white leading-none">Mentor</h1>
+                            <span className="text-xs text-slate-500 font-medium">Portal</span>
                         </div>
                     </div>
                     {isMobile && (
@@ -115,10 +109,10 @@ export default function AdminDashboardLayout() {
                 </nav>
 
                 <div className="p-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
-                    {/* Admin User Info */}
+                    {/* Mentor User Info */}
                     <div className="flex items-center gap-3 px-4 py-2">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-slate-200 to-slate-300 dark:from-slate-700 dark:to-slate-800 flex items-center justify-center font-bold text-slate-600 dark:text-slate-300">
-                            {userProfile?.firstName?.[0] || 'A'}
+                            {userProfile?.firstName?.[0] || 'M'}
                         </div>
                         <div className="overflow-hidden">
                             <p className="text-sm font-bold truncate text-slate-900 dark:text-white">

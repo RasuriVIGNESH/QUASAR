@@ -50,6 +50,8 @@ public class AuthService implements iAuthService {
     /**
      * Register a new user
      */
+
+
     public AuthResponse register(RegisterRequest registerRequest) {
         // Validate input
         validateRegisterRequest(registerRequest);

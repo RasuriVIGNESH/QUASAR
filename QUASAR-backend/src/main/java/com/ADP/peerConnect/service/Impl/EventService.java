@@ -15,13 +15,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-
 @Service
 @Transactional(readOnly = true)
 public class EventService implements iEventService {
 
     @Autowired
     private EventRepository EventReopsitory;
+
+    @Autowired
+    private com.ADP.peerConnect.repository.ProjectRepository projectRepository;
 
     @Override
     @Transactional
@@ -42,10 +44,9 @@ public class EventService implements iEventService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + EventId));
     }
 
-
     @Override
     public List<Project> getProjects(Long eventId) {
-        return List.of();
+        return projectRepository.findByEventId(eventId);
     }
 
     @Override
@@ -124,7 +125,8 @@ public class EventService implements iEventService {
 
     @Override
     public List<Event> getRecentEvents(int limit) {
-        if (limit <= 0) return List.of();
+        if (limit <= 0)
+            return List.of();
         // Use the optimized repository method when limit == 10
         if (limit == 10) {
             return EventReopsitory.findTop10ByOrderByCreatedAtDesc();

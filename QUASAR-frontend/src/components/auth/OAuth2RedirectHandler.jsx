@@ -82,7 +82,15 @@ export default function OAuth2RedirectHandler() {
         } else if (oauthIntent === 'register') {
           setTimeout(() => navigate('/onboarding'), 1200);
         } else {
-          setTimeout(() => navigate('/dashboard'), 1200);
+          setTimeout(() => {
+            if (user?.role === 'ADMIN') {
+              navigate('/admin/overview');
+            } else if (user?.role === 'MENTOR') {
+              navigate('/mentor/overview');
+            } else {
+              navigate('/dashboard');
+            }
+          }, 1200);
         }
       } catch (err) {
         console.error('OAuth2 redirect error:', err);
@@ -144,7 +152,7 @@ export default function OAuth2RedirectHandler() {
         {/* Text Status */}
         <div className="space-y-3">
           <h2 className={`text-2xl font-bold tracking-tight transition-all duration-300 ${status === 'error' ? 'text-red-600' :
-              status === 'success' ? 'text-emerald-700' : 'text-slate-900'
+            status === 'success' ? 'text-emerald-700' : 'text-slate-900'
             }`}>
             {status === 'loading' && 'Connecting to GitHub...'}
             {status === 'success' && 'Successfully Connected!'}

@@ -1,17 +1,12 @@
-package com.ADP.peerConnect.controller;
-
-import com.ADP.peerConnect.model.dto.ProjectRecommendationDTO;
-import com.ADP.peerConnect.model.dto.RecommendationRequestWithPriority;
+package com.ADP.peerConnect.controller.Student;
 
 import com.ADP.peerConnect.model.dto.response.RecommendationResponseWithPriority;
 import com.ADP.peerConnect.model.entity.UserRecommendedProject;
 import com.ADP.peerConnect.service.Interface.RecommendationServiceWithPriority;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import java.util.List;

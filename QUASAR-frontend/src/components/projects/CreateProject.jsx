@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,10 @@ const stepContent = {
 
 export default function CreateProject() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const eventId = searchParams.get('eventId');
+  const eventName = searchParams.get('eventName');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
@@ -108,6 +112,9 @@ export default function CreateProject() {
     setLoading(true);
     try {
       const payload = { ...formData, maxTeamSize: parseInt(formData.maxTeamSize), categoryName: formData.category, skills: formData.skillsRequired };
+      if (eventId) {
+        payload.eventId = parseInt(eventId);
+      }
       const res = await projectService.createProject(payload);
       // setMessage("Project Launched Successfully!"); // Replaced by overlay
       setCreatedId(res.data?.id);
@@ -210,7 +217,7 @@ export default function CreateProject() {
             />
           </div>
           <p className="text-[10px] uppercase tracking-widest text-slate-400 mt-3 font-bold">
-            Redirecting to Project Page...
+            Redirecting to Invitations...
           </p>
         </motion.div>
       </motion.div>
@@ -223,7 +230,7 @@ export default function CreateProject() {
         {showSuccess && (
           <SuccessOverlay
             projectName={formData.title}
-            onComplete={() => navigate(`/projects/${createdId}`)}
+            onComplete={() => navigate(`/projects/${createdId}/invite`)}
           />
         )}
       </AnimatePresence>
@@ -262,6 +269,12 @@ export default function CreateProject() {
               <h1 className="text-4xl lg:text-5xl font-extrabold text-white mb-6 leading-tight">
                 {stepContent[currentStep].subtitle}
               </h1>
+              {eventName && (
+                <div className="mb-6 inline-flex items-center gap-2 bg-indigo-500/20 text-indigo-300 px-4 py-2 rounded-xl text-sm font-semibold border border-indigo-500/30">
+                  <Sparkles className="w-4 h-4" />
+                  Registering for Event: {decodeURIComponent(eventName)}
+                </div>
+              )}
               <p className="text-slate-400 text-lg max-w-sm leading-relaxed">
                 {stepContent[currentStep].description}
               </p>

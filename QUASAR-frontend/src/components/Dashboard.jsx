@@ -84,6 +84,14 @@ export default function Dashboard() {
   const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.95]);
 
   useEffect(() => {
+    if (userProfile?.role === 'ADMIN') {
+      navigate('/admin/overview', { replace: true });
+    } else if (userProfile?.role === 'MENTOR') {
+      navigate('/mentor/overview', { replace: true });
+    }
+  }, [userProfile, navigate]);
+
+  useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         const response = await dashboardService.getDashboardCounts();

@@ -1,5 +1,8 @@
 package com.ADP.peerConnect.service.Impl;
 
+import com.ADP.peerConnect.model.dto.request.Admin.CreateMentorRequest;
+import com.ADP.peerConnect.model.dto.response.MentorResponse;
+import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.Mentor;
 import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.model.enums.Role;
@@ -37,31 +40,40 @@ public class AdminService implements iAdminService {
      * Admin creates a mentor and assigns credentials
      */
     @Transactional
-    public Mentor createMentor(
-            String email,
-            String firstName,
-            String lastName,
-            String rawPassword
-    ) {
-        if (userRepository.existsByEmail(email)) {
-            throw new IllegalStateException("User already exists with email");
+    public String createMentor(CreateMentorRequest request){
+
+        if(userRepository.existsByEmail(request.getEmail())){
+            throw new RuntimeException("Email already exists");
         }
 
-        // 1. Create User
+        // generate random password
+        String rawPassword = generateRandomPassword(request.getFirstName());
+
         User user = new User();
-        user.setId(UUID.randomUUID().toString());
-        user.setEmail(email);
-        user.setFirstName(firstName);
-        user.setLastName(lastName);
+        user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(rawPassword));
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
         user.setRole(Role.MENTOR);
         user.setVerified(true);
 
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
 
-        // 2. Create Mentor
-        Mentor mentor = new Mentor(user);
-        return mentorRepository.save(mentor);
+        Mentor mentor = new Mentor();
+        mentor.setUser(savedUser);
+        mentor.setDepartment(request.getDepartment());
+        mentor.setDesignation(request.getDesignation());
+
+        mentorRepository.save(mentor);
+
+        return "Mentor created.\nEmail: "
+                + request.getEmail()
+                + "\nPassword: "
+                + rawPassword;
+    }
+
+    private String generateRandomPassword(String firstName){
+           return firstName+ "@123";
     }
 
     /**
@@ -75,8 +87,21 @@ public class AdminService implements iAdminService {
         mentor.setActive(false);
         mentorRepository.save(mentor);
     }
-    public List<Mentor> getAllMentors() {
-        return mentorRepository.findAll();
+    public List<MentorResponse> getAllMentors() {
+        List<MentorResponse> mentors = mentorRepository.findAll().stream()
+                .filter(Mentor::isActive)
+                .map(mentor -> {
+                    User user = mentor.getUser();
+                    MentorResponse response = new MentorResponse();
+                    response.setId(user.getId());
+                    response.setFirstName(user.getFirstName());
+                    response.setLastName(user.getLastName());
+                    response.setEmail(user.getEmail());
+                    response.setBio(user.getBio());
+                    return response;
+                })
+                .toList();
+        return mentors;
     }
 
 }

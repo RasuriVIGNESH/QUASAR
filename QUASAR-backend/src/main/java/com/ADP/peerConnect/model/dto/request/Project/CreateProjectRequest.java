@@ -16,7 +16,8 @@ public class CreateProjectRequest {
     @Size(min = 10, max = 1000)
     private String description;
 
-    // Category: frontend should provide either an existing category id or a new category name.
+    // Category: frontend should provide either an existing category id or a new
+    // category name.
     // At least one of categoryId or categoryName must be provided by the client.
     private Long categoryId;
     @Size(max = 200)
@@ -30,8 +31,8 @@ public class CreateProjectRequest {
     private LocalDate expectedStartDate;
     private LocalDate expectedEndDate;
 
-//    @Size(max = 1000)
-//    private String requirements;
+    // @Size(max = 1000)
+    // private String requirements;
 
     @Size(max = 1000)
     private String goals;
@@ -54,65 +55,158 @@ public class CreateProjectRequest {
     @Size(max = 200)
     private String demoUrl;
 
-    // Optional: either provide an existing ProjectFor id, or provide a new name to create one.
+    // Optional: either provide an existing ProjectFor id, or provide a new name to
+    // create one.
     // Both are optional; if both provided, id takes precedence.
     private String projectForId;
     @Size(max = 200)
     private String projectForName;
 
+    // Optional: Event ID this project belongs to
+    private Long eventId;
 
-    public CreateProjectRequest() {}
+    public CreateProjectRequest() {
+    }
 
     // Getters & Setters
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public String getTitle() {
+        return title;
+    }
 
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public Long getCategoryId() { return categoryId; }
-    public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
+    public String getDescription() {
+        return description;
+    }
 
-    public String getCategoryName() { return categoryName; }
-    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
-    public Integer getMaxTeamSize() { return maxTeamSize; }
-    public void setMaxTeamSize(Integer maxTeamSize) { this.maxTeamSize = maxTeamSize; }
+    public Long getCategoryId() {
+        return categoryId;
+    }
 
-    public LocalDate getExpectedStartDate() { return expectedStartDate; }
-    public void setExpectedStartDate(LocalDate expectedStartDate) { this.expectedStartDate = expectedStartDate; }
+    public void setCategoryId(Long categoryId) {
+        this.categoryId = categoryId;
+    }
 
-    public LocalDate getExpectedEndDate() { return expectedEndDate; }
-    public void setExpectedEndDate(LocalDate expectedEndDate) { this.expectedEndDate = expectedEndDate; }
+    public String getCategoryName() {
+        return categoryName;
+    }
 
-//    public String getRequirements() { return requirements; }
-//    public void setRequirements(String requirements) { this.requirements = requirements; }
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
 
-    public String getGoals() { return goals; }
-    public void setGoals(String goals) { this.goals = goals; }
+    public Integer getMaxTeamSize() {
+        return maxTeamSize;
+    }
 
-    public String getProblemStatement() { return problemStatement; }
-    public void setProblemStatement(String problemStatement) { this.problemStatement = problemStatement; }
+    public void setMaxTeamSize(Integer maxTeamSize) {
+        this.maxTeamSize = maxTeamSize;
+    }
 
-    public String getObjectives() { return objectives; }
-    public void setObjectives(String objectives) { this.objectives = objectives; }
+    public LocalDate getExpectedStartDate() {
+        return expectedStartDate;
+    }
 
-    public List<ProjectSkillRequest> getSkills() { return skills; }
-    public void setSkills(List<ProjectSkillRequest> skills) { this.skills = skills; }
+    public void setExpectedStartDate(LocalDate expectedStartDate) {
+        this.expectedStartDate = expectedStartDate;
+    }
 
-    public List<String> getTechStack() { return techStack; }
-    public void setTechStack(List<String> techStack) { this.techStack = techStack; }
+    public LocalDate getExpectedEndDate() {
+        return expectedEndDate;
+    }
 
-    public String getGithubRepo() { return githubRepo; }
-    public void setGithubRepo(String githubRepo) { this.githubRepo = githubRepo; }
+    public void setExpectedEndDate(LocalDate expectedEndDate) {
+        this.expectedEndDate = expectedEndDate;
+    }
 
-    public String getDemoUrl() { return demoUrl; }
-    public void setDemoUrl(String demoUrl) { this.demoUrl = demoUrl; }
+    // public String getRequirements() { return requirements; }
+    // public void setRequirements(String requirements) { this.requirements =
+    // requirements; }
 
-    public String getProjectForId() { return projectForId; }
-    public void setProjectForId(String projectForId) { this.projectForId = projectForId; }
+    public String getGoals() {
+        return goals;
+    }
 
-    public String getProjectForName() { return projectForName; }
-    public void setProjectForName(String projectForName) { this.projectForName = projectForName; }
+    public void setGoals(String goals) {
+        this.goals = goals;
+    }
+
+    public String getProblemStatement() {
+        return problemStatement;
+    }
+
+    public void setProblemStatement(String problemStatement) {
+        this.problemStatement = problemStatement;
+    }
+
+    public String getObjectives() {
+        return objectives;
+    }
+
+    public void setObjectives(String objectives) {
+        this.objectives = objectives;
+    }
+
+    public List<ProjectSkillRequest> getSkills() {
+        return skills;
+    }
+
+    public void setSkills(List<ProjectSkillRequest> skills) {
+        this.skills = skills;
+    }
+
+    public List<String> getTechStack() {
+        return techStack;
+    }
+
+    public void setTechStack(List<String> techStack) {
+        this.techStack = techStack;
+    }
+
+    public String getGithubRepo() {
+        return githubRepo;
+    }
+
+    public void setGithubRepo(String githubRepo) {
+        this.githubRepo = githubRepo;
+    }
+
+    public String getDemoUrl() {
+        return demoUrl;
+    }
+
+    public void setDemoUrl(String demoUrl) {
+        this.demoUrl = demoUrl;
+    }
+
+    public String getProjectForId() {
+        return projectForId;
+    }
+
+    public void setProjectForId(String projectForId) {
+        this.projectForId = projectForId;
+    }
+
+    public String getProjectForName() {
+        return projectForName;
+    }
+
+    public void setProjectForName(String projectForName) {
+        this.projectForName = projectForName;
+    }
+
+    public Long getEventId() {
+        return eventId;
+    }
+
+    public void setEventId(Long eventId) {
+        this.eventId = eventId;
+    }
 }

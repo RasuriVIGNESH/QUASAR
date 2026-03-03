@@ -26,14 +26,21 @@ import EventDetailPage from './components/events/EventDetailPage';
 import AdminDashboardLayout from './components/admin/AdminDashboardLayout';
 import AdminOverview from './components/admin/AdminOverview';
 import AdminEvents from './components/admin/AdminEvents';
+import AdminEventDetails from './components/admin/AdminEventDetails';
 import AdminUsers from './components/admin/AdminUsers';
 import AdminProjects from './components/admin/AdminProjects';
+import AdminMentors from './components/admin/AdminMentors';
 import AdminRoute from './components/admin/AdminRoute';
 import MeetingRoomsPage from '../src/components/project/MeetingRoomsPage';
 import SkillMastery from './components/profile/SkillMastery';
 import GlobalErrorManager from './components/GlobalErrorManager';
 import ServerError from './components/common/ServerError';
 import NotFound from './components/common/NotFound';
+
+import MentorRoute from './components/mentor/MentorRoute';
+import MentorDashboardLayout from './components/mentor/MentorDashboardLayout';
+import MentorOverview from './components/mentor/MentorOverview';
+import MentorStudents from './components/mentor/MentorStudents';
 
 import { Toaster } from '@/components/ui/sonner';
 import AnimatedBackground from './components/common/AnimatedBackground';
@@ -162,8 +169,17 @@ function App() {
                 <Route index element={<Navigate to="overview" replace />} />
                 <Route path="overview" element={<AdminOverview />} />
                 <Route path="events" element={<AdminEvents />} />
+                <Route path="events/:eventId" element={<AdminEventDetails />} />
                 <Route path="users" element={<AdminUsers />} />
                 <Route path="projects" element={<AdminProjects />} />
+                <Route path="mentors" element={<AdminMentors />} />
+              </Route>
+
+              {/* Mentor Routes */}
+              <Route path="/mentor" element={<MentorRoute><MentorDashboardLayout /></MentorRoute>}>
+                <Route index element={<Navigate to="overview" replace />} />
+                <Route path="overview" element={<MentorOverview />} />
+                <Route path="students" element={<MentorStudents />} />
               </Route>
 
               <Route

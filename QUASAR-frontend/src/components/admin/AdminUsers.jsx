@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Search, Loader2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import userService from '../../services/userService';
 
 export default function AdminUsers() {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [roleFilter, setRoleFilter] = useState('ALL');
     const [page, setPage] = useState(0);
 
     useEffect(() => {
@@ -20,7 +22,11 @@ export default function AdminUsers() {
                 setLoading(true);
                 // Using getAllUsers which supports pagination
                 const response = await userService.getAllUsers(page, 50);
-                const userList = response.content || response.data || [];
+                const userList = Array.isArray(response) ? response
+                    : Array.isArray(response?.content) ? response.content
+                        : Array.isArray(response?.data) ? response.data
+                            : Array.isArray(response?.data?.content) ? response.data.content
+                                : [];
                 setUsers(userList);
             } catch (error) {
                 console.error('Failed to fetch users:', error);
@@ -32,11 +38,16 @@ export default function AdminUsers() {
         fetchUsers();
     }, [page]);
 
-    const filteredUsers = users.filter(user =>
-        user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredUsers = users.filter(user => {
+        const matchesSearch = user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const userRole = user.role || (user.roles && user.roles.length > 0 ? user.roles[0].name : "USER");
+        const matchesRole = roleFilter === 'ALL' || userRole.toUpperCase() === roleFilter.toUpperCase();
+
+        return matchesSearch && matchesRole;
+    });
 
     return (
         <div className="space-y-6">
@@ -49,14 +60,27 @@ export default function AdminUsers() {
                 <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                         <CardTitle>Registered Users</CardTitle>
-                        <div className="relative w-64">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
-                            <Input
-                                placeholder="Search users..."
-                                className="pl-9"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-64">
+                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+                                <Input
+                                    placeholder="Search users..."
+                                    className="pl-9"
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                            </div>
+                            <Select value={roleFilter} onValueChange={setRoleFilter}>
+                                <SelectTrigger className="w-[180px]">
+                                    <SelectValue placeholder="Filter by role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Users</SelectItem>
+                                    <SelectItem value="STUDENT">Students</SelectItem>
+                                    <SelectItem value="MENTOR">Mentors</SelectItem>
+                                    <SelectItem value="ADMIN">Admins</SelectItem>
+                                </SelectContent>
+                            </Select>
                         </div>
                     </div>
                 </CardHeader>
@@ -103,8 +127,7 @@ export default function AdminUsers() {
                                             <TableCell>{user.graduationYear || '-'}</TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary" className="font-mono text-xs">
-                                                    {/* Assuming role is available, otherwise user */}
-                                                    {user.roles && user.roles.length > 0 ? user.roles[0].name : "USER"}
+                                                    {user.role || (user.roles && user.roles.length > 0 ? user.roles[0].name : "USER")}
                                                 </Badge>
                                             </TableCell>
                                         </TableRow>

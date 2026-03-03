@@ -1,6 +1,6 @@
-package com.ADP.peerConnect.controller;
+package com.ADP.peerConnect.controller.Admin;
 
-import com.ADP.peerConnect.model.dto.response.EventResponse;
+import com.ADP.peerConnect.model.dto.response.event.EventsResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.Event;
 import com.ADP.peerConnect.model.entity.EventRegistration;
@@ -9,6 +9,7 @@ import com.ADP.peerConnect.security.UserPrincipal;
 import com.ADP.peerConnect.service.Impl.EventRegistrationService;
 import com.ADP.peerConnect.service.Impl.EventService;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -29,16 +30,16 @@ public class EventController {
     private EventRegistrationService registrationService;
 
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventResponse> getEventById(@PathVariable Long eventId) {
+    public ResponseEntity<EventsResponse> getEventById(@PathVariable Long eventId) {
         Event event = eventService.getEvent(eventId);
-        EventResponse response = new EventResponse(event);
+        EventsResponse response = new EventsResponse(event);
         return ResponseEntity.ok(response);
     }
 
     @GetMapping("/upcoming")
-    public ResponseEntity<List<EventResponse>> getUpcomingEvents() {
+    public ResponseEntity<List<EventsResponse>> getUpcomingEvents() {
         List<Event> events = eventService.getUpcomingEvents();
-        List<EventResponse> responses = events.stream().map(EventResponse::new).collect(Collectors.toList());
+        List<EventsResponse> responses = events.stream().map(EventsResponse::new).collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
@@ -48,10 +49,9 @@ public class EventController {
     @PostMapping("/{eventId}/register")
     @PreAuthorize("hasRole('STUDENT')")
     public ResponseEntity<?> registerForEvent(@PathVariable Long eventId,
-                                              @Parameter(hidden = true)
-                                              @AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         EventRegistration reg = registrationService.register(eventId, currentUser.getId());
-        return ResponseEntity.ok(new EventResponse(reg.getEvent()));
+        return ResponseEntity.ok(new EventsResponse(reg.getEvent()));
     }
 
     /**
@@ -59,9 +59,9 @@ public class EventController {
      */
     @PostMapping("")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EventResponse> createEvent(@RequestBody Event event) {
+    public ResponseEntity<EventsResponse> createEvent(@RequestBody Event event) {
         Event created = eventService.createEvent(event);
-        return ResponseEntity.ok(new EventResponse(created));
+        return ResponseEntity.ok(new EventsResponse(created));
     }
 
     /**
@@ -69,10 +69,10 @@ public class EventController {
      */
     @PutMapping("/{eventId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EventResponse> updateEvent(@PathVariable Long eventId, @RequestBody Event event) {
+    public ResponseEntity<EventsResponse> updateEvent(@PathVariable Long eventId, @RequestBody Event event) {
         event.setId(eventId);
         Event updated = eventService.updateEvent(event);
-        return ResponseEntity.ok(new EventResponse(updated));
+        return ResponseEntity.ok(new EventsResponse(updated));
     }
 
     /**
@@ -85,7 +85,7 @@ public class EventController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/{eventId}/users")
+    @GetMapping("/{eventId}/students")
     public ResponseEntity<List<UserResponse>> getEventUsers(@PathVariable Long eventId) {
         List<User> users = eventService.getEventUsers(eventId);
 
@@ -96,13 +96,15 @@ public class EventController {
         return ResponseEntity.ok(userDTOs);
     }
 
-    @GetMapping("/{eventId}/users/count")
+    @GetMapping("/{eventId}/students/count")
+    @Operation(summary = "Get exact registration count", description = "Get total number of registrations for an event")
     public ResponseEntity<Long> getEventUserCount(@PathVariable Long eventId) {
         Long count = eventService.getUserCount(eventId);
         return ResponseEntity.ok(count);
     }
 
-    @GetMapping("/{eventId}/users/{userId}/exists")
+    @GetMapping("/{eventId}/students/{userId}/exists")
+    @Operation(summary = "Check event registration", description = "Check if user is registered for an event")
     public ResponseEntity<Boolean> checkUserInEvent(
             @PathVariable Long eventId,
             @PathVariable String userId) {
@@ -114,9 +116,9 @@ public class EventController {
      * Get all events (regardless of status)
      */
     @GetMapping("/all")
-    public ResponseEntity<List<EventResponse>> getAllEvents() {
+    public ResponseEntity<List<EventsResponse>> getAllEvents() {
         List<Event> events = eventService.getAllEvents();
-        List<EventResponse> responses = events.stream().map(EventResponse::new).collect(Collectors.toList());
+        List<EventsResponse> responses = events.stream().map(EventsResponse::new).collect(Collectors.toList());
         return ResponseEntity.ok(responses);
     }
 
@@ -124,10 +126,21 @@ public class EventController {
      * Get recent events (default 10). Optional query param `limit` can override.
      */
     @GetMapping("/recent")
-    public ResponseEntity<List<EventResponse>> getRecentEvents(@RequestParam(required = false, defaultValue = "10") int limit) {
+    public ResponseEntity<List<EventsResponse>> getRecentEvents(
+            @RequestParam(required = false, defaultValue = "10") int limit) {
         List<Event> events = eventService.getRecentEvents(limit);
-        List<EventResponse> responses = events.stream().map(EventResponse::new).collect(Collectors.toList());
+        List<EventsResponse> responses = events.stream().map(EventsResponse::new).collect(Collectors.toList());
         return ResponseEntity.ok(responses);
+    }
+
+    @GetMapping("/{eventId}/projects")
+    public ResponseEntity<List<com.ADP.peerConnect.model.dto.response.Project.ProjectResponse>> getEventProjects(
+            @PathVariable Long eventId) {
+        List<com.ADP.peerConnect.model.entity.Project> projects = eventService.getProjects(eventId);
+        List<com.ADP.peerConnect.model.dto.response.Project.ProjectResponse> projectDTOs = projects.stream()
+                .map(com.ADP.peerConnect.model.dto.response.Project.ProjectResponse::new)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(projectDTOs);
     }
 
     private UserResponse convertToDTO(User user) {

@@ -8,16 +8,16 @@ import java.util.Map;
  * Application constants
  */
 public final class Constants {
-    
+
     // JWT Constants
     public static final String JWT_TOKEN_PREFIX = "Bearer ";
     public static final String JWT_HEADER_STRING = "Authorization";
     public static final String JWT_AUTHORITIES_KEY = "authorities";
-    
+
     // API Constants
     public static final String API_BASE_PATH = "/api";
     public static final String AUTH_BASE_PATH = API_BASE_PATH + "/auth";
-    public static final String USER_BASE_PATH = API_BASE_PATH + "/users";
+    public static final String USER_BASE_PATH = API_BASE_PATH + "/students";
     public static final String PROJECT_BASE_PATH = API_BASE_PATH + "/projects";
     public static final String SKILL_BASE_PATH = API_BASE_PATH + "/skills";
     public static final String TEAM_BASE_PATH = API_BASE_PATH + "/team";
@@ -31,13 +31,13 @@ public final class Constants {
     public static final String WS_BASE_PATH = "/ws";
     public static final String WS_NOTIFICATION_PATH = WS_BASE_PATH + "/notifications";
     public static final String WS_CHAT_PATH = WS_BASE_PATH + "/chat";
-    
+
     // Pagination Constants
     public static final int DEFAULT_PAGE_SIZE = 20;
     public static final int MAX_PAGE_SIZE = 100;
     public static final String DEFAULT_SORT_DIRECTION = "DESC";
     public static final String DEFAULT_SORT_BY = "createdAt";
-    
+
     // Validation Constants
     public static final int MIN_PASSWORD_LENGTH = 8;
     public static final int MAX_PASSWORD_LENGTH = 100;
@@ -52,27 +52,28 @@ public final class Constants {
     public static final int MAX_TEAM_SIZE = 10;
     public static final int MIN_GRADUATION_YEAR = 2020;
     public static final int MAX_GRADUATION_YEAR = 2030;
-    
+
     // File Upload Constants
     public static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-    public static final String[] ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/gif"};
-    
+    public static final String[] ALLOWED_IMAGE_TYPES = { "image/jpeg", "image/png", "image/gif" };
+
     // Static Data
     public static final String[] BRANCHES = {
-        "Computer Science", "Information Technology", "Electronics and Communication",
-        "Mechanical Engineering", "Civil Engineering", "Electrical Engineering",
-        "Chemical Engineering", "Biotechnology", "Business Administration",
-        "Data Science", "Artificial Intelligence", "Cybersecurity","Other"
-    };
-    
-    public static final String[] PROJECT_CATEGORIES = {
-        "Web Development", "Mobile App Development", "Data Science",
-        "Machine Learning", "Artificial Intelligence", "Blockchain",
-        "Game Development", "IoT", "Cybersecurity", "Research",
-        "Business", "Design", "Other"
+            "Computer Science", "Information Technology", "Electronics and Communication",
+            "Mechanical Engineering", "Civil Engineering", "Electrical Engineering",
+            "Chemical Engineering", "Biotechnology", "Business Administration",
+            "Data Science", "Artificial Intelligence", "Cybersecurity", "Other"
     };
 
-    // Replaced flat skill list with a map of skill -> category so frontend receives structured data
+    public static final String[] PROJECT_CATEGORIES = {
+            "Web Development", "Mobile App Development", "Data Science",
+            "Machine Learning", "Artificial Intelligence", "Blockchain",
+            "Game Development", "IoT", "Cybersecurity", "Research",
+            "Business", "Design", "Other"
+    };
+
+    // Replaced flat skill list with a map of skill -> category so frontend receives
+    // structured data
     public static final Map<String, String> PREDEFINED_SKILLS_MAP;
     static {
         Map<String, String> skills = new LinkedHashMap<>();
@@ -124,11 +125,11 @@ public final class Constants {
         PREDEFINED_SKILLS_MAP = Collections.unmodifiableMap(skills);
     }
     public static final String[] TeamRoles = {
-        "Developer", "Designer", "Project Manager", "Tester",
-        "DevOps Engineer", "Business Analyst", "Researcher",
-        "Data Scientist", "Other"
+            "Developer", "Designer", "Project Manager", "Tester",
+            "DevOps Engineer", "Business Analyst", "Researcher",
+            "Data Scientist", "Other"
     };
-    
+
     // Error Messages
     public static final String USER_NOT_FOUND = "User not found";
     public static final String PROJECT_NOT_FOUND = "Project not found";
@@ -141,7 +142,7 @@ public final class Constants {
     public static final String PROJECT_FULL = "Project team is full";
     public static final String ALREADY_MEMBER = "User is already a member of this project";
     public static final String INVITATION_ALREADY_SENT = "Invitation already sent to this user";
-    
+
     private Constants() {
         // Private constructor to prevent instantiation
     }

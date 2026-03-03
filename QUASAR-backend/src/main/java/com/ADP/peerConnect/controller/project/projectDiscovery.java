@@ -1,4 +1,4 @@
-package com.ADP.peerConnect.controller.discovery;
+package com.ADP.peerConnect.controller.project;
 
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
@@ -28,11 +28,8 @@ public class projectDiscovery {
 
     @Autowired
     private iProjectService projectService;
-
     public static final String DEFAULT_SIZE_STR = "20";
     public static final String DEFAULT_PAGE_NUMBER_STR = "0";
-
-
 
     @Operation(summary = "Discover projects")
     @GetMapping("/api/discover")

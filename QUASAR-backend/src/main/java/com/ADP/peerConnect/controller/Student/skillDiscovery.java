@@ -1,4 +1,4 @@
-package com.ADP.peerConnect.controller.discovery;
+package com.ADP.peerConnect.controller.Student;
 
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;

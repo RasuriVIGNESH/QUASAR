@@ -4,7 +4,6 @@ import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -19,7 +18,7 @@ import java.time.LocalDateTime;
         @Index(name = "idx_project_skill_skill", columnList = "skill_id"),
         @Index(name = "idx_project_skill_required", columnList = "is_required")
 }, uniqueConstraints = {
-        @UniqueConstraint(name = "uk_project_skill", columnNames = {"project_id", "skill_id"})
+        @UniqueConstraint(name = "uk_project_skill", columnNames = { "project_id", "skill_id" })
 })
 public class ProjectSkill {
 
@@ -37,7 +36,6 @@ public class ProjectSkill {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "skill_id", nullable = false)
     @NotNull(message = "Skill is required")
-    @JsonManagedReference("project-skill")
     private Skill skill;
 
     @Column(name = "is_required", nullable = false)
@@ -112,8 +110,10 @@ public class ProjectSkill {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ProjectSkill)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof ProjectSkill))
+            return false;
         ProjectSkill that = (ProjectSkill) o;
         return id != null && id.equals(that.getId());
     }

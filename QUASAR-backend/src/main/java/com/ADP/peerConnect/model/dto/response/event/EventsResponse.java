@@ -1,11 +1,11 @@
-package com.ADP.peerConnect.model.dto.response;
+package com.ADP.peerConnect.model.dto.response.event;
 
 import com.ADP.peerConnect.model.entity.Event;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public class EventResponse {
+public class EventsResponse {
     private Long id;
     private String name;
     private String description;
@@ -14,9 +14,9 @@ public class EventResponse {
     private LocalDate endDate;
     private LocalDateTime createdAt;
 
-    public EventResponse() {}
+    public EventsResponse() {}
 
-    public EventResponse(Event event) {
+    public EventsResponse(Event event) {
         this.id = event.getId();
         this.name = event.getName();
         this.description = event.getDescription();

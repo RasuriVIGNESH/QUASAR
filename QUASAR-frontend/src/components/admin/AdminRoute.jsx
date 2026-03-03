@@ -15,16 +15,16 @@ const AdminRoute = ({ children }) => {
                 // Check for ADMIN role
                 // Adjust this check based on actual API response structure for roles
                 // Assuming roles is an array of objects ({id, name}) or strings
-                const hasAdminRole = userProfile.roles?.some(r => r.name === 'ADMIN' || r === 'ADMIN');
+                const hasAdminRole = userProfile.role === 'ADMIN' || userProfile.roles?.some(r => r.name === 'ADMIN' || r === 'ADMIN');
 
                 // OR checks depending on how your backend sends it (AdminController usually implies ROLE_ADMIN)
                 // If you are testing and don't have the role yet, you might temporarily allow all for dev:
                 // setIsAuthorized(true); 
 
-                setIsAuthorized(hasAdminRole);
+                setIsAuthorized(Boolean(hasAdminRole));
 
                 if (!hasAdminRole && userProfile) {
-                    console.warn('Access denied: User does not have ADMIN role.', userProfile.roles);
+                    console.warn('Access denied: User does not have ADMIN role.', userProfile.role, userProfile.roles);
                     toast.error('Access Restricted: Admins Only');
                 }
             }

@@ -98,12 +98,12 @@ export default function AdminProjects() {
                                             </TableCell>
                                             {/* Owner might be an ID or object depending on API, assuming standard object */}
                                             <TableCell>
-                                                {typeof project.owner === 'object'
-                                                    ? `${project.owner.firstName} ${project.owner.lastName}`
-                                                    : project.owner || 'Unknown'}
+                                                {typeof project.lead === 'object' && project.lead !== null
+                                                    ? `${project.lead.firstName} ${project.lead.lastName}`
+                                                    : project.lead?.firstName || 'Unknown'}
                                             </TableCell>
-                                            <TableCell>{project.category || '-'}</TableCell>
-                                            <TableCell>{project.membersCount || project.members?.length || 0}</TableCell>
+                                            <TableCell>{project.categoryName || '-'}</TableCell>
+                                            <TableCell>{project.currentTeamSize || project.members?.length || 1}</TableCell>
                                             <TableCell>{project.createdAt ? new Date(project.createdAt).toLocaleDateString() : '-'}</TableCell>
                                         </TableRow>
                                     ))

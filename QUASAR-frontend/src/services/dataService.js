@@ -305,9 +305,20 @@ class DataService {
   async getEventUsers(id) {
     try {
       if (!id) throw new Error('Event ID is required');
-      return await apiService.get(`/events/${id}/users`);
+      return await apiService.get(`/events/${id}/students`);
     } catch (error) {
       console.error(`DataService: Error getting event users ${id}:`, error);
+      return [];
+    }
+  }
+
+  // Get event projects
+  async getEventProjects(id) {
+    try {
+      if (!id) throw new Error('Event ID is required');
+      return await apiService.get(`/events/${id}/projects`);
+    } catch (error) {
+      console.error(`DataService: Error getting event projects ${id}:`, error);
       return [];
     }
   }
@@ -316,7 +327,7 @@ class DataService {
   async checkEventUserExists(eventId, userId) {
     try {
       if (!eventId || !userId) throw new Error('Event ID and User ID are required');
-      return await apiService.get(`/events/${eventId}/users/${userId}/exists`);
+      return await apiService.get(`/events/${eventId}/students/${userId}/exists`);
     } catch (error) {
       console.error(`DataService: Error checking event user exists:`, error);
       return false;
@@ -327,7 +338,7 @@ class DataService {
   async getEventUserCount(id) {
     try {
       if (!id) throw new Error('Event ID is required');
-      return await apiService.get(`/events/${id}/users/count`);
+      return await apiService.get(`/events/${id}/students/count`);
     } catch (error) {
       console.error(`DataService: Error getting event user count ${id}:`, error);
       return 0;

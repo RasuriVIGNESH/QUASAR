@@ -30,21 +30,23 @@ export default function AdminOverview() {
         const fetchStats = async () => {
             try {
                 setLoading(true);
-                // Using existing endpoints to gather stats
-                // Note: For real admin stats we might need specific admin endpoints, 
-                // but using what's available for now as proxies.
+                // 1 & 2. Get user and project counts
+                const countRes = await dataService.getSystemCounts();
+                // Response is a list: [userCount, projectCount]
+                let userCount = 0;
+                let projectCount = 0;
+                if (Array.isArray(countRes)) {
+                    userCount = countRes[0] || 0;
+                    projectCount = countRes[1] || 0;
+                } else if (Array.isArray(countRes?.data)) {
+                    userCount = countRes.data[0] || 0;
+                    projectCount = countRes.data[1] || 0;
+                }
 
-                // 1. Get user count (using public count or scanning list)
-                // Ideally we want exact database count
-                const userCount = await userService.getPublicUserCount();
-
-                // 2. Get project count (fetching page 1 gives totalElements)
-                const projectsRes = await projectService.searchProjects({ size: 1 });
-                const projectCount = projectsRes.data?.totalElements || 0;
-
-                // 3. Get upcoming events count (simple length for now)
+                // 3. Get upcoming events count
                 const eventsRes = await dataService.getAllEvents();
-                const eventCount = Array.isArray(eventsRes) ? eventsRes.length : 0;
+                const eventCount = Array.isArray(eventsRes) ? eventsRes.length :
+                    (Array.isArray(eventsRes?.data) ? eventsRes.data.length : 0);
 
                 setStats({
                     users: userCount,

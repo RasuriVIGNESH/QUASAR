@@ -88,14 +88,31 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests(authz -> {
-                    authz
-                            .antMatchers("/oauth2/**", "/oauth2/authorization/**", "/login/**", "/login/oauth2/**").permitAll()
-                            .antMatchers(Constants.AUTH_BASE_PATH + "/**").permitAll()
-                            .antMatchers(publicStaticEndpoints).permitAll()
-                            .antMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/api-docs/**").permitAll()
-                            .antMatchers("/ws/**").permitAll()
-                            .anyRequest().authenticated();
-                })
+            authz
+                    // public
+                    .antMatchers("/oauth2/**", "/login/**").permitAll()
+                    .antMatchers(Constants.AUTH_BASE_PATH + "/**").permitAll()
+                    .antMatchers(publicStaticEndpoints).permitAll()
+                    .antMatchers(
+                            "/swagger-ui/**",
+                            "/swagger-ui.html",
+                            "/v3/api-docs/**",
+                            "/v3/api-docs",
+                            "/api-docs/**"
+                    ).permitAll()
+
+                    // ===== ADMIN =====
+                    .antMatchers("/api/admin/**").hasRole("ADMIN")
+
+                    // ===== MENTOR =====
+                    .antMatchers("/api/mentor/**").hasAnyRole("MENTOR","ADMIN")
+
+                    // ===== STUDENT =====
+                    .antMatchers("/api/student/**").hasRole("STUDENT")
+
+                    // fallback
+                    .anyRequest().authenticated();
+        })
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationEndpoint(auth -> auth.baseUri("/oauth2/authorization"))
                         .redirectionEndpoint(redir -> redir.baseUri("/login/oauth2/code/*"))

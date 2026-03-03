@@ -11,12 +11,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, String>, JpaSpecificationExecutor<Project> {
 
     static int countProjectsInCollege(String collegeId) {
         throw new UnsupportedOperationException("Unimplemented method 'countProjectsInCollege'");
     }
+
+    // Find projects by Event ID
+    List<Project> findByEventId(Long eventId);
 
     // Find projects owned by a user
     Page<Project> findByLeadIdOrderByCreatedAtDesc(String LeadId, Pageable pageable);
@@ -59,9 +64,9 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
     /**
      * Finds projects for the "Discover" feature.
      */
-    @Query(value = "SELECT p FROM Project p JOIN FETCH p.lead WHERE p.status = :status AND (SELECT COUNT(pm) FROM ProjectMember pm WHERE pm.project.id = p.id) < p.maxTeamSize AND p.lead.id != :userId AND NOT EXISTS (SELECT 1 FROM ProjectMember pm WHERE pm.project.id = p.id AND pm.user.id = :userId) ORDER BY p.createdAt DESC",
-            countQuery = "SELECT count(p) FROM Project p WHERE p.status = :status AND (SELECT COUNT(pm) FROM ProjectMember pm WHERE pm.project.id = p.id) < p.maxTeamSize AND p.lead.id != :userId AND NOT EXISTS (SELECT 1 FROM ProjectMember pm WHERE pm.project.id = p.id AND pm.user.id = :userId)")
-    Page<Project> findDiscoverProjectsForUser(@Param("userId") String userId, @Param("status") ProjectStatus status, Pageable pageable);
+    @Query(value = "SELECT p FROM Project p JOIN FETCH p.lead WHERE p.status = :status AND (SELECT COUNT(pm) FROM ProjectMember pm WHERE pm.project.id = p.id) < p.maxTeamSize AND p.lead.id != :userId AND NOT EXISTS (SELECT 1 FROM ProjectMember pm WHERE pm.project.id = p.id AND pm.user.id = :userId) ORDER BY p.createdAt DESC", countQuery = "SELECT count(p) FROM Project p WHERE p.status = :status AND (SELECT COUNT(pm) FROM ProjectMember pm WHERE pm.project.id = p.id) < p.maxTeamSize AND p.lead.id != :userId AND NOT EXISTS (SELECT 1 FROM ProjectMember pm WHERE pm.project.id = p.id AND pm.user.id = :userId)")
+    Page<Project> findDiscoverProjectsForUser(@Param("userId") String userId, @Param("status") ProjectStatus status,
+            Pageable pageable);
 
     // Find projects by projectFor name (case-insensitive)
     @Query("SELECT p FROM Project p WHERE p.category IS NOT NULL AND LOWER(p.category.name) = LOWER(:categoryName)")

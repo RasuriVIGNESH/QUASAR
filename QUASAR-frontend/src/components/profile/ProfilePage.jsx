@@ -99,6 +99,7 @@ export default function ProfilePage() {
     };
 
     const currentAvail = availabilityOptions.find(o => o.value === formData.availabilityStatus);
+    const isStudent = !userProfile || userProfile?.role === 'STUDENT';
 
     return (
         <div className="min-h-screen bg-[#F8FAFC] dark:bg-[#020617] flex flex-col md:flex-row overflow-hidden font-sans">
@@ -210,21 +211,23 @@ export default function ProfilePage() {
                                     </p>
                                 </Card>
 
-                                <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white dark:bg-slate-900 flex flex-col justify-between">
-                                    <div>
-                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Education</h4>
-                                        <div className="space-y-4">
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl"><BookOpen size={20} /></div>
-                                                <div><p className="text-xs text-slate-400 font-bold">Branch</p><p className="font-bold text-slate-800 dark:text-white">{userProfile?.branch || 'N/A'}</p></div>
-                                            </div>
-                                            <div className="flex items-center gap-4">
-                                                <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl"><GraduationCap size={20} /></div>
-                                                <div><p className="text-xs text-slate-400 font-bold">Graduation Year</p><p className="font-bold text-slate-800 dark:text-white">{userProfile?.graduationYear || 'N/A'}</p></div>
+                                {isStudent && (
+                                    <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white dark:bg-slate-900 flex flex-col justify-between">
+                                        <div>
+                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Education</h4>
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl"><BookOpen size={20} /></div>
+                                                    <div><p className="text-xs text-slate-400 font-bold">Branch</p><p className="font-bold text-slate-800 dark:text-white">{userProfile?.branch || 'N/A'}</p></div>
+                                                </div>
+                                                <div className="flex items-center gap-4">
+                                                    <div className="p-3 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 rounded-2xl"><GraduationCap size={20} /></div>
+                                                    <div><p className="text-xs text-slate-400 font-bold">Graduation Year</p><p className="font-bold text-slate-800 dark:text-white">{userProfile?.graduationYear || 'N/A'}</p></div>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </Card>
+                                    </Card>
+                                )}
 
                                 <Card className="border-none shadow-sm rounded-[32px] p-8 bg-white dark:bg-slate-900 overflow-hidden relative group">
                                     <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6">Network Health</h4>
@@ -268,24 +271,28 @@ export default function ProfilePage() {
                                                     </SelectContent>
                                                 </Select>
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Graduation</Label>
-                                                <Select value={formData.graduationYear} onValueChange={(v) => handleSelectChange('graduationYear', v)}>
-                                                    <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
-                                                        {graduationYears.map(y => <SelectItem key={y} value={y.toString()} className="dark:text-slate-300 dark:focus:bg-slate-700">{y}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Branch</Label>
-                                                <Select value={formData.branch} onValueChange={(v) => handleSelectChange('branch', v)}>
-                                                    <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
-                                                        {branches.map(b => <SelectItem key={b} value={b} className="dark:text-slate-300 dark:focus:bg-slate-700">{b}</SelectItem>)}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
+                                            {isStudent && (
+                                                <>
+                                                    <div className="space-y-2">
+                                                        <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Graduation</Label>
+                                                        <Select value={formData.graduationYear} onValueChange={(v) => handleSelectChange('graduationYear', v)}>
+                                                            <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                                                                {graduationYears.map(y => <SelectItem key={y} value={y.toString()} className="dark:text-slate-300 dark:focus:bg-slate-700">{y}</SelectItem>)}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="font-bold text-slate-700 dark:text-slate-300 ml-1">Branch</Label>
+                                                        <Select value={formData.branch} onValueChange={(v) => handleSelectChange('branch', v)}>
+                                                            <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 dark:text-white"><SelectValue /></SelectTrigger>
+                                                            <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
+                                                                {branches.map(b => <SelectItem key={b} value={b} className="dark:text-slate-300 dark:focus:bg-slate-700">{b}</SelectItem>)}
+                                                            </SelectContent>
+                                                        </Select>
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </TabsContent>
 

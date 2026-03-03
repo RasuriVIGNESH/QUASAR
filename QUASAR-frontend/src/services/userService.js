@@ -7,7 +7,7 @@ class UserService {
             if (!userId || userId === 'undefined') {
                 throw new Error('Invalid user ID provided');
             }
-            return await apiService.get(`/users/${userId}`);
+            return await apiService.get(`/students/${userId}`);
         } catch (error) {
             console.error('Get user profile error:', error);
             throw new Error(error.message || 'Failed to get user profile');
@@ -43,7 +43,7 @@ class UserService {
             }
 
             // FIXED: Using correct endpoint from UserController
-            return await apiService.put('/users/profile', cleanedData);
+            return await apiService.put('/students/profile', cleanedData);
         } catch (error) {
             console.error('Update profile error:', error);
             throw new Error(error.message || 'Failed to update profile');
@@ -80,7 +80,7 @@ class UserService {
             if (searchParams.sortDir) queryParams.append('sortDir', searchParams.sortDir);
 
             const queryString = queryParams.toString();
-            const endpoint = queryString ? `/search/users?${queryString}` : '/search/users';
+            const endpoint = queryString ? `/search/students?${queryString}` : '/search/students';
             return await apiService.get(endpoint);
         } catch (error) {
             throw new Error(error.message || 'Failed to search users');
@@ -138,7 +138,7 @@ class UserService {
             const token = apiService.getToken();
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-            return await apiService.request('/users/profile-photo', {
+            return await apiService.request('/students/profile-photo', {
                 method: 'POST',
                 body: formData,
                 headers
@@ -152,7 +152,7 @@ class UserService {
     // Delete profile photo (DELETE /api/users/profile-photo)
     async deleteProfilePhoto() {
         try {
-            return await apiService.delete('/users/profile-photo');
+            return await apiService.delete('/students/profile-photo');
         } catch (error) {
             console.error('Delete profile photo error:', error);
             throw new Error(error.message || 'Failed to delete profile photo');
@@ -166,7 +166,7 @@ class UserService {
                 throw new Error('Status is required');
             }
             // FIXED: Use query parameter as expected by UserController
-            return await apiService.put('/users/availability', null, { status });
+            return await apiService.put('/students/availability', null, { status });
         } catch (error) {
             throw new Error(error.message || 'Failed to update availability');
         }

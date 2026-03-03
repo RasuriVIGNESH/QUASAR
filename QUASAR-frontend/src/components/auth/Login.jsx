@@ -28,10 +28,16 @@ export default function Login() {
     setError(null);
     try {
       setLoading(true);
-      await login(email, password);
+      const user = await login(email, password);
       setShowWelcome(true);
       setTimeout(() => {
-        navigate('/dashboard');
+        if (user?.role === 'ADMIN') {
+          navigate('/admin/overview');
+        } else if (user?.role === 'MENTOR') {
+          navigate('/mentor/overview');
+        } else {
+          navigate('/dashboard');
+        }
       }, 2000);
     } catch (err) {
       console.error('Login error:', err);

@@ -49,7 +49,7 @@ class AnalyticsService {
   // Get user statistics
   async getUserStats() {
     try {
-      return await apiService.get('/analytics/users/stats');
+      return await apiService.get('/analytics/students/stats');
     } catch (error) {
       throw new Error(error.message || 'Failed to get user statistics');
     }

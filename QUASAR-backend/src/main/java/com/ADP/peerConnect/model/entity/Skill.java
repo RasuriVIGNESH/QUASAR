@@ -21,7 +21,8 @@ import java.util.List;
  * - Skill IDs are generated from skill name hash (MD5)
  * - This ensures the SAME skill name always gets the SAME ID
  * - Required for ML recommendation system to match skills accurately
- * - Example: User's "Java" (ID: 5234987623498765) matches Project's "Java" (same ID)
+ * - Example: User's "Java" (ID: 5234987623498765) matches Project's "Java"
+ * (same ID)
  *
  * @author PeerConnect Team
  * @version 2.0 - ML Optimized
@@ -39,7 +40,7 @@ public class Skill {
 
     @Id
     @Column(name = "id", updatable = false, nullable = false)
-    private Long id;  // NO @GeneratedValue - we set it manually from hash!
+    private Long id; // NO @GeneratedValue - we set it manually from hash!
 
     @Column(name = "name", unique = true, nullable = false, length = 100)
     @NotBlank(message = "Skill name is required")
@@ -80,15 +81,15 @@ public class Skill {
 
     // Relationships
     @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference("user-skill")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<UserSkill> userSkills = new ArrayList<>();
 
     @OneToMany(mappedBy = "skill", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonBackReference("project-skill")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<ProjectSkill> projectSkills = new ArrayList<>();
 
     // =============================
-    //        CONSTRUCTORS
+    // CONSTRUCTORS
     // =============================
 
     public Skill() {
@@ -107,7 +108,7 @@ public class Skill {
     }
 
     // =============================
-    //    DETERMINISTIC ID GENERATION
+    // DETERMINISTIC ID GENERATION
     // =============================
 
     /**
@@ -161,7 +162,7 @@ public class Skill {
      * Examples:
      * - "Java" -> "java"
      * - " Python " -> "python"
-     * - "REACT  JS" -> "react js"
+     * - "REACT JS" -> "react js"
      *
      * @param name Original skill name
      * @return Normalized skill name
@@ -174,7 +175,7 @@ public class Skill {
     }
 
     // =============================
-    //        GETTERS / SETTERS
+    // GETTERS / SETTERS
     // =============================
 
     public Long getId() {
@@ -260,7 +261,7 @@ public class Skill {
     }
 
     // =============================
-    //        UTILITY METHODS
+    // UTILITY METHODS
     // =============================
 
     /**
@@ -299,20 +300,22 @@ public class Skill {
      * Check if this skill is popular (used by many users)
      */
     public boolean isPopular() {
-        return this.usersCount > 50;  // Threshold can be adjusted
+        return this.usersCount > 50; // Threshold can be adjusted
     }
 
     /**
      * Check if this skill is in high demand (required by many projects)
      */
     public boolean isInDemand() {
-        return this.projectsCount > 20;  // Threshold can be adjusted
+        return this.projectsCount > 20; // Threshold can be adjusted
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Skill)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof Skill))
+            return false;
         Skill skill = (Skill) o;
         return id != null && id.equals(skill.getId());
     }

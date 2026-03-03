@@ -16,7 +16,7 @@ import java.time.LocalDateTime;
         @Index(name = "idx_user_skill_skill", columnList = "skill_id"),
         @Index(name = "idx_user_skill_level", columnList = "level")
 }, uniqueConstraints = {
-        @UniqueConstraint(name = "uk_user_skill", columnNames = {"user_id", "skill_id"})
+        @UniqueConstraint(name = "uk_user_skill", columnNames = { "user_id", "skill_id" })
 })
 public class UserSkill {
 
@@ -34,7 +34,6 @@ public class UserSkill {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "skill_id", nullable = false)
     @NotNull(message = "Skill is required")
-    @JsonBackReference("user-skill")
     private Skill skill;
 
     @Enumerated(EnumType.STRING)
@@ -114,8 +113,10 @@ public class UserSkill {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof UserSkill)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof UserSkill))
+            return false;
         UserSkill userSkill = (UserSkill) o;
         return id != null && id.equals(userSkill.getId());
     }

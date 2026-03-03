@@ -173,7 +173,7 @@ class SkillsService {
     async getUserSkills() {
         try {
             console.log('SkillsService: Getting user skills...');
-            const response = await apiService.get('/users/skills');
+            const response = await apiService.get('/skills/skills');
             console.log('SkillsService: User skills response:', response);
             return response;
         } catch (error) {
@@ -190,7 +190,7 @@ class SkillsService {
                 throw new Error('User ID is required');
             }
 
-            const response = await apiService.get(`/users/${userId}`);
+            const response = await apiService.get(`/students/${userId}`);
             console.log('SkillsService: User profile response:', response);
 
             // Extract skills from user profile response
@@ -223,7 +223,7 @@ class SkillsService {
             };
 
             console.log('SkillsService: Sending request data:', requestData);
-            const response = await apiService.post('/users/skills', requestData);
+            const response = await apiService.post('/skills/skills', requestData);
             console.log('SkillsService: Add skill response:', response);
             return response;
         } catch (error) {
@@ -253,7 +253,7 @@ class SkillsService {
             };
 
             console.log('SkillsService: Sending batch request:', payload);
-            const response = await apiService.post('/users/skills/batch', payload);
+            const response = await apiService.post('/skills/skills/batch', payload);
             console.log('SkillsService: Batch add response:', response);
             return response;
         } catch (error) {
@@ -277,7 +277,7 @@ class SkillsService {
             };
 
             console.log('SkillsService: Sending update request data:', requestData);
-            const response = await apiService.put(`/users/skills/${skillId}`, requestData);
+            const response = await apiService.put(`/skills/skills/${skillId}`, requestData);
             console.log('SkillsService: Update user skill response:', response);
             return response;
         } catch (error) {
@@ -294,7 +294,7 @@ class SkillsService {
                 throw new Error('Skill ID is required for deletion');
             }
 
-            const response = await apiService.delete(`/users/skills/${skillId}`);
+            const response = await apiService.delete(`/skills/skills/${skillId}`);
             console.log('SkillsService: Delete user skill response:', response);
             return response;
         } catch (error) {

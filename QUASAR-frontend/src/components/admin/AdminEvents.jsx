@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,8 @@ import {
     Trash2,
     Calendar,
     MoreHorizontal,
-    Loader2
+    Loader2,
+    Folder
 } from 'lucide-react';
 import {
     DropdownMenu,
@@ -28,12 +30,19 @@ import dataService from '../../services/dataService';
 import { toast } from 'sonner';
 
 export default function AdminEvents() {
+    const navigate = useNavigate();
     const [events, setEvents] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [currentEvent, setCurrentEvent] = useState(null); // For edit mode
     const [isDeploying, setIsDeploying] = useState(false);
+
+    // Project modal state
+    const [isProjectsDialogOpen, setIsProjectsDialogOpen] = useState(false);
+    const [eventProjects, setEventProjects] = useState([]);
+    const [projectsLoading, setProjectsLoading] = useState(false);
+    const [selectedEventForProjects, setSelectedEventForProjects] = useState(null);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -132,6 +141,22 @@ export default function AdminEvents() {
         }
     };
 
+    const fetchEventProjects = async (event) => {
+        try {
+            setSelectedEventForProjects(event);
+            setIsProjectsDialogOpen(true);
+            setProjectsLoading(true);
+            // Fetch projects
+            const response = await dataService.getEventProjects(event.id);
+            setEventProjects(response || []);
+        } catch (error) {
+            console.error('Failed to fetch event projects:', error);
+            toast.error('Failed to load projects for this event');
+        } finally {
+            setProjectsLoading(false);
+        }
+    };
+
     const filteredEvents = events.filter(event =>
         event.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.description?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -194,9 +219,12 @@ export default function AdminEvents() {
                                     filteredEvents.map((event) => (
                                         <TableRow key={event.id}>
                                             <TableCell className="font-medium">
-                                                <div>
+                                                <div
+                                                    className="cursor-pointer hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                                                    onClick={() => navigate(`/admin/events/${event.id}`)}
+                                                >
                                                     {event.name}
-                                                    <div className="text-xs text-slate-500 truncate max-w-[250px]">{event.description}</div>
+                                                    <div className="text-xs text-slate-500 truncate max-w-[250px] group-hover:text-slate-600">{event.description}</div>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
@@ -221,6 +249,10 @@ export default function AdminEvents() {
                                                         <DropdownMenuItem onClick={() => openEditDialog(event)}>
                                                             <Pencil className="mr-2 h-4 w-4" />
                                                             Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => navigate(`/admin/events/${event.id}`)}>
+                                                            <Folder className="mr-2 h-4 w-4" />
+                                                            View Projects
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem
                                                             onClick={() => handleDelete(event.id)}
@@ -336,6 +368,73 @@ export default function AdminEvents() {
                             </Button>
                         </DialogFooter>
                     </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* View Projects Modal */}
+            <Dialog open={isProjectsDialogOpen} onOpenChange={setIsProjectsDialogOpen}>
+                <DialogContent className="sm:max-w-[700px] max-h-[85vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Projects for {selectedEventForProjects?.name}</DialogTitle>
+                        <DialogDescription>
+                            List of all registered projects for this event.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="flex-1 overflow-y-auto pr-2 mt-4 space-y-4">
+                        {projectsLoading ? (
+                            <div className="flex justify-center items-center h-32">
+                                <Loader2 className="h-8 w-8 animate-spin text-indigo-500" />
+                            </div>
+                        ) : eventProjects.length === 0 ? (
+                            <div className="text-center p-8 border border-dashed rounded-lg text-slate-500">
+                                No projects registered for this event yet.
+                            </div>
+                        ) : (
+                            eventProjects.map(project => (
+                                <Card
+                                    key={project.id}
+                                    className="mb-4 cursor-pointer hover:border-indigo-500 hover:shadow-md transition-all group"
+                                    onClick={() => {
+                                        setIsProjectsDialogOpen(false);
+                                        navigate(`/projects/${project.id}`);
+                                    }}
+                                >
+                                    <CardHeader className="pb-2">
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <CardTitle className="text-lg">{project.title}</CardTitle>
+                                                <CardDescription className="line-clamp-2 mt-1">
+                                                    {project.description}
+                                                </CardDescription>
+                                            </div>
+                                            <Badge variant={project.status === 'COMPLETED' ? 'default' : 'secondary'}>
+                                                {project.status}
+                                            </Badge>
+                                        </div>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="grid grid-cols-2 gap-4 text-sm mt-2">
+                                            <div>
+                                                <span className="text-slate-500 font-medium">Lead: </span>
+                                                {project.Lead?.firstName} {project.Lead?.lastName}
+                                            </div>
+                                            <div>
+                                                <span className="text-slate-500 font-medium">Team Size: </span>
+                                                {project.currentTeamSize || 1} / {project.maxTeamSize}
+                                            </div>
+                                            <div className="col-span-2">
+                                                <span className="text-slate-500 font-medium">Members: </span>
+                                                {project.members && project.members.length > 0
+                                                    ? project.members.map(m => m.user.firstName + ' ' + m.user.lastName).join(', ')
+                                                    : 'Lead only'}
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            ))
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </div>

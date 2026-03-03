@@ -1,6 +1,7 @@
 package com.ADP.peerConnect.model.dto.response.Project;
 
 import com.ADP.peerConnect.model.dto.response.UserResponse;
+import com.ADP.peerConnect.model.entity.Event;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.enums.ProjectStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -19,7 +20,7 @@ public class ProjectResponse {
     private String id;
     private String title;
     private String description;
-    //private String category;
+    private Event event;
     private ProjectStatus status;
     private LocalDate expectedStartDate;
     private LocalDate expectedEndDate;
@@ -47,6 +48,7 @@ public class ProjectResponse {
     public ProjectResponse() {}
     public ProjectResponse(Project project) {
         this.id = project.getId();
+        this.event = project.getEvent();
         this.title = project.getTitle();
         this.description = project.getDescription();
         if (project.getCategory() != null) {
@@ -104,7 +106,13 @@ public class ProjectResponse {
     public String getTitle() {
         return title;
     }
-    
+    public Event getEvent() {
+        return event;
+    }
+
+    public void setEvent(Event event) {
+        this.event = event;
+    }
     public void setTitle(String title) {
         this.title = title;
     }

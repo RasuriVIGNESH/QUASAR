@@ -242,8 +242,11 @@ export default function EventDetailPage() {
                                         </div>
                                     </div>
 
-                                    <Button className="w-full h-12 text-lg font-bold bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/20">
-                                        {userStatus.exists ? 'Registered' : 'Register Now'}
+                                    <Button
+                                        onClick={() => !userStatus.exists && navigate(`/projects/create?eventId=${event.id}&eventName=${encodeURIComponent(event.name)}`)}
+                                        disabled={userStatus.exists}
+                                        className="w-full h-12 text-lg font-bold bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 shadow-lg shadow-blue-200 dark:shadow-blue-900/20 disabled:opacity-50 disabled:cursor-not-allowed">
+                                        {userStatus.exists ? 'Registered' : 'Register with a Project'}
                                     </Button>
 
                                     <p className="text-xs text-center mt-3 text-slate-400">

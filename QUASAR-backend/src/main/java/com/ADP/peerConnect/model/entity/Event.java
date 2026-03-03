@@ -53,11 +53,8 @@ public class Event {
     @Column(name = "end_date")
     private LocalDate endDate;
 
-    @OneToMany(
-            cascade = CascadeType.ALL,
-            fetch = FetchType.LAZY,
-            mappedBy = "event"
-    )
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "event")
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<Project> projects = new ArrayList<>();
 
     @CreationTimestamp
@@ -73,7 +70,7 @@ public class Event {
     }
 
     public Event(String name, String description, LocalDate startRegisterDate,
-                 LocalDate endRegistrationDate, LocalDate startDate, LocalDate endDate) {
+            LocalDate endRegistrationDate, LocalDate startDate, LocalDate endDate) {
         this.name = name;
         this.description = description;
         this.startRegisterDate = startRegisterDate;
@@ -197,8 +194,10 @@ public class Event {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Event)) return false;
+        if (this == o)
+            return true;
+        if (!(o instanceof Event))
+            return false;
         Event event = (Event) o;
         return id != null && id.equals(event.getId());
     }
