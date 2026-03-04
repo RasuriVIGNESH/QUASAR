@@ -114,9 +114,9 @@ const MyProjects = () => {
 
     if (searchQuery) {
       filtered = filtered.filter(project =>
-        project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        project.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        project.category.toLowerCase().includes(searchQuery.toLowerCase())
+        project.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        project.categoryName?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -125,7 +125,7 @@ const MyProjects = () => {
     }
 
     if (categoryFilter !== 'ALL') {
-      filtered = filtered.filter(project => project.category === categoryFilter);
+      filtered = filtered.filter(project => project.categoryName === categoryFilter);
     }
 
     setFilteredProjects(filtered);

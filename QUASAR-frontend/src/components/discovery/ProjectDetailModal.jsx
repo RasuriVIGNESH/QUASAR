@@ -96,7 +96,7 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
                                     )}
                                 </div>
 
-                                <h2 className="text-4xl font-black mb-4 tracking-tight leading-tight">
+                                <h2 className="text-4xl font-black mb-4 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-100">
                                     {project.title}
                                 </h2>
 

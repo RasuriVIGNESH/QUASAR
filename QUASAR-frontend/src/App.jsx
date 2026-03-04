@@ -41,6 +41,7 @@ import MentorRoute from './components/mentor/MentorRoute';
 import MentorDashboardLayout from './components/mentor/MentorDashboardLayout';
 import MentorOverview from './components/mentor/MentorOverview';
 import MentorStudents from './components/mentor/MentorStudents';
+import MentorProjects from './components/mentor/MentorProjects';
 
 import { Toaster } from '@/components/ui/sonner';
 import AnimatedBackground from './components/common/AnimatedBackground';
@@ -180,6 +181,7 @@ function App() {
                 <Route index element={<Navigate to="overview" replace />} />
                 <Route path="overview" element={<MentorOverview />} />
                 <Route path="students" element={<MentorStudents />} />
+                <Route path="projects" element={<MentorProjects />} />
               </Route>
 
               <Route

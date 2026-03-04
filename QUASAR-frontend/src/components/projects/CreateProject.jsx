@@ -225,7 +225,7 @@ export default function CreateProject() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col lg:flex-row overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col lg:flex-row overflow-hidden">
       <AnimatePresence>
         {showSuccess && (
           <SuccessOverlay
@@ -294,7 +294,7 @@ export default function CreateProject() {
       </div>
 
       {/* --- RIGHT SIDE: THE FORM --- */}
-      <div className="lg:w-3/5 bg-slate-50 relative overflow-y-auto">
+      <div className="lg:w-3/5 bg-slate-50 dark:bg-slate-900 relative overflow-y-auto">
         <div className="max-w-2xl mx-auto px-8 py-16 lg:py-24">
           <ValidationAlert error={error} />
           <AnimatePresence mode="wait" custom={direction}>
@@ -310,39 +310,39 @@ export default function CreateProject() {
                 {currentStep === 1 && (
                   <div className="space-y-6">
                     <div className="grid gap-2">
-                      <Label className="text-slate-700 font-semibold">Project Title *</Label>
+                      <Label className="text-slate-700 dark:text-slate-200 font-semibold">Project Title *</Label>
                       <Input
                         placeholder="What's the name of your masterpiece?"
                         value={formData.title}
                         onChange={e => handleInputChange('title', e.target.value)}
-                        className="h-14 rounded-2xl border-slate-200 bg-white shadow-sm focus:ring-2 focus:ring-indigo-500/20"
+                        className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 shadow-sm focus:ring-2 focus:ring-indigo-500/20"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-slate-700 font-semibold">Problem Statement *</Label>
+                      <Label className="text-slate-700 dark:text-slate-200 font-semibold">Problem Statement *</Label>
                       <Textarea
                         placeholder="Clearly describe the gap you're bridging..."
                         value={formData.problemStatement}
                         onChange={e => handleInputChange('problemStatement', e.target.value)}
-                        className="min-h-[120px] rounded-2xl border-slate-200 bg-white"
+                        className="min-h-[120px] rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-slate-700 font-semibold">Project Summary</Label>
+                      <Label className="text-slate-700 dark:text-slate-200 font-semibold">Project Summary</Label>
                       <Textarea
                         placeholder="A short, catchy description for the feed..."
                         value={formData.description}
                         onChange={e => handleInputChange('description', e.target.value)}
-                        className="min-h-[100px] rounded-2xl border-slate-200 bg-white"
+                        className="min-h-[100px] rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-slate-700 font-semibold">Category *</Label>
+                      <Label className="text-slate-700 dark:text-slate-200 font-semibold">Category *</Label>
                       <Select value={formData.category} onValueChange={(v) => v === 'create_new' ? setShowCategoryDialog(true) : handleInputChange('category', v)}>
-                        <SelectTrigger className="h-14 rounded-2xl bg-white">
+                        <SelectTrigger className="h-14 rounded-2xl bg-white dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                           <SelectValue placeholder="Pick a domain" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="dark:bg-slate-800 dark:border-slate-700 dark:text-white">
                           {projectCategories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
                           <SelectItem value="create_new" className="text-indigo-600 font-bold">+ New Category</SelectItem>
                         </SelectContent>
@@ -354,31 +354,31 @@ export default function CreateProject() {
                 {currentStep === 2 && (
                   <div className="space-y-6">
                     <div className="grid gap-2">
-                      <Label className="text-slate-700 font-semibold">Key Goals *</Label>
+                      <Label className="text-slate-700 dark:text-slate-200 font-semibold">Key Goals *</Label>
                       <Textarea
                         placeholder="Goal 1: Launch MVP..."
                         value={formData.goals}
                         onChange={e => handleInputChange('goals', e.target.value)}
-                        className="min-h-[120px] rounded-2xl"
+                        className="min-h-[120px] rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-slate-700 font-semibold">Desired Teammate Skills *</Label>
+                      <Label className="text-slate-700 dark:text-slate-200 font-semibold">Desired Teammate Skills *</Label>
                       <div className="flex gap-2 relative">
                         <Input
                           placeholder="e.g. React, UI Design..."
                           value={skillsRequiredInput}
                           onChange={e => setSkillsRequiredInput(e.target.value)}
                           onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), setFormData(p => ({ ...p, skillsRequired: [...p.skillsRequired, skillsRequiredInput] })), setSkillsRequiredInput(''))}
-                          className="h-14 rounded-2xl"
+                          className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
                         />
                         <Button type="button" onClick={() => { if (skillsRequiredInput.trim()) { setFormData(p => ({ ...p, skillsRequired: [...p.skillsRequired, skillsRequiredInput] })); setSkillsRequiredInput(''); } }} className="h-14 px-6 rounded-2xl bg-slate-900">Add</Button>
                       </div>
 
                       {/* Skills Suggestions */}
                       {staticSkills.length > 0 && (
-                        <div className="mt-2 p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                          <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 block">Suggested Skills</Label>
+                        <div className="mt-2 p-4 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700">
+                          <Label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 block">Suggested Skills</Label>
                           <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
                             {staticSkills
                               .filter(skill => {
@@ -396,7 +396,7 @@ export default function CreateProject() {
                                       setFormData(p => ({ ...p, skillsRequired: [...p.skillsRequired, skillName] }));
                                       setSkillsRequiredInput('');
                                     }}
-                                    className="cursor-pointer bg-white border-slate-200 text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-all px-3 py-1.5"
+                                    className="cursor-pointer bg-white dark:bg-slate-700 border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-600 dark:hover:text-indigo-300 hover:border-indigo-200 transition-all px-3 py-1.5"
                                   >
                                     + {skillName}
                                   </Badge>
@@ -431,16 +431,16 @@ export default function CreateProject() {
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label className="text-slate-700 font-semibold">Max Team Size *</Label>
-                        <Input type="number" value={formData.maxTeamSize} onChange={e => handleInputChange('maxTeamSize', e.target.value)} className="h-14 rounded-2xl" />
+                        <Label className="text-slate-700 dark:text-slate-200 font-semibold">Max Team Size *</Label>
+                        <Input type="number" value={formData.maxTeamSize} onChange={e => handleInputChange('maxTeamSize', e.target.value)} className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
                       </div>
                       <div className="grid gap-2">
-                        <Label className="text-slate-700 font-semibold">Expected Start</Label>
-                        <Input type="date" value={formData.expectedStartDate} onChange={e => handleInputChange('expectedStartDate', e.target.value)} className="h-14 rounded-2xl" />
+                        <Label className="text-slate-700 dark:text-slate-200 font-semibold">Expected Start</Label>
+                        <Input type="date" value={formData.expectedStartDate} onChange={e => handleInputChange('expectedStartDate', e.target.value)} className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
                       </div>
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-slate-700 font-semibold">Tech Stack</Label>
+                      <Label className="text-slate-700 dark:text-slate-200 font-semibold">Tech Stack</Label>
                       <div className="flex gap-2">
                         <Input
                           placeholder="e.g. Node.js, Firebase..."
@@ -455,7 +455,7 @@ export default function CreateProject() {
                               }
                             }
                           }}
-                          className="h-14 rounded-2xl"
+                          className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
                         />
                         <Button type="button" onClick={() => {
                           if (techStackInput.trim()) {
@@ -471,8 +471,8 @@ export default function CreateProject() {
                       </div>
                     </div>
                     <div className="grid gap-2">
-                      <Label className="text-slate-700 font-semibold">GitHub Repository</Label>
-                      <Input placeholder="https://github.com/..." value={formData.githubRepo} onChange={e => handleInputChange('githubRepo', e.target.value)} className="h-14 rounded-2xl" />
+                      <Label className="text-slate-700 dark:text-slate-200 font-semibold">GitHub Repository</Label>
+                      <Input placeholder="https://github.com/..." value={formData.githubRepo} onChange={e => handleInputChange('githubRepo', e.target.value)} className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500" />
                     </div>
                   </div>
                 )}
@@ -480,7 +480,7 @@ export default function CreateProject() {
                 {/* --- NAVIGATION FOOTER --- */}
                 <div className="pt-10 flex items-center justify-between">
                   {currentStep > 1 ? (
-                    <Button type="button" variant="ghost" onClick={handleBack} className="text-slate-500 font-bold hover:bg-slate-100 px-6 rounded-2xl h-14">
+                    <Button type="button" variant="ghost" onClick={handleBack} className="text-slate-500 dark:text-slate-300 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 px-6 rounded-2xl h-14">
                       Back
                     </Button>
                   ) : <div />}

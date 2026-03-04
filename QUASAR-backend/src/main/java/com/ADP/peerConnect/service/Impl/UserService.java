@@ -55,7 +55,8 @@ public class UserService implements iUserService, UserDetailsService {
 
     @Override
     public int getUserCount() {
-        return (int) userRepository.count();
+        return
+                (int) userRepository.count();
     }
 
     /**

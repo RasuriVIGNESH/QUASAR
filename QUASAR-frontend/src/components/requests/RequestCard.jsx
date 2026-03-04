@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  ArrowRight, Clock, Mail, CheckCircle2, XCircle,
+  Clock, Mail, CheckCircle2, XCircle,
   AlertCircle, Loader2, MessageSquare, Users, Trash2, Zap
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -35,8 +35,8 @@ export default function RequestCard({ item, type, onAccept, onReject, onCancel }
   };
 
   return (
-    <motion.div variants={itemVar} layout>
-      <Card className={`group relative border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[32px] overflow-hidden bg-white dark:bg-slate-900/50 backdrop-blur-sm dark:border dark:border-slate-800/60 ${item.status !== 'PENDING' ? 'opacity-75 grayscale-[0.5]' : ''}`}>
+    <motion.div variants={itemVar} layout className="h-full">
+      <Card className={`group relative border-none shadow-sm hover:shadow-xl transition-all duration-500 rounded-[32px] overflow-hidden bg-white dark:bg-slate-900/50 backdrop-blur-sm dark:border dark:border-slate-800/60 h-full flex flex-col ${item.status !== 'PENDING' ? 'opacity-75 grayscale-[0.5]' : ''}`}>
 
         {/* Progress Loading Overlay */}
         <AnimatePresence>
@@ -47,7 +47,7 @@ export default function RequestCard({ item, type, onAccept, onReject, onCancel }
           )}
         </AnimatePresence>
 
-        <CardContent className="p-8">
+        <CardContent className="p-8 flex flex-col flex-1">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
 
             {/* Project & User Context */}
@@ -96,7 +96,7 @@ export default function RequestCard({ item, type, onAccept, onReject, onCancel }
 
           {/* Action Footer */}
           {item.status === 'PENDING' && (
-            <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+            <div className="mt-auto pt-6 border-t border-slate-100 dark:border-slate-800 flex flex-wrap items-center gap-3">
               <div className="flex gap-3 flex-1 md:flex-none">
                 {onAccept && (
                   <Button
@@ -125,12 +125,6 @@ export default function RequestCard({ item, type, onAccept, onReject, onCancel }
                   </Button>
                 )}
               </div>
-
-              <Button variant="ghost" className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-blue-600 dark:hover:text-blue-400 group/btn" asChild>
-                <Link to={`/projects/${item.project?.id}`}>
-                  Explore Base <ArrowRight size={14} className="ml-1 group-hover/btn:translate-x-1 transition-transform" />
-                </Link>
-              </Button>
             </div>
           )}
         </CardContent>

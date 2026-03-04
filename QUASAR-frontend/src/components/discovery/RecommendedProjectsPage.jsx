@@ -145,7 +145,7 @@ export default function RecommendedProjectsPage() {
                                                 <div className={`w-2.5 h-2.5 rounded-full ${project.status === 'RECRUITING' || project.status === 'OPEN' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'}`} />
                                             </div>
 
-                                            <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">
+                                            <h3 className="text-xl font-black text-slate-900 dark:!text-white mb-3 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">
                                                 {project.title}
                                             </h3>
                                             <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed line-clamp-2 mb-6 font-medium">

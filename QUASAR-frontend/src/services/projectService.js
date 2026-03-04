@@ -24,18 +24,6 @@ class ProjectService {
     }
   }
 
-  // Get recent projects - Public endpoint
-  async getRecentProjects() {
-    try {
-      // The user specified /RecentProjects which implies it might be case sensitive or just the name
-      // Based on summary it is /RecentProjects
-      return await apiService.get('/RecentProjects');
-    } catch (error) {
-      console.error('Failed to get recent projects:', error);
-      throw new Error(error.message || 'Failed to get recent projects');
-    }
-  }
-
   // Get projects by college
   async getProjectsByCollege(collegeId) {
     try {
@@ -103,6 +91,17 @@ class ProjectService {
     } catch (error) {
       console.error(`Failed to get project ${projectId}:`, error);
       throw new Error(error.message || 'Failed to get project');
+    }
+  }
+
+  // Get recent projects - Public endpoint → GET /api/RecentProjects
+  async getRecentProjects() {
+    try {
+      const response = await apiService.get('/RecentProjects');
+      return response;
+    } catch (error) {
+      console.error('Failed to get recent projects:', error);
+      throw new Error(error.message || 'Failed to get recent projects');
     }
   }
 

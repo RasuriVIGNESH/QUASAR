@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Search, Users, UserPlus, Check, ArrowLeft,
+  Search, Users, UserPlus, Check, ArrowLeft, ArrowRight,
   Loader2, Sparkles, MapPin, GraduationCap, Trophy, Filter, X,
   ChevronRight
 } from 'lucide-react';
@@ -366,6 +366,21 @@ export default function InviteMembers() {
           </div>
         )}
       </main>
+
+      {/* Floating Go-to-Project Button */}
+      <motion.button
+        onClick={() => navigate(`/projects/${projectId}`)}
+        initial={{ opacity: 0, scale: 0.8, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ delay: 0.4, type: 'spring', stiffness: 260, damping: 20 }}
+        whileHover={{ scale: 1.08, boxShadow: '0 8px 30px rgba(59,130,246,0.45)' }}
+        whileTap={{ scale: 0.95 }}
+        title="Go to Project"
+        className="fixed bottom-8 right-8 z-50 flex items-center gap-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3.5 rounded-2xl shadow-xl shadow-blue-900/30 transition-colors cursor-pointer"
+      >
+        <span className="hidden sm:inline">Go to Project</span>
+        <ArrowRight className="w-5 h-5" />
+      </motion.button>
     </div>
   );
 }

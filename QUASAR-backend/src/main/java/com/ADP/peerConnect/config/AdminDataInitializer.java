@@ -18,14 +18,14 @@ public class AdminDataInitializer {
         return args -> {
 
             // -------- Admin 1 --------
-            String admin1Email = "admin1@peerconnect.com";
+            String admin1Email = "vigneshAdmin@gmail.com";
 
             if (!userRepository.existsByEmail(admin1Email)) {
 
                 User admin1 = new User();
                 admin1.setEmail(admin1Email);
-                admin1.setPassword(passwordEncoder.encode("Admin@123"));
-                admin1.setFirstName("System");
+                admin1.setPassword(passwordEncoder.encode("Vingesh@123"));
+                admin1.setFirstName("Vingesh");
                 admin1.setLastName("Admin");
                 admin1.setRole(Role.ADMIN);
                 admin1.setVerified(true);

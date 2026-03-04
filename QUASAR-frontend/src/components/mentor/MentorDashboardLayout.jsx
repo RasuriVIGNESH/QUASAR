@@ -9,7 +9,8 @@ import {
     LogOut,
     Menu,
     X,
-    GraduationCap
+    GraduationCap,
+    Briefcase
 } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
 
@@ -48,6 +49,7 @@ export default function MentorDashboardLayout() {
     const menuItems = [
         { path: '/mentor/overview', label: 'Overview', icon: <LayoutDashboard /> },
         { path: '/mentor/students', label: 'Students', icon: <Users /> },
+        { path: '/mentor/projects', label: 'Projects', icon: <Briefcase /> },
     ];
 
     return (

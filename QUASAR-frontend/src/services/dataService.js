@@ -345,6 +345,16 @@ class DataService {
     }
   }
 
+  // Register current student for an event - POST /api/events/{eventId}/register (STUDENT role)
+  async registerForEvent(eventId) {
+    try {
+      if (!eventId) throw new Error('Event ID is required');
+      return await apiService.post(`/events/${eventId}/register`, {});
+    } catch (error) {
+      console.error(`DataService: Error registering for event ${eventId}:`, error);
+      throw error;
+    }
+  }
   // REMOVED METHODS: The following methods don't have corresponding backend endpoints
   // If you need these functionalities, implement them in the backend first:
 

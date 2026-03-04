@@ -172,18 +172,78 @@ class UserService {
         }
     }
 
-    // Get public user count (safe for landing page)
+    // Get public user count — uses /api/count (public) instead of a non-existent /user-count
     async getPublicUserCount() {
         try {
-            // Fetch total user count from new endpoint
-            const response = await apiService.get('/user-count', {}, { preventRedirect: true });
-            console.log('User count response:', response);
-            // Handle if response is object with count or direct number
-            return typeof response === 'object' ? (response.count || response.data || 0) : response;
+            const response = await apiService.get('/count', {}, { preventRedirect: true });
+            // /api/count returns [userCount, projectCount]
+            const arr = Array.isArray(response) ? response : (Array.isArray(response?.data) ? response.data : []);
+            return arr[0] || 0;
         } catch (error) {
             console.warn('Failed to fetch public user count:', error);
-            // Fallback to 0 or a reasonable default if API fails
             return 0;
+        }
+    }
+
+    // --- User Discovery Endpoints (UserDiscovery controller @ /api) ---
+
+    // GET /api/{branch} — Find users by academic branch (path variable)
+    async findByBranch(branch) {
+        try {
+            if (!branch) throw new Error('Branch is required');
+            return await apiService.get(`/${encodeURIComponent(branch)}`);
+        } catch (error) {
+            console.error(`UserService: Error finding users by branch ${branch}:`, error);
+            return [];
+        }
+    }
+
+    // GET /api/year/{year} — Find users by graduation year (path variable)
+    async findByGraduationYear(year) {
+        try {
+            if (!year) throw new Error('Graduation year is required');
+            return await apiService.get(`/year/${year}`);
+        } catch (error) {
+            console.error(`UserService: Error finding users by graduation year ${year}:`, error);
+            return [];
+        }
+    }
+
+    // GET /api/users/skills-search?Skillname=... — Find users by skill name(s)
+    async findBySkillNames(skillNames = []) {
+        try {
+            const params = new URLSearchParams();
+            (Array.isArray(skillNames) ? skillNames : [skillNames])
+                .forEach(s => params.append('Skillname', s));
+            return await apiService.get(`/users/skills-search?${params.toString()}`);
+        } catch (error) {
+            console.error(`UserService: Error finding users by skills:`, error);
+            return [];
+        }
+    }
+
+    // GET /api/available-with-skills/{excludeUserId}?skillNames=... — Find available users with specified skills
+    async findAvailableUsersWithSkills(skillNames = [], excludeUserId) {
+        try {
+            if (!excludeUserId) throw new Error('excludeUserId is required');
+            const params = new URLSearchParams();
+            (Array.isArray(skillNames) ? skillNames : [skillNames])
+                .forEach(s => params.append('skillNames', s));
+            return await apiService.get(`/available-with-skills/${excludeUserId}?${params.toString()}`);
+        } catch (error) {
+            console.error(`UserService: Error finding available users with skills:`, error);
+            return [];
+        }
+    }
+
+    // GET /api/availability/{status} — Find users by availability status (path variable)
+    async findByAvailabilityStatus(status) {
+        try {
+            if (!status) throw new Error('Status is required');
+            return await apiService.get(`/availability/${status}`);
+        } catch (error) {
+            console.error(`UserService: Error finding users by availability status:`, error);
+            return [];
         }
     }
 }
