@@ -128,7 +128,7 @@ export default function ProjectDiscovery() {
       {/* Search Header */}
       <header className="sticky top-0 z-50 w-full h-20 bg-white/90 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60 px-8 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <img src="/data/Logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
+          <img src="/Logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover shadow-sm" />
           <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Project Hub</h1>
         </div>
 

@@ -37,7 +37,7 @@ export default function Onboarding() {
         linkedinUrl: '',
         websiteUrl: ''
     });
-    const [profileImage, setProfileImage] = useState(null);
+    const [profilePicture, setProfilePicture] = useState(null);
     const [imagePreview, setImagePreview] = useState(null);
 
     // Load initial data
@@ -61,8 +61,8 @@ export default function Onboarding() {
                         linkedinUrl: currentUser.linkedinUrl || '',
                         websiteUrl: currentUser.websiteUrl || ''
                     });
-                    if (currentUser.profileImage) {
-                        setImagePreview(currentUser.profileImage);
+                    if (currentUser.profilePictureUrl) {
+                        setImagePreview(currentUser.profilePictureUrl);
                     }
                 }
             } catch (error) {
@@ -138,7 +138,7 @@ export default function Onboarding() {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setProfileImage(file);
+            setProfilePicture(file);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);
@@ -191,8 +191,8 @@ export default function Onboarding() {
         setSubmitting(true);
         try {
             // 1. Upload Image if changed
-            if (profileImage) {
-                await userService.uploadProfilePicture(profileImage);
+            if (profilePicture) {
+                await userService.uploadProfilePicture(profilePicture);
             }
 
             // 2. Update Profile Fields

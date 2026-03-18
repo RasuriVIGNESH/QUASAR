@@ -45,14 +45,13 @@ export function AuthProvider({ children }) {
                     // Process profile photo from user data
                     // Priority: profilePictureUrl (URL) > profilePhoto (Binary)
                     if (userData?.profilePictureUrl) {
-                        userData.profileImage = userData.profilePictureUrl;
+                        // All set
                     } else if (userData?.profilePhoto) {
                         const photoData = userData.profilePhoto;
                         const photoUrl = typeof photoData === 'string' && photoData.startsWith('data:image')
                             ? photoData
                             : `data:image/png;base64,${photoData}`;
 
-                        userData.profileImage = photoUrl;
                         userData.profilePictureUrl = photoUrl;
                     }
 
@@ -91,13 +90,12 @@ export function AuthProvider({ children }) {
 
             const user = response?.data?.user || response?.user || response?.data || response;
             if (user?.profilePictureUrl) {
-                user.profileImage = user.profilePictureUrl;
+                // All set
             } else if (user?.profilePhoto) {
                 const photoData = user.profilePhoto;
                 const photoUrl = typeof photoData === 'string' && photoData.startsWith('data:image')
                     ? photoData
                     : `data:image/png;base64,${photoData}`;
-                user.profileImage = photoUrl;
                 user.profilePictureUrl = photoUrl;
             }
 
@@ -140,13 +138,12 @@ export function AuthProvider({ children }) {
 
             // If authService stores token, make sure AuthProvider knows current user
             if (user?.profilePictureUrl) {
-                user.profileImage = user.profilePictureUrl;
+                // All set
             } else if (user?.profilePhoto) {
                 const photoData = user.profilePhoto;
                 const photoUrl = typeof photoData === 'string' && photoData.startsWith('data:image')
                     ? photoData
                     : `data:image/png;base64,${photoData}`;
-                user.profileImage = photoUrl;
                 user.profilePictureUrl = photoUrl;
             }
 
@@ -184,13 +181,12 @@ export function AuthProvider({ children }) {
             const userData = response?.data || response;
             if (currentUser?.id === userId) {
                 if (userData?.profilePictureUrl) {
-                    userData.profileImage = userData.profilePictureUrl;
+                    // All set
                 } else if (userData?.profilePhoto) {
                     const photoData = userData.profilePhoto;
                     const photoUrl = typeof photoData === 'string' && photoData.startsWith('data:image')
                         ? photoData
                         : `data:image/png;base64,${photoData}`;
-                    userData.profileImage = photoUrl;
                     userData.profilePictureUrl = photoUrl;
                 }
                 setUserProfile(userData);

@@ -158,7 +158,7 @@ export default function StudentDiscovery() {
           skillCount: studentSkills.length,
           // Ensure proper field mapping
           displayName: student.name || `${student.firstName || ''} ${student.lastName || ''}`.trim(),
-          profileImage: student.profileImage || student.profilePictureUrl || student.profilePicture || student.avatar || null,
+          profilePictureUrl: student.profilePictureUrl || student.profilePicture || student.avatar || null,
           studentSkills: studentSkills,
           collegeName: student.collage?.name
         };
@@ -522,7 +522,7 @@ export default function StudentDiscovery() {
                 <div className="flex items-start justify-between">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-12 w-12">
-                      <AvatarImage src={student.profileImage} />
+                      <AvatarImage src={student.profilePictureUrl} />
                       <AvatarFallback>
                         {(student.displayName || 'Unknown').split(' ').map(n => n[0]).join('').toUpperCase()}
                       </AvatarFallback>

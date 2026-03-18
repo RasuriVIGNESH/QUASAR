@@ -108,7 +108,7 @@ export default function CompleteProfile() {
                 {/* Header */}
                 <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-4">
-                        <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+                        <img src="/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
                         <span className="text-2xl font-bold text-slate-900 dark:text-white">Quasar</span>
                     </div>
                     <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white">Complete Your Profile</h2>
@@ -124,9 +124,9 @@ export default function CompleteProfile() {
                         {currentUser && (
                             <div className="flex items-center space-x-4 mb-6 p-4 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-700/60">
                                 <div className="h-12 w-12 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 flex-shrink-0 ring-2 ring-white dark:ring-slate-800">
-                                    {currentUser.profileImage ? (
+                                    {currentUser.profilePictureUrl ? (
                                         <img
-                                            src={currentUser.profileImage}
+                                            src={currentUser.profilePictureUrl}
                                             alt="Profile"
                                             className="h-full w-full object-cover"
                                         />

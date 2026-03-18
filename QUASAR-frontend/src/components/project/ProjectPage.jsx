@@ -148,7 +148,7 @@ export default function ProjectPage() {
 
       {/* --- SLIM SIDEBAR NAVIGATION --- */}
       <aside className="w-20 border-r border-slate-200 dark:border-slate-800 flex flex-col items-center py-6 gap-8 bg-white dark:bg-[#0B1120] z-50 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
-        <img src="/data/Logo.png" alt="Dashboard" className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 cursor-pointer" onClick={() => navigate('/dashboard')} />
+        <img src="/Logo.png" alt="Dashboard" className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20 cursor-pointer" onClick={() => navigate('/dashboard')} />
 
         <nav className="flex flex-col gap-4">
           {[

@@ -17,6 +17,7 @@ import { projectService } from '../../services/projectService.js';
 import { skillsService } from '../../services/skillsService.js';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import ValidationAlert from '@/components/common/ValidationAlert';
+import ShootingStarsCanvas from '@/components/common/ShootingStarsCanvas';
 
 const stepContent = {
   1: {
@@ -152,7 +153,7 @@ export default function CreateProject() {
         <motion.div
           initial={{ scale: 0.8, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          className="bg-white rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl relative overflow-hidden"
+          className="glass-surface rounded-[40px] p-10 max-w-sm w-full text-center shadow-2xl relative overflow-hidden"
         >
           {/* Animated Checkmark Circle */}
           <div className="relative w-24 h-24 mx-auto mb-8">
@@ -162,7 +163,7 @@ export default function CreateProject() {
             >
               <motion.circle
                 cx="50" cy="50" r="45"
-                stroke="#4f46e5"
+                stroke="var(--indigo-primary)"
                 strokeWidth="6"
                 fill="transparent"
                 initial={{ pathLength: 0 }}
@@ -171,7 +172,7 @@ export default function CreateProject() {
               />
               <motion.path
                 d="M30 50 L45 65 L70 35"
-                stroke="#4f46e5"
+                stroke="var(--indigo-primary)"
                 strokeWidth="8"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -192,7 +193,7 @@ export default function CreateProject() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.2 }}
-            className="text-2xl font-black text-slate-900 mb-2"
+            className="text-2xl font-black text-white mb-2"
           >
             Project Launched!
           </motion.h2>
@@ -201,9 +202,9 @@ export default function CreateProject() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.4 }}
-            className="text-slate-500 mb-8"
+            className="text-slate-400 mb-8"
           >
-            <span className="font-bold text-indigo-600">"{projectName}"</span> is now live and visible to potential teammates.
+            <span className="font-bold text-indigo-400">"{projectName}"</span> is now live and visible to potential teammates.
           </motion.p>
 
           {/* Redirect Progress Bar */}
@@ -225,7 +226,16 @@ export default function CreateProject() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-slate-950 flex flex-col lg:flex-row overflow-hidden">
+    <div className="min-h-screen qx-root bg-[#03050d] flex flex-col lg:flex-row overflow-hidden relative">
+      <ShootingStarsCanvas />
+
+      {/* Nebula glow orbs (fixed, sit above canvas, behind content) */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-18%', left: '-12%', width: '60%', height: '55%', background: 'rgba(139,92,246,0.11)', borderRadius: '50%', filter: 'blur(100px)' }} />
+        <div style={{ position: 'absolute', bottom: '-12%', right: '-10%', width: '50%', height: '45%', background: 'rgba(6,182,212,0.07)', borderRadius: '50%', filter: 'blur(90px)' }} />
+        <div style={{ position: 'absolute', top: '38%', left: '25%', width: '40%', height: '32%', background: 'rgba(249,115,22,0.05)', borderRadius: '50%', filter: 'blur(80px)' }} />
+      </div>
+
       <AnimatePresence>
         {showSuccess && (
           <SuccessOverlay
@@ -235,16 +245,7 @@ export default function CreateProject() {
         )}
       </AnimatePresence>
       {/* --- LEFT SIDE: THE NARRATIVE --- */}
-      <div className="lg:w-2/5 bg-slate-900 relative p-8 lg:p-16 flex flex-col justify-between overflow-hidden">
-        {/* Animated Background Pulse */}
-        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.2, 0.1] }}
-            transition={{ duration: 8, repeat: Infinity }}
-            className="absolute -top-24 -left-24 w-96 h-96 bg-indigo-500 rounded-full blur-[120px]"
-          />
-        </div>
-
+      <div className="lg:w-2/5 bg-[#03050d]/60 backdrop-blur-md relative p-8 lg:p-16 flex flex-col justify-between overflow-hidden border-r border-white/5 z-10">
         <div className="relative z-10">
           <button
             onClick={() => navigate('/dashboard')}
@@ -294,7 +295,7 @@ export default function CreateProject() {
       </div>
 
       {/* --- RIGHT SIDE: THE FORM --- */}
-      <div className="lg:w-3/5 bg-slate-50 dark:bg-slate-900 relative overflow-y-auto">
+      <div className="lg:w-3/5 relative overflow-y-auto bg-transparent z-10">
         <div className="max-w-2xl mx-auto px-8 py-16 lg:py-24">
           <ValidationAlert error={error} />
           <AnimatePresence mode="wait" custom={direction}>

@@ -12,6 +12,7 @@ import { ModeToggle } from '@/components/mode-toggle';
 import { toast } from "sonner";
 import ValidationAlert from '@/components/common/ValidationAlert';
 import MagneticButton from '@/components/common/MagneticButton';
+import SpaceBackground from '@/components/common/SpaceBackground';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -64,38 +65,37 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden relative" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen overflow-hidden relative" style={{ background: '#03050d' }}>
+      <SpaceBackground />
       <div className="absolute top-4 right-4 z-50">
         <ModeToggle />
       </div>
-      {/* Animated Background */}
-      {/* Background handled by global AnimatedBackground */}
 
       <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="max-w-md w-full space-y-8">
           {/* Header */}
           <div className="text-center">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
-              <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
-              <span className="text-2xl font-bold" style={{ color: 'var(--text-bright)' }}>Quasar</span>
-            </Link>
-            <h2 className="mt-6 text-4xl font-black" style={{ color: 'var(--text-bright)' }}>
+            {/* <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
+              <img src="/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+              <span className="text-2xl font-bold" style={{ color: '#f0f4ff' }}>Quasar</span>
+            </Link> */}
+            {/* <h2 className="mt-6 text-4xl font-black" style={{ color: '#f0f4ff' }}>
               Welcome back
-            </h2>
-            <p className="mt-2 text-lg" style={{ color: 'var(--text-secondary)' }}>
+            </h2> */}
+            <p className="mt-2 text-lg" style={{ color: '#6b7280' }}>
               Sign in to continue your journey
             </p>
           </div>
 
           {/* Form Card */}
           <div>
-            <Card className="border-0 glass-surface" style={{ boxShadow: 'var(--shadow-float)' }}>
+            <Card className="border-0" style={{ boxShadow: '0 24px 64px rgba(0,0,0,0.45)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
               <CardContent className="p-8">
                 <ValidationAlert error={error} />
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Email Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    <Label htmlFor="email" className="font-semibold" style={{ color: '#94a3b8' }}>
                       Email Address
                     </Label>
                     <div className="relative group">
@@ -107,7 +107,7 @@ export default function Login() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-12 h-12 rounded-xl input-focus-glow"
-                        style={{ background: 'var(--surface-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
+                        style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
                         required
                       />
                     </div>
@@ -115,7 +115,7 @@ export default function Login() {
 
                   {/* Password Field */}
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="font-semibold" style={{ color: 'var(--text-secondary)' }}>
+                    <Label htmlFor="password" className="font-semibold" style={{ color: '#94a3b8' }}>
                       Password
                     </Label>
                     <div className="relative group">
@@ -127,7 +127,7 @@ export default function Login() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-12 pr-12 h-12 rounded-xl input-focus-glow"
-                        style={{ background: 'var(--surface-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}
+                        style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
                         required
                       />
                       <motion.button
@@ -146,7 +146,7 @@ export default function Login() {
                   <div className="flex justify-end">
                     <Link
                       to="/forgot-password"
-                      className="text-sm font-semibold transition-colors hover-spring" style={{ color: 'var(--indigo-primary)' }}
+                      className="text-sm font-semibold transition-colors hover-spring" style={{ color: '#a78bfa' }}
                     >
                       Forgot password?
                     </Link>
@@ -161,7 +161,7 @@ export default function Login() {
                       <Button
                         type="submit"
                         className="w-full h-12 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 hover-spring"
-                        style={{ background: 'linear-gradient(135deg, var(--indigo-primary), var(--violet))', boxShadow: 'var(--shadow-button)' }}
+                        style={{ background: 'linear-gradient(90deg, #7c3aed, #a855f7, #06b6d4, #a855f7, #7c3aed)', backgroundSize: '300% auto', animation: 'shimmer 5s linear infinite', boxShadow: '0 14px 44px rgba(139,92,246,0.35)' }}
                         disabled={loading}
                       >
                         {loading ? (
@@ -187,7 +187,7 @@ export default function Login() {
                     <div className="w-full border-t border-slate-200 dark:border-slate-700" />
                   </div>
                   <div className="relative flex justify-center text-sm">
-                    <span className="px-4 text-sm font-medium" style={{ background: 'var(--bg-secondary)', color: 'var(--text-muted)' }}>Or continue with</span>
+                    <span className="px-4 text-sm font-medium" style={{ background: 'transparent', color: '#4b5563' }}>Or continue with</span>
                   </div>
                 </div>
 
@@ -227,11 +227,11 @@ export default function Login() {
 
                 {/* Sign Up Link */}
                 <div className="mt-6 text-center">
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                  <p className="text-sm" style={{ color: '#6b7280' }}>
                     Don't have an account?{' '}
                     <Link
                       to="/register"
-                      className="font-bold text-blue-600 hover:text-blue-700 transition-colors"
+                      className="font-bold transition-colors" style={{ color: '#a78bfa' }}
                     >
                       Sign up
                     </Link>
@@ -243,7 +243,7 @@ export default function Login() {
 
           {/* Footer */}
           <div className="text-center">
-            <Link to="/" className="inline-flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors font-medium">
+            <Link to="/" className="inline-flex items-center gap-2 transition-colors font-medium" style={{ color: '#6b7280' }}>
               ← Back to home
             </Link>
           </div>
@@ -258,7 +258,7 @@ export default function Login() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}
+            className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: '#03050d' }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -268,9 +268,9 @@ export default function Login() {
               className="text-center"
             >
               <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl mx-auto mb-6 shadow-2xl flex items-center justify-center p-2 border border-slate-100 dark:border-slate-800">
-                <img src="/data/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
+                <img src="/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
               </div>
-              <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight" style={{ color: 'var(--text-bright)' }}>
+              <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight" style={{ color: '#f0f4ff' }}>
                 Welcome back
               </h1>
               <p className="text-lg text-slate-500 dark:text-slate-400">Taking you to your dashboard...</p>

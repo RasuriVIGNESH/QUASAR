@@ -19,4 +19,3 @@ id,name,description,badge_icon,badge_color,criteria_type,criteria_value
 18,Consistent Contributor,Stay active for 30 consecutive days,📅,blue,active_days,30
 19,Problem Solver,Help resolve 10 project issues or questions,🔍,green,issues_resolved,10
 20,Platform Ambassador,Achieve all other badges,🏆,rainbow,all_badges,19
-

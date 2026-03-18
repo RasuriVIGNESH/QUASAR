@@ -1,202 +1,582 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform, useInView, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Target,
-  Trophy,
-  ArrowRight,
-  CheckCircle,
-  Sparkles,
-  Zap,
-  Rocket,
-  GitBranch,
-  TrendingUp,
-  Shield,
-  Star,
-  Code,
-  Globe,
-  Menu,
-  X,
-  Building2,
-  Calendar,
-  Users,
-  ArrowUp
+  Trophy, ArrowRight, CheckCircle, Sparkles, Zap, Rocket,
+  GitBranch, TrendingUp, Star, Code, Globe, Menu, X,
+  Building2, Calendar, Users, ArrowUp, ChevronRight, Shield
 } from 'lucide-react';
-import { ModeToggle } from '@/components/mode-toggle';
 import { projectService } from '@/services/projectService';
 import { skillsService } from '@/services/skillsService';
 import { dataService } from '@/services/dataService';
-import MagneticButton from './common/MagneticButton';
-import TiltCard from './common/TiltCard';
 
-// Standardized Animated Section
-const AnimatedSection = ({ children, delay = 0 }) => {
+import { ShinyButton } from "@/components/ui/shiny-button";
+
+
+
+
+/* ─── Shooting Stars Canvas ──────────────────────────────────────────────── */
+const ShootingStarsCanvas = () => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let rafId, nextShoot = 0;
+    const tw = [];   // twinkling background stars
+    const sw = [];   // shooting stars
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    // Seed static twinkling stars
+    for (let i = 0; i < 220; i++) {
+      tw.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        r: Math.random() * 1.4 + 0.1,
+        ph: Math.random() * Math.PI * 2,
+        sp: Math.random() * 0.002 + 0.0007,
+      });
+    }
+
+    const COLORS = [
+      ['#9E00FF', '#2EB9DF'],
+      ['#FF0099', '#FFB800'],
+      ['#00FF9E', '#00B8FF'],
+      ['#f97316', '#8b5cf6'],
+    ];
+
+    const spawnShooter = () => {
+      const [sc, tc] = COLORS[Math.floor(Math.random() * COLORS.length)];
+      const spd = Math.random() * 7 + 5;
+      const ang = (Math.random() * 28 + 14) * (Math.PI / 180);
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height * 0.45,
+        vx: Math.cos(ang) * spd,
+        vy: Math.sin(ang) * spd,
+        len: Math.random() * 110 + 55,
+        sc, tc,
+        life: 0,
+        max: Math.random() * 65 + 45,
+      };
+    };
+
+    const draw = (t) => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Twinkling stars
+      for (const s of tw) {
+        ctx.globalAlpha = 0.2 + 0.6 * (0.5 + 0.5 * Math.sin(t * s.sp + s.ph));
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = '#fff';
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // Spawn
+      if (t > nextShoot) {
+        sw.push(spawnShooter());
+        nextShoot = t + Math.random() * 2400 + 650;
+      }
+
+      // Draw shooting stars
+      for (let i = sw.length - 1; i >= 0; i--) {
+        const s = sw[i];
+        const p = s.life / s.max;
+        const a = Math.max(0, p < 0.3 ? p / 0.3 : 1 - (p - 0.3) / 0.7);
+        const mag = Math.hypot(s.vx, s.vy);
+        const tx = s.x - (s.vx / mag) * s.len;
+        const ty = s.y - (s.vy / mag) * s.len;
+
+        const grad = ctx.createLinearGradient(tx, ty, s.x, s.y);
+        grad.addColorStop(0, 'transparent');
+        grad.addColorStop(0.65, s.tc + '55');
+        grad.addColorStop(1, s.sc);
+
+        ctx.save();
+        ctx.globalAlpha = a;
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(s.x, s.y);
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Head glow
+        const hg = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 8);
+        hg.addColorStop(0, s.sc);
+        hg.addColorStop(1, 'transparent');
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, 8, 0, Math.PI * 2);
+        ctx.fillStyle = hg;
+        ctx.fill();
+        ctx.restore();
+
+        s.x += s.vx;
+        s.y += s.vy;
+        s.life++;
+        if (s.life >= s.max || s.x > canvas.width + 120 || s.y > canvas.height + 120) {
+          sw.splice(i, 1);
+        }
+      }
+
+      rafId = requestAnimationFrame(draw);
+    };
+
+    rafId = requestAnimationFrame(draw);
+    return () => {
+      cancelAnimationFrame(rafId);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
 
   return (
-    <motion.div
+    <canvas
       ref={ref}
-      initial={{ opacity: 0, y: 20 }}
-      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-      transition={{ duration: 0.5, delay, ease: "easeOut" }}
-    >
-      {children}
-    </motion.div>
+      style={{
+        position: 'fixed', top: 0, left: 0,
+        width: '100%', height: '100%',
+        zIndex: 0, pointerEvents: 'none',
+      }}
+    />
   );
 };
 
-const InfiniteMarquee = ({ children, className, duration = 40 }) => {
-  return (
-    <div className={`overflow-hidden flex w-full ${className}`}>
-      <motion.div
-        initial={{ x: 0 }}
-        animate={{ x: "-50%" }}
-        transition={{ duration: duration, repeat: Infinity, ease: "linear" }}
-        className="flex flex-shrink-0 min-w-max items-stretch"
-      >
-        <div className="flex gap-8 flex-shrink-0 items-stretch mr-8">
-          {children}
-        </div>
-        <div className="flex gap-8 flex-shrink-0 items-stretch mr-8">
-          {children}
-        </div>
-      </motion.div>
-    </div>
-  );
-};
+/* ─── Global Styles ──────────────────────────────────────────────────────── */
+const Styles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 
-const ProjectCard = ({ project, idx, isMarquee }) => {
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .qx-root {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #03050d;
+      color: #f0f4ff;
+      -webkit-font-smoothing: antialiased;
+    }
+    .qx-syne { font-family: 'Space Grotesk', system-ui, sans-serif; }
+
+    /* Z-layer: all page content sits above the fixed canvas */
+    .qx-layer { position: relative; z-index: 1; }
+
+    /* Section backgrounds */
+    .qx-section-dim { background: rgba(3,5,13,0.6); }
+    .qx-section-alt {
+      background: rgba(139,92,246,0.04);
+      border-top: 1px solid rgba(255,255,255,0.05);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+    @keyframes marquee {
+      0%   { transform: translateX(0);    }
+      100% { transform: translateX(-50%); }
+    }
+    @keyframes shimmer {
+      0%   { background-position: 0%   center; }
+      100% { background-position: 300% center; }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px);   }
+      50%       { transform: translateY(-9px);  }
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 18px rgba(139,92,246,0.35); }
+      50%       { box-shadow: 0 0 42px rgba(139,92,246,0.65), 0 0 80px rgba(139,92,246,0.18); }
+    }
+    @keyframes pingDot {
+      0%, 100% { transform: scale(1);   opacity: 1; }
+      50%       { transform: scale(1.7); opacity: 0; }
+    }
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0);    }
+    }
+    @keyframes orbitSpin {
+      from { transform: rotate(0deg);   }
+      to   { transform: rotate(360deg); }
+    }
+
+    .qx-fade-up { animation: fadeUp 0.65s cubic-bezier(0.22,1,0.36,1) both; }
+    .qx-d1 { animation-delay: 0.06s; }
+    .qx-d2 { animation-delay: 0.16s; }
+    .qx-d3 { animation-delay: 0.28s; }
+    .qx-d4 { animation-delay: 0.44s; }
+
+    /* ── Shimmer CTA ── */
+    .qx-shimmer {
+      background: linear-gradient(90deg, #7c3aed, #a855f7, #06b6d4, #a855f7, #7c3aed);
+      background-size: 300% auto;
+      animation: shimmer 5s linear infinite;
+      border: none; cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .qx-shimmer:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 44px rgba(139,92,246,0.55);
+    }
+
+    /* ── Gradient text ── */
+    .qx-grad {
+      background: linear-gradient(135deg, #c4b5fd 0%, #8b5cf6 45%, #22d3ee 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .qx-grad-warm {
+      background: linear-gradient(135deg, #fb923c 0%, #f97316 45%, #fbbf24 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Glass card ── */
+    .qx-glass {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+    .qx-lift {
+      transition: transform 0.22s cubic-bezier(0.34,1.56,0.64,1),
+                  background 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+    .qx-lift:hover {
+      transform: translateY(-5px);
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(139,92,246,0.32);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.45), 0 0 0 1px rgba(139,92,246,0.12);
+    }
+
+    /* Top accent bar on cards */
+    .qx-accent-bar {
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, #8b5cf6, #06b6d4);
+      border-radius: 20px 20px 0 0;
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.4s ease;
+    }
+    .qx-lift:hover .qx-accent-bar { transform: scaleX(1); }
+
+    /* ── Nav ── */
+    .qx-nav-link {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px; font-weight: 500;
+      color: #8892a8; text-decoration: none;
+      padding: 6px 14px; border-radius: 8px;
+      transition: all 0.15s; cursor: pointer;
+      background: none; border: none;
+    }
+    .qx-nav-link:hover { color: #f0f4ff; background: rgba(255,255,255,0.07); }
+
+    /* ── Outline button ── */
+    .qx-btn-out {
+      border: 1px solid rgba(255,255,255,0.14);
+      color: #e2e8f0; background: rgba(255,255,255,0.04);
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: all 0.18s;
+    }
+    .qx-btn-out:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.09); }
+
+    /* ── Live dot ── */
+    .qx-live::before {
+      content: ''; display: inline-block; width: 7px; height: 7px;
+      border-radius: 50%; background: #22c55e;
+      animation: pingDot 2s ease-in-out infinite;
+      margin-right: 7px; vertical-align: middle;
+    }
+
+    /* ── Pill badge ── */
+    .qx-pill {
+      background: rgba(139,92,246,0.12);
+      border: 1px solid rgba(139,92,246,0.28);
+      color: #c4b5fd;
+    }
+
+    /* ── Skill tag ── */
+    .qx-skill {
+      background: rgba(139,92,246,0.08);
+      border: 1px solid rgba(139,92,246,0.2);
+      color: #a78bfa;
+      cursor: default;
+      transition: all 0.2s;
+    }
+    .qx-skill:hover {
+      background: rgba(139,92,246,0.18);
+      border-color: rgba(139,92,246,0.48);
+      transform: translateY(-2px);
+    }
+
+    /* ── Marquee ── */
+    .qx-mqwrap { overflow: hidden; position: relative; }
+    .qx-mqtrack { display: flex; width: max-content; animation: marquee 52s linear infinite; }
+    .qx-mqwrap:hover .qx-mqtrack { animation-play-state: paused; }
+
+    /* ── Logo visual ── */
+    .qx-float { animation: float 5s ease-in-out infinite; }
+    .qx-orbit-ring {
+      position: absolute; inset: 8px; border-radius: 50%;
+      border: 1px dashed rgba(139,92,246,0.22);
+      animation: orbitSpin 24s linear infinite;
+    }
+
+    /* ── Status tags ── */
+    .tag-recruiting {
+      background: rgba(34,197,94,0.1); color: #4ade80;
+      border: 1px solid rgba(34,197,94,0.22);
+      font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+    }
+    .tag-default {
+      background: rgba(255,255,255,0.05); color: #4b5563;
+      border: 1px solid rgba(255,255,255,0.09);
+      font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+    }
+
+    /* ── Stat card ── */
+    .qx-stat { transition: all 0.22s; }
+    .qx-stat:hover { transform: translateY(-3px); }
+
+    /* ── Feature ghost number ── */
+    .qx-ghost-num {
+      position: absolute; top: 12px; right: 18px;
+      font-size: 78px; font-weight: 900; opacity: 0.035;
+      color: #fff; user-select: none; line-height: 1;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    /* ── Benefit row ── */
+    .qx-benefit {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      transition: all 0.2s;
+    }
+    .qx-benefit:hover {
+      background: rgba(139,92,246,0.08);
+      border-color: rgba(139,92,246,0.28);
+      transform: translateX(5px);
+    }
+
+    /* ── College chip ── */
+    .qx-college {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      color: #6b7280; transition: all 0.2s;
+    }
+    .qx-college:hover { border-color: rgba(139,92,246,0.35); color: #a78bfa; }
+
+    /* ── Scroll top ── */
+    .qx-scroll-top {
+      background: linear-gradient(135deg, #7c3aed, #06b6d4);
+      animation: glowPulse 3s ease-in-out infinite;
+      transition: transform 0.2s;
+    }
+    .qx-scroll-top:hover { transform: translateY(-4px) !important; }
+
+    /* ── Footer ── */
+    .qx-footer { border-top: 1px solid rgba(255,255,255,0.05); }
+    .qx-footer a { color: #4b5563; text-decoration: none; transition: color 0.15s; }
+    .qx-footer a:hover { color: #a78bfa; }
+
+    /* ── Mobile menu ── */
+    .qx-mobile-anim { animation: slideDown 0.22s ease; }
+
+    /* ── Responsive helpers ── */
+    .qx-hide-m { }
+    .qx-show-m { display: none !important; }
+
+    @media (max-width: 768px) {
+      .qx-hide-m { display: none !important; }
+      .qx-show-m { display: flex !important; }
+      .qx-r1  { grid-template-columns: 1fr !important; gap: 40px !important; }
+      .qx-r2  { grid-template-columns: 1fr 1fr !important; }
+    }
+  `}</style>
+);
+
+/* ─── Project Card ───────────────────────────────────────────────────────── */
+const ProjectCard = ({ project, isMarquee = false }) => {
   const lead = project.lead || {};
-  const leadName = `${lead.firstName || 'Unknown'} ${lead.lastName && lead.lastName !== '---' ? lead.lastName : ''}`.trim();
+  const leadName = `${lead.firstName || 'Unknown'} ${lead.lastName && lead.lastName !== '---' ? lead.lastName : ''
+    }`.trim();
   const skills = project.requiredSkills?.map(s => s.skill) || project.skills || [];
-  const startDate = project.expectedStartDate ? new Date(project.expectedStartDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD';
+  const startDate = project.expectedStartDate
+    ? new Date(project.expectedStartDate).toLocaleDateString(undefined, {
+      month: 'short', day: 'numeric', year: 'numeric',
+    })
+    : 'TBD';
 
   return (
-    <Card className={`h-full bg-white dark:bg-slate-900/40 backdrop-blur-sm border-slate-200 dark:border-slate-800/60 hover:shadow-2xl hover:border-blue-200 dark:hover:border-blue-500/30 transition-all duration-300 overflow-hidden flex flex-col group relative ${isMarquee ? 'w-[350px] md:w-[400px] shrink-0' : ''}`}>
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-violet-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
+    <div
+      className="qx-glass qx-lift"
+      style={{
+        borderRadius: 20, overflow: 'hidden',
+        display: 'flex', flexDirection: 'column', position: 'relative',
+        width: isMarquee ? 364 : '100%',
+        flexShrink: isMarquee ? 0 : 'unset',
+      }}
+    >
+      <div className="qx-accent-bar" />
 
-      <CardHeader className="pb-3 space-y-3">
-        <div className="flex justify-between items-start gap-2">
-          <div className="flex flex-col">
-            <Badge variant="outline" className="w-fit mb-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-700/50 hover:bg-blue-100 dark:hover:bg-blue-900/30">
-              {project.categoryName || 'Project'}
-            </Badge>
-            <CardTitle className="text-xl font-bold text-slate-900 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors line-clamp-1">
-              {project.title}
-            </CardTitle>
-          </div>
-          <Badge className={`shrink-0 ${project.status === 'RECRUITING' ? 'bg-emerald-100 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800 shadow-sm' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'}`}>
-            {project.status || 'Active'}
-          </Badge>
-        </div>
-      </CardHeader>
-
-      <CardContent className="flex-grow space-y-5 pt-0 mb-4">
-        {/* Description & Goals */}
-        <div className="space-y-3">
-          {project.description && (
-            <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">
-              {project.description}
-            </p>
-          )}
+      <div style={{ padding: '22px 22px 0' }}>
+        {/* Header row */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
           <div>
-            <p className="text-[10px] uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500 mb-1">Goals</p>
-            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 line-clamp-2 leading-relaxed">
-              {project.goals || "No specific goals listed."}
-            </p>
+            <span
+              className="qx-pill"
+              style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, display: 'inline-block', marginBottom: 8 }}
+            >
+              {project.categoryName || 'Project'}
+            </span>
+            <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.35, color: '#f0f4ff', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 1, WebkitBoxOrient: 'vertical' }}>
+              {project.title}
+            </div>
           </div>
+          <span className={project.status === 'RECRUITING' ? 'tag-recruiting' : 'tag-default'} style={{ flexShrink: 0 }}>
+            {project.status || 'Active'}
+          </span>
         </div>
 
-        {/* Required Skills */}
-        <div>
-          <div className="flex items-center gap-1.5 mb-2">
-            <Sparkles className="h-3.5 w-3.5 text-amber-500" />
-            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">Required Skills</span>
+        {/* Description */}
+        {project.description && (
+          <p style={{ fontSize: 13, lineHeight: 1.65, color: '#6b7280', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', marginBottom: 12 }}>
+            {project.description}
+          </p>
+        )}
+
+        {/* Goals */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#374151', marginBottom: 4 }}>Goals</div>
+          <p style={{ fontSize: 13, fontWeight: 500, lineHeight: 1.6, color: '#cbd5e1', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+            {project.goals || 'No specific goals listed.'}
+          </p>
+        </div>
+
+        {/* Skills */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#374151', marginBottom: 6, display: 'flex', alignItems: 'center', gap: 5 }}>
+            <Sparkles style={{ width: 10, height: 10, color: '#f97316' }} /> Required Skills
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {skills.slice(0, 5).map((skillItem, sIdx) => {
-              const skillName = skillItem.name || (typeof skillItem === 'string' ? skillItem : 'Skill');
-              return (
-                <div key={sIdx} className="px-2 py-1 rounded-md bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-[10px] font-medium text-slate-600 dark:text-slate-300 flex items-center gap-1">
-                  {skillName}
-                </div>
-              );
-            })}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            {skills.slice(0, 5).map((s, i) => (
+              <span key={i} className="qx-skill" style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6 }}>
+                {s.name || (typeof s === 'string' ? s : 'Skill')}
+              </span>
+            ))}
             {skills.length > 5 && (
-              <div className="px-2 py-1 text-[10px] font-medium text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-100 dark:border-slate-700">
+              <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)', color: '#4b5563' }}>
                 +{skills.length - 5}
-              </div>
+              </span>
             )}
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="h-px bg-slate-100 dark:bg-slate-800" />
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.06)', marginBottom: 14 }} />
+      </div>
 
-        {/* Lead & Stats */}
-        <div className="space-y-4">
-          {/* Created By */}
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-medium text-slate-400 dark:text-slate-500">Members</span>
-            <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-800 pr-3 pl-1 py-1 rounded-full border border-slate-100/50 dark:border-slate-700/50">
-              <Avatar className="h-6 w-6">
-                <AvatarImage src={lead.profilePictureUrl} alt={leadName} />
-                <AvatarFallback className="bg-blue-100 text-blue-600 text-[10px]">
-                  {lead.firstName?.[0] || 'U'}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-xs font-semibold text-slate-700 dark:text-slate-300 max-w-[120px] truncate">{leadName}</span>
+      {/* Card footer */}
+      <div style={{ padding: '0 22px 20px', marginTop: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+          <span style={{ fontSize: 11, color: '#374151', fontWeight: 500 }}>Lead</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '4px 10px 4px 5px', borderRadius: 20, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ width: 24, height: 24, borderRadius: '50%', overflow: 'hidden', background: '#1e1a3d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 700 }}>
+              {lead.profilePictureUrl
+                ? <img src={lead.profilePictureUrl} alt={leadName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ color: '#8b5cf6' }}>{lead.firstName?.[0] || 'U'}</span>
+              }
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#e2e8f0', maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {leadName}
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ padding: 5, borderRadius: 7, background: 'rgba(139,92,246,0.14)' }}>
+              <Calendar style={{ width: 12, height: 12, color: '#8b5cf6' }} />
+            </div>
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#374151' }}>Start</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#e2e8f0' }}>{startDate}</div>
             </div>
           </div>
-
-          {/* Bottom Stats Info */}
-          <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800 p-3 rounded-xl border border-slate-100 dark:border-slate-700">
-            <div className="flex items-center gap-2.5">
-              <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg shadow-sm text-blue-500">
-                <Calendar className="h-3.5 w-3.5" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">Start</span>
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{startDate}</span>
-              </div>
+          <div style={{ padding: '10px 12px', display: 'flex', alignItems: 'center', gap: 8, borderLeft: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)' }}>
+            <div style={{ padding: 5, borderRadius: 7, background: 'rgba(6,182,212,0.12)' }}>
+              <Users style={{ width: 12, height: 12, color: '#06b6d4' }} />
             </div>
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200 dark:border-slate-700">
-              <div className="p-1.5 bg-white dark:bg-slate-900 rounded-lg shadow-sm text-violet-500">
-                <Users className="h-3.5 w-3.5" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase">Team</span>
-                <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{project.currentTeamSize + 1} <span className="text-slate-400 dark:text-slate-500 font-normal">/ {project.maxTeamSize}</span></span>
+            <div>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#374151' }}>Team</div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#e2e8f0' }}>
+                {(project.currentTeamSize || 0) + 1}{' '}
+                <span style={{ color: '#374151', fontWeight: 400 }}>/ {project.maxTeamSize || '?'}</span>
               </div>
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card >
+      </div>
+    </div>
   );
 };
 
-export default function LandingPage() {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { scrollYProgress } = useScroll();
-  const headerBgOpacity = useTransform(scrollYProgress, [0, 0.1], [0, 0.9]);
-  const headerShadow = useTransform(scrollYProgress, [0, 0.1], ["none", "0 4px 6px -1px rgb(0 0 0 / 0.1)"]);
+/* ─── Feature & Benefit Data ─────────────────────────────────────────────── */
+const featureData = [
+  {
+    icon: <GitBranch style={{ width: 22, height: 22 }} />,
+    title: 'Project Collaboration',
+    desc: 'Built-in tools for seamless team coordination — skill matching, task boards, and real-time project tracking.',
+    accent: '#8b5cf6', bg: 'rgba(139,92,246,0.14)',
+  },
+  {
+    icon: <TrendingUp style={{ width: 22, height: 22 }} />,
+    title: 'Skills Intelligence',
+    desc: 'Track trending skills in your domain and visualize your learning trajectory with smart analytics.',
+    accent: '#06b6d4', bg: 'rgba(6,182,212,0.12)',
+  },
+  {
+    icon: <Trophy style={{ width: 22, height: 22 }} />,
+    title: 'Achievement System',
+    desc: 'Earn orbit badges and build a visible portfolio with every contribution, collaboration, and completion.',
+    accent: '#f97316', bg: 'rgba(249,115,22,0.12)',
+  },
+  {
+    icon: <Globe style={{ width: 22, height: 22 }} />,
+    title: 'Galactic Network',
+    desc: 'Connect with students across universities, domains, and disciplines in one collaborative universe.',
+    accent: '#22c55e', bg: 'rgba(34,197,94,0.12)',
+  },
+];
 
+const benefitData = [
+  { text: 'Showcase real projects in your public portfolio', icon: <Trophy style={{ width: 16, height: 16 }} />, color: '#f97316' },
+  { text: 'Discover which skills are trending in your field', icon: <TrendingUp style={{ width: 16, height: 16 }} />, color: '#06b6d4' },
+  { text: 'Build your professional network before you graduate', icon: <Globe style={{ width: 16, height: 16 }} />, color: '#22c55e' },
+  { text: 'Collaborate on projects that matter beyond class', icon: <Code style={{ width: 16, height: 16 }} />, color: '#8b5cf6' },
+  { text: 'Get meaningful peer feedback and skill validation', icon: <Star style={{ width: 16, height: 16 }} />, color: '#fbbf24' },
+];
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LANDING PAGE
+   ═══════════════════════════════════════════════════════════════════════════ */
+export default function LandingPage() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const [publicData, setPublicData] = useState({
-    projects: [],
-    popularSkills: [],
-    colleges: [],
-    userCount: 0,
-    projectCount: 0,
-    loading: true
+    projects: [], popularSkills: [], colleges: [],
+    userCount: 0, projectCount: 0, loading: true,
   });
 
+  /* ── Data fetch (same API calls as original) ── */
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -206,415 +586,523 @@ export default function LandingPage() {
           dataService.getColleges({ preventRedirect: true }),
           dataService.getSystemCounts(),
         ]);
-
         const getList = (res) => {
           if (res.status === 'rejected') return [];
-          const val = res.value;
-          if (Array.isArray(val)) return val;
-          return val.data?.content || val.content || val.data || [];
+          const v = res.value;
+          if (Array.isArray(v)) return v;
+          return v.data?.content || v.content || v.data || [];
         };
-
         setPublicData({
           projects: getList(projectsRes),
           popularSkills: getList(skillsRes),
           colleges: getList(collegesRes),
-          // Use counts from /count endpoint ([users, projects])
           userCount: countsRes.status === 'fulfilled'
-            ? (Array.isArray(countsRes.value) ? (countsRes.value[0] || 0) : (countsRes.value.users || countsRes.value.userCount || 1250))
+            ? (Array.isArray(countsRes.value) ? (countsRes.value[0] || 0) : (countsRes.value.users || 1250))
             : 1250,
           projectCount: countsRes.status === 'fulfilled'
-            ? (Array.isArray(countsRes.value) ? (countsRes.value[1] || 0) : (countsRes.value.projects || countsRes.value.projectCount || (projectsRes.status === 'fulfilled' ? (projectsRes.value.data?.totalElements || 850) : 850)))
+            ? (Array.isArray(countsRes.value) ? (countsRes.value[1] || 0) : (countsRes.value.projects || 850))
             : 850,
-          loading: false
+          loading: false,
         });
-      } catch (e) {
-        console.error("Failed to fetch public data", e);
-        setPublicData(prev => ({ ...prev, loading: false }));
+      } catch {
+        setPublicData(p => ({ ...p, loading: false }));
       }
     };
     fetchData();
   }, []);
 
-  const [showScrollTop, setShowScrollTop] = useState(false);
-
   useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const scrollTo = (id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-      setMobileMenuOpen(false);
-    }
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+    setMobileOpen(false);
   };
-
-  const features = [
-    {
-      icon: <GitBranch className="h-6 w-6" />,
-      title: "Project Collaboration",
-      description: "Built-in tools for seamless team coordination and project management.",
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-900/20"
-    },
-    {
-      icon: <TrendingUp className="h-6 w-6" />,
-      title: "Skills Analytics",
-      description: "Track trending skills and plan your learning journey with data insights.",
-      color: "text-violet-600 dark:text-violet-400",
-      bgColor: "bg-violet-50 dark:bg-violet-900/20"
-    },
-    {
-      icon: <Trophy className="h-6 w-6" />,
-      title: "Achievement System",
-      description: "Earn recognition and build your portfolio with every contribution.",
-      color: "text-emerald-500 dark:text-emerald-400",
-      bgColor: "bg-emerald-50 dark:bg-emerald-900/20"
-    },
-    {
-      icon: <Globe className="h-6 w-6" />,
-      title: "Global Networking",
-      description: "Connect with students across different universities and domains.",
-      color: "text-blue-600 dark:text-blue-400",
-      bgColor: "bg-blue-50 dark:bg-blue-900/20"
-    }
-  ];
-
-  const benefits = [
-    { text: "Showcase your projects and achievements", icon: <Trophy className="h-5 w-5" /> },
-    { text: "Discover trending skills in your field", icon: <TrendingUp className="h-5 w-5" /> },
-    { text: "Build your professional network early", icon: <Globe className="h-5 w-5" /> },
-    { text: "Collaborate on real-world projects", icon: <Code className="h-5 w-5" /> },
-    { text: "Get peer feedback and skill ratings", icon: <Star className="h-5 w-5" /> }
-  ];
 
   return (
-    <div className="min-h-screen font-sans selection:bg-blue-100 selection:text-blue-900" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-      {/* Sticky Header */}
-      <motion.header
-        className="fixed top-0 left-0 right-0 z-50 glass-header"
+    <div className="qx-root" style={{ minHeight: '100vh' }}>
+      {/* Fixed background layers */}
+      <ShootingStarsCanvas />
+      <Styles />
+
+      {/* Nebula glow orbs (fixed, sit above canvas, behind content) */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-18%', left: '-12%', width: '60%', height: '55%', background: 'rgba(139,92,246,0.11)', borderRadius: '50%', filter: 'blur(100px)' }} />
+        <div style={{ position: 'absolute', bottom: '-12%', right: '-10%', width: '50%', height: '45%', background: 'rgba(6,182,212,0.07)', borderRadius: '50%', filter: 'blur(90px)' }} />
+        <div style={{ position: 'absolute', top: '38%', left: '25%', width: '40%', height: '32%', background: 'rgba(249,115,22,0.05)', borderRadius: '50%', filter: 'blur(80px)' }} />
+      </div>
+
+      {/* ── NAVBAR ─────────────────────────────────────────────────────── */}
+      <nav
+        className="qx-layer"
+        style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50,
+          background: 'rgba(3,5,13,0.82)', backdropFilter: 'blur(22px)',
+          WebkitBackdropFilter: 'blur(22px)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          transition: 'all 0.3s',
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20 relative">
-            <Link to="/" className="flex items-center gap-2">
-              <img src="/data/Logo.png" alt="Logo" className="h-9 w-9 rounded-lg object-cover" />
-              <span className="text-2xl font-bold tracking-tight">
-                <span className="text-gradient-indigo">Quasar</span>
-              </span>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+
+          {/* Logo */}
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', flexShrink: 0 }}>
+            <div style={{ position: 'relative', width: 36, height: 36, flexShrink: 0 }}>
+              <div style={{ position: 'absolute', inset: -4, borderRadius: 14, background: 'rgba(139,92,246,0.28)', filter: 'blur(10px)' }} />
+              <img src="/Logo.png" alt="Quasar Logo" style={{ width: 36, height: 36, borderRadius: 10, objectFit: 'cover', position: 'relative' }} />
+            </div>
+            <span className="qx-syne qx-grad" style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.02em' }}>Quasar</span>
+          </Link>
+
+          {/* Desktop nav pill — centered */}
+          <div
+            className="qx-hide-m"
+            style={{
+              position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
+              display: 'flex', alignItems: 'center', gap: 2,
+              padding: '6px 8px', borderRadius: 40,
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            {[['projects', 'Live Projects'], ['features', 'Features'], ['colleges', 'Universities']].map(([id, label]) => (
+              <button key={id} onClick={() => scrollTo(id)} className="qx-nav-link">{label}</button>
+            ))}
+          </div>
+
+          {/* Right actions */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Link to="/login" className="qx-hide-m" style={{ textDecoration: 'none' }}>
+              <button className="qx-btn-out" style={{ fontSize: 13, fontWeight: 600, padding: '7px 16px', borderRadius: 9 }}>Sign In</button>
             </Link>
-
-            {/* Desktop Navigation - Centered & Glassy */}
-            <motion.nav
-              initial={{ y: -100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ duration: 0.8, type: "spring", bounce: 0.3 }}
-              className="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 items-center gap-1 p-1.5 rounded-full glass-surface" style={{ boxShadow: 'var(--shadow-card)' }}
-            >
-              <div className="flex items-center gap-1 px-2">
-                {['projects', 'features', 'colleges'].map((item) => (
-                  <button
-                    key={item}
-                    onClick={() => scrollTo(item)}
-                    className="relative px-4 py-2 text-sm font-semibold hover-spring rounded-full capitalize" style={{ color: 'var(--text-secondary)' }}
-                  >
-                    {item === 'projects' ? 'Latest Projects' : item}
-                  </button>
-                ))}
-              </div>
-              <div className="pl-2 border-l ml-2" style={{ borderColor: 'var(--border-subtle)' }}>
-                <ModeToggle />
-              </div>
-            </motion.nav>
-
-            {/* Mobile Menu Button */}
-            <div className="flex items-center gap-4 md:hidden">
-              <ModeToggle />
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            <Link to="/register" style={{ textDecoration: 'none' }}>
+              <button className="qx-shimmer" style={{ color: '#fff', fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 9, display: 'flex', alignItems: 'center', gap: 6 }}>
+                Join Free <ArrowRight style={{ width: 14, height: 14 }} />
               </button>
-            </div>
-          </div>
-        </div >
-
-        {/* Mobile Menu */}
-        {
-          mobileMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="md:hidden glass-surface px-4 py-6 space-y-4" style={{ borderBottom: '1px solid var(--border-subtle)' }}
+            </Link>
+            <button
+              onClick={() => setMobileOpen(o => !o)}
+              className="qx-show-m"
+              style={{ padding: 7, borderRadius: 9, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer', color: '#8892a8' }}
+              aria-label="Menu"
             >
-              <button onClick={() => scrollTo('projects')} className="block w-full text-left font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400">Latest Projects</button>
-              <button onClick={() => scrollTo('features')} className="block w-full text-left font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400">Features</button>
-              <button onClick={() => scrollTo('colleges')} className="block w-full text-left font-semibold text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400">Colleges</button>
-            </motion.div>
-          )
-        }
-      </motion.header >
-
-      {/* Hero Section */}
-      < section className="relative pt-40 pb-24 overflow-hidden" >
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/50 dark:bg-blue-900/30 rounded-full blur-[120px]" />
-          <div className="absolute bottom-[10%] right-[-5%] w-[30%] h-[30%] bg-violet-100/50 dark:bg-violet-900/30 rounded-full blur-[100px]" />
+              {mobileOpen ? <X style={{ width: 20, height: 20 }} /> : <Menu style={{ width: 20, height: 20 }} />}
+            </button>
+          </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <AnimatedSection>
-            {/* <Badge className="mb-6 px-4 py-1 bg-blue-50 text-blue-700 border-blue-100 rounded-full font-medium">
-              🚀 Join 1,200+ students building the future
-            </Badge> */}
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-8" style={{ color: 'var(--text-bright)' }}>
-              Connect. Collaborate. <br />
-              <span className="text-gradient-indigo">
-                Create Together.
-              </span>
-            </h1>
-            <p className="text-lg md:text-xl mb-10 max-w-3xl mx-auto leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-              The ultimate professional networking platform for college students.
-              Find your perfect project partners based on complementary skills and shared interests.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Link to="/register">
-                <Button size="lg" className="text-white text-lg px-8 py-6 rounded-full shadow-lg transition-all duration-200 hover:scale-105 hover-spring" style={{ background: 'linear-gradient(135deg, var(--indigo-primary), var(--violet))', boxShadow: 'var(--shadow-button)' }}>
-                  Join Quasar
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
+        {/* Mobile drawer */}
+        {mobileOpen && (
+          <div
+            className="qx-mobile-anim"
+            style={{ padding: '16px 24px 20px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(3,5,13,0.97)', display: 'flex', flexDirection: 'column', gap: 4 }}
+          >
+            {[['projects', 'Live Projects'], ['features', 'Features'], ['colleges', 'Universities']].map(([id, label]) => (
+              <button key={id} onClick={() => scrollTo(id)} style={{ textAlign: 'left', padding: '11px 0', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 500, color: '#8892a8', fontFamily: 'Inter, sans-serif' }}>
+                {label}
+              </button>
+            ))}
+            <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
+              <Link to="/login" style={{ flex: 1, textDecoration: 'none' }}>
+                <button className="qx-btn-out" style={{ width: '100%', padding: '11px', borderRadius: 9, fontSize: 13, fontWeight: 600 }}>Sign In</button>
               </Link>
-              <Link to="/login">
-                <Button size="lg" variant="outline" className="text-lg px-8 py-6 rounded-full glass-surface hover-spring" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}>
-                  Sign In
-                </Button>
+              <Link to="/register" style={{ flex: 1, textDecoration: 'none' }}>
+                <button className="qx-shimmer" style={{ width: '100%', color: '#fff', padding: '11px', borderRadius: 9, fontSize: 13, fontWeight: 700 }}>Join Free</button>
               </Link>
             </div>
-          </AnimatedSection>
-        </div>
-      </section >
+          </div>
+        )}
+      </nav>
 
-      {/* Stats Section */}
-      <section className="py-12 border-y" style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-subtle)' }}>
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+      {/* ── HERO ───────────────────────────────────────────────────────── */}
+      <section
+        className="qx-layer"
+        style={{
+          paddingTop: 164, paddingBottom: 112,
+          minHeight: '100vh',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          textAlign: 'center', overflow: 'hidden',
+        }}
+      >
+        <div style={{ maxWidth: 880, margin: '0 auto', padding: '0 24px', position: 'relative', zIndex: 1 }}>
+
+          {/* Headline */}
+          <h1
+            className="qx-fade-up qx-d1 qx-syne"
+            style={{ fontSize: 'clamp(38px, 7vw, 78px)', fontWeight: 700, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 22, color: '#f0f4ff' }}
+          >
+            Find teammates, <br />
+            <span className="qx-grad">ship projects, get noticed.</span>
+          </h1>
+
+          <p
+            className="qx-fade-up qx-d2"
+            style={{ fontSize: 'clamp(14px, 1.8vw, 17px)', lineHeight: 1.7, maxWidth: 540, margin: '0 auto 40px', color: '#6b7280' }}
+          >
+            The professional collaboration platform for college students.
+            Find teammates by skill, launch real projects, and build a portfolio
+            that stands out — before you ever graduate.
+          </p>
+
+          {/* CTAs */}
+          <div
+            className="qx-fade-up qx-d3"
+            style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginBottom: 60 }}
+          >
+            <Link to="/register" style={{ textDecoration: 'none' }}>
+              <button className="qx-btn-out" style={{ color: '#fff', fontSize: 15, fontWeight: 700, padding: '13px 34px', borderRadius: 40, display: 'flex', alignItems: 'center', gap: 9 }}>
+                Launch your orbit.
+              </button>
+            </Link>
+            <Link to="/login" style={{ textDecoration: 'none' }}>
+              <button className="qx-btn-out" style={{ fontSize: 15, fontWeight: 600, padding: '13px 28px', borderRadius: 40, display: 'flex', alignItems: 'center', gap: 8 }}>
+                Login <ChevronRight style={{ width: 17, height: 17 }} />
+              </button>
+            </Link>
+          </div>
+
+          {/* Trust row */}
+          <div
+            className="qx-fade-up qx-d4"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 11, fontSize: 12, color: '#4b5563', flexWrap: 'wrap' }}
+          >
+          </div>
+        </div>
+      </section>
+
+      {/* ── STATS ──────────────────────────────────────────────────────── */}
+      <section className="qx-layer qx-section-alt" style={{ padding: '52px 24px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }} className="qx-r2">
             {[
-              { label: "Active Students", value: `${publicData.userCount}` },
-              { label: "Projects Created", value: `${publicData.projectCount}` },
-              { label: "Universities", value: `${publicData.colleges.length || 50}` },
-              { label: "Success Rate", value: "98%" }
-            ].map((stat, i) => (
-              <div key={i} className="text-center group flex flex-col items-center">
-                <div className="h-10 mb-1 flex items-center justify-center">
-                  <div className="text-3xl md:text-4xl font-bold group-hover:scale-110 transition-transform duration-300" style={{ color: 'var(--indigo-primary)' }}>
-                    {stat.value}
-                  </div>
+              { label: 'Active Students', value: publicData.userCount > 0 ? `${publicData.userCount.toLocaleString()}+` : '1,250+', color: '#8b5cf6', icon: <Users style={{ width: 20, height: 20 }} /> },
+              { label: 'Projects Launched', value: publicData.projectCount > 0 ? `${publicData.projectCount.toLocaleString()}+` : '850+', color: '#06b6d4', icon: <Rocket style={{ width: 20, height: 20 }} /> },
+              { label: 'Universities', value: `${publicData.colleges.length || 50}+`, color: '#f97316', icon: <Building2 style={{ width: 20, height: 20 }} /> },
+              { label: 'Success Rate', value: '98%', color: '#22c55e', icon: <Trophy style={{ width: 20, height: 20 }} /> },
+            ].map((s, i) => (
+              <div
+                key={i}
+                className="qx-glass qx-stat"
+                style={{ borderRadius: 18, padding: '22px', display: 'flex', alignItems: 'center', gap: 16 }}
+                onMouseEnter={e => { e.currentTarget.style.borderColor = `${s.color}55`; e.currentTarget.style.boxShadow = `0 0 28px ${s.color}22`; }}
+                onMouseLeave={e => { e.currentTarget.style.borderColor = ''; e.currentTarget.style.boxShadow = ''; }}
+              >
+                <div style={{ width: 48, height: 48, borderRadius: 14, background: `${s.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: s.color, flexShrink: 0, boxShadow: `0 0 18px ${s.color}28` }}>
+                  {s.icon}
                 </div>
-                <div className="text-sm font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">{stat.label}</div>
+                <div>
+                  <div className="qx-syne" style={{ fontSize: 'clamp(20px, 2.5vw, 30px)', fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</div>
+                  <div style={{ fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#374151', marginTop: 5 }}>{s.label}</div>
+                </div>
               </div>
             ))}
           </div>
         </div>
-      </section >
+      </section>
 
-      {/* Featured Projects */}
-      {
-        publicData.projects.length > 0 && (
-          <section id="projects" className="py-24 px-4" style={{ background: 'var(--bg-primary)' }}>
-            <div className="max-w-7xl mx-auto">
-              <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
-                <div>
-                  <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ color: 'var(--text-bright)' }}>Latest Projects</h2>
-                  <p style={{ color: 'var(--text-secondary)' }}>Discover what's being built by students right now.</p>
+      {/* ── FEATURED PROJECTS ──────────────────────────────────────────── */}
+      {publicData.projects.length > 0 && (
+        <section id="projects" className="qx-layer" style={{ padding: '100px 0' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', marginBottom: 44 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+              <div>
+                <div className="qx-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 14 }}>
+                  <Rocket style={{ width: 11, height: 11 }} /> Live Projects
                 </div>
-                <Link to="/login">
-                  <Button variant="link" className="text-blue-600 dark:text-blue-400 font-semibold p-0 flex items-center gap-1">
-                    View all projects <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
+                <h2 className="qx-syne" style={{ fontSize: 'clamp(24px, 3.5vw, 42px)', fontWeight: 700, lineHeight: 1.1, color: '#f0f4ff' }}>
+                  What Students Are Building
+                </h2>
+                <p style={{ fontSize: 14, color: '#4b5563', marginTop: 10 }}>Real projects, real teams, real impact.</p>
               </div>
-
-              {publicData.projects.length > 3 ? (
-                <div className="w-full py-8 md:py-12 relative">
-                  {/* Fade gradients for marquee edges */}
-                  <div className="absolute left-0 top-0 bottom-0 w-8 md:w-32 bg-gradient-to-r from-slate-50 dark:from-slate-950 to-transparent z-10 pointer-events-none" />
-                  <div className="absolute right-0 top-0 bottom-0 w-8 md:w-32 bg-gradient-to-l from-slate-50 dark:from-slate-950 to-transparent z-10 pointer-events-none" />
-
-                  <InfiniteMarquee className="py-4" duration={Math.max(40, publicData.projects.length * 8)}>
-                    {publicData.projects.map((project, idx) => (
-                      <ProjectCard
-                        key={project.id || idx}
-                        project={project}
-                        idx={idx}
-                        isMarquee={true}
-                      />
-                    ))}
-                  </InfiniteMarquee>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {publicData.projects.map((project, idx) => (
-                    <AnimatedSection key={project.id || idx} delay={idx * 0.1}>
-                      <ProjectCard project={project} idx={idx} />
-                    </AnimatedSection>
-                  ))}
-                </div>
-              )}
+              <Link
+                to="/login"
+                style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, fontWeight: 600, color: '#a78bfa', textDecoration: 'none', transition: 'gap 0.15s', whiteSpace: 'nowrap' }}
+                onMouseEnter={e => e.currentTarget.style.gap = '11px'}
+                onMouseLeave={e => e.currentTarget.style.gap = '6px'}
+              >
+                View all projects <ArrowRight style={{ width: 15, height: 15 }} />
+              </Link>
             </div>
-          </section>
-        )
-      }
+          </div>
 
-      {/* Features Grid */}
-      <section id="features" className="py-24 px-4" style={{ background: 'var(--bg-secondary)' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-bold mb-6" style={{ color: 'var(--text-bright)' }}>Built for Student Success</h2>
-            <p className="max-w-2xl mx-auto text-lg" style={{ color: 'var(--text-secondary)' }}>
-              Everything you need to find a team, grow your network, and build an impressive portfolio.
+          {publicData.projects.length > 3 ? (
+            <div className="qx-mqwrap" style={{ padding: '8px 0' }}>
+              {/* Edge fades */}
+              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 110, background: 'linear-gradient(to right, #03050d, transparent)', zIndex: 2, pointerEvents: 'none' }} />
+              <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 110, background: 'linear-gradient(to left, #03050d, transparent)', zIndex: 2, pointerEvents: 'none' }} />
+              <div className="qx-mqtrack" style={{ padding: '12px 0', gap: 20 }}>
+                {[...publicData.projects, ...publicData.projects].map((project, i) => (
+                  <ProjectCard key={i} project={project} isMarquee />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 20 }}>
+              {publicData.projects.map((project, i) => (
+                <ProjectCard key={i} project={project} />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* ── FEATURES GRID ──────────────────────────────────────────────── */}
+      <section id="features" className="qx-layer qx-section-alt" style={{ padding: '100px 24px' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: 64 }}>
+
+            <h2 className="qx-syne" style={{ fontSize: 'clamp(24px, 3.5vw, 44px)', fontWeight: 700, lineHeight: 1.08, color: '#f0f4ff', marginBottom: 14 }}>
+              Built for Student Success
+            </h2>
+            <p style={{ fontSize: 14, color: '#4b5563', maxWidth: 520, margin: '0 auto', lineHeight: 1.7 }}>
+              Everything you need to find the right team, grow your skills, and ship work that matters.
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, idx) => (
-              <TiltCard key={idx} className="p-8 rounded-2xl glass-surface hover-spring card-hover-lift" style={{ border: '1px solid var(--border-subtle)' }}>
-                <div className={`${feature.bgColor} ${feature.color} w-12 h-12 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform`}>
-                  {feature.icon}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }} className="qx-r2">
+            {featureData.map((f, i) => (
+              <div key={i} className="qx-glass qx-lift" style={{ borderRadius: 22, padding: 30, position: 'relative', overflow: 'hidden' }}>
+                <div className="qx-accent-bar" />
+                <div className="qx-ghost-num">{String(i + 1).padStart(2, '0')}</div>
+                <div style={{ width: 52, height: 52, borderRadius: 16, background: f.bg, color: f.accent, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 22, boxShadow: `0 0 22px ${f.accent}28` }}>
+                  {f.icon}
                 </div>
-                <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--text-bright)' }}>{feature.title}</h3>
-                <p className="leading-relaxed text-sm" style={{ color: 'var(--text-secondary)' }}>{feature.description}</p>
-              </TiltCard>
+                <h3 className="qx-syne" style={{ fontSize: 15, fontWeight: 700, marginBottom: 10, color: '#f0f4ff' }}>{f.title}</h3>
+                <p style={{ fontSize: 12, lineHeight: 1.7, color: '#4b5563' }}>{f.desc}</p>
+              </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Benefits / Social Proof */}
-      <section className="py-24 px-4" style={{ background: 'var(--bg-primary)' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <AnimatedSection>
-              <h2 className="text-4xl font-bold mb-8 leading-tight" style={{ color: 'var(--text-bright)' }}>
-                Why thousands of students <br />
-                <span className="text-gradient-indigo">trust Quasar</span>
-              </h2>
-              <div className="space-y-4">
-                {benefits.map((benefit, i) => (
-                  <div key={i} className="flex items-center gap-4 p-4 glass-surface rounded-xl hover-spring card-hover-lift" style={{ border: '1px solid var(--border-subtle)' }}>
-                    <div className="text-blue-600 dark:text-blue-500 bg-blue-50 dark:bg-blue-900/20 p-2 rounded-lg">{benefit.icon}</div>
-                    <span className="font-semibold text-slate-700 dark:text-slate-200">{benefit.text}</span>
+      {/* ── BENEFITS + LOGO VISUAL ─────────────────────────────────────── */}
+      <section className="qx-layer" style={{ padding: '100px 24px' }}>
+        <div
+          style={{ maxWidth: 1280, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}
+          className="qx-r1"
+        >
+          {/* Left: Benefits */}
+          <div>
+            <div className="qx-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 100, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: 20 }}>
+              <Star style={{ width: 12, height: 12 }} /> Why Students Love Quasar
+            </div>
+            <h2 className="qx-syne" style={{ fontSize: 'clamp(22px, 3vw, 38px)', fontWeight: 700, lineHeight: 1.1, color: '#f0f4ff', marginBottom: 28 }}>
+              Your launchpad to a<br />
+              <span className="qx-grad-warm">remarkable career.</span>
+            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+              {benefitData.map((b, i) => (
+                <div key={i} className="qx-benefit" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 14 }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: `${b.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: b.color, flexShrink: 0 }}>
+                    {b.icon}
                   </div>
-                ))}
-              </div>
-            </AnimatedSection>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0', lineHeight: 1.4 }}>{b.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            <AnimatedSection delay={0.2}>
-              <div className="flex items-center justify-center p-8">
-                <div className="relative group">
-                  {/* Glow ring - Hidden in dark mode for aesthetics */}
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-400/30 to-violet-500/30 blur-2xl scale-110 group-hover:scale-125 transition-transform duration-500 dark:opacity-0" />
-                  {/* Floating Logo without box */}
-                  <div className="relative p-4 md:p-8">
-                    <img
-                      src="/data/Logo.png"
-                      alt="Quasar Logo"
-                      className="w-52 h-52 md:w-64 md:h-64 object-contain filter drop-shadow-[0_0_40px_rgba(99,102,241,0.2)] dark:drop-shadow-[0_0_20px_rgba(255,255,255,0.02)] hover:scale-110 transition-all duration-700 card-float"
-                    />
-                  </div>
+          {/* Right: Logo visual with orbit cards */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ position: 'relative', padding: 48 }}>
+              {/* Outer nebula glow */}
+              <div style={{ position: 'absolute', inset: -20, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)', filter: 'blur(30px)', pointerEvents: 'none' }} />
+              {/* Spinning orbit ring */}
+              <div className="qx-orbit-ring" />
+
+              {/* Projects card */}
+              <div
+                className="qx-float"
+                style={{ position: 'absolute', top: 12, right: -52, background: 'rgba(3,5,13,0.92)', backdropFilter: 'blur(18px)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 14, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px rgba(139,92,246,0.22)' }}
+              >
+                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(139,92,246,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <GitBranch style={{ width: 14, height: 14, color: '#8b5cf6' }} />
+                </div>
+                <div>
+                  <div className="qx-syne" style={{ fontSize: 16, fontWeight: 800, color: '#8b5cf6' }}>{publicData.projectCount > 0 ? `${publicData.projectCount}+` : '850+'}</div>
+                  <div style={{ fontSize: 11, color: '#374151' }}>Projects</div>
                 </div>
               </div>
-            </AnimatedSection>
+
+              {/* Students card */}
+              <div
+                style={{ position: 'absolute', bottom: 22, left: -56, background: 'rgba(3,5,13,0.92)', backdropFilter: 'blur(18px)', border: '1px solid rgba(6,182,212,0.3)', borderRadius: 14, padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 10, boxShadow: '0 8px 32px rgba(6,182,212,0.22)', animation: 'float 4.5s 1.1s ease-in-out infinite' }}
+              >
+                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(6,182,212,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <Users style={{ width: 14, height: 14, color: '#06b6d4' }} />
+                </div>
+                <div>
+                  <div className="qx-syne" style={{ fontSize: 16, fontWeight: 800, color: '#06b6d4' }}>{publicData.userCount > 0 ? `${publicData.userCount}+` : '1,250+'}</div>
+                  <div style={{ fontSize: 11, color: '#374151' }}>Students</div>
+                </div>
+              </div>
+
+              {/* Central logo */}
+              <img
+                src="/Logo.png"
+                alt="Quasar Logo"
+                className="qx-float"
+                style={{
+                  width: 210, height: 210, objectFit: 'contain', position: 'relative', zIndex: 1,
+                  filter: 'drop-shadow(0 0 44px rgba(139,92,246,0.45)) drop-shadow(0 0 90px rgba(6,182,212,0.15))',
+                }}
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Institutional Trust */}
-      {
-        publicData.colleges.length > 0 && (
-          <section id="colleges" className="py-16 px-4" style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-subtle)' }}>
-            <div className="max-w-7xl mx-auto text-center">
-              <p className="text-slate-400 font-bold text-xs uppercase tracking-[0.2em] mb-10">Trusted by students from</p>
-              <div className="flex flex-wrap justify-center items-center gap-8 md:gap-16 grayscale opacity-60 dark:opacity-40">
-                {publicData.colleges.slice(0, 5).map((college, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-bold text-lg italic">
-                    <Building2 className="h-5 w-5" />
-                    {college.name}
-                  </div>
+      {/* ── POPULAR SKILLS ─────────────────────────────────────────────── */}
+      {publicData.popularSkills.length > 0 && (
+        <section className="qx-layer qx-section-alt" style={{ padding: '68px 24px' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.13em', color: '#374151', marginBottom: 8 }}>
+              Trending on the Platform
+            </div>
+            <h3 className="qx-syne" style={{ fontSize: 22, fontWeight: 700, color: '#f0f4ff', marginBottom: 28 }}>Skills in Demand</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center' }}>
+              {publicData.popularSkills.map((skill, i) => (
+                <span key={i} className="qx-skill" style={{ fontSize: 12, fontWeight: 600, padding: '8px 18px', borderRadius: 26 }}>
+                  {skill.name || skill}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── INSTITUTIONAL TRUST ────────────────────────────────────────── */}
+      {publicData.colleges.length > 0 && (
+        <section id="colleges" className="qx-layer" style={{ padding: '76px 24px' }}>
+          <div style={{ maxWidth: 1280, margin: '0 auto', textAlign: 'center' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.13em', color: '#374151', marginBottom: 8 }}>
+              Our Universe of Institutions
+            </div>
+            <h3 className="qx-syne" style={{ fontSize: 22, fontWeight: 700, color: '#f0f4ff', marginBottom: 30 }}>Trusted by students from</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
+              {publicData.colleges.slice(0, 8).map((college, i) => (
+                <div key={i} className="qx-college" style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 18px', borderRadius: 30, fontSize: 13, fontWeight: 600 }}>
+                  <Building2 style={{ width: 14, height: 14 }} />
+                  {college.name}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ── CTA BANNER ─────────────────────────────────────────────────── */}
+      <section className="qx-layer qx-section-alt" style={{ padding: '108px 24px' }}>
+        <div style={{ maxWidth: 760, margin: '0 auto', textAlign: 'center' }}>
+          <div className="qx-pill" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 16px', borderRadius: 100, fontSize: 12, fontWeight: 600, marginBottom: 26 }}>
+            <Sparkles style={{ width: 13, height: 13 }} /> Ready to launch?
+          </div>
+          <h2
+            className="qx-syne"
+            style={{ fontSize: 'clamp(28px, 4.5vw, 52px)', fontWeight: 700, lineHeight: 1.06, color: '#f0f4ff', marginBottom: 16, letterSpacing: '-0.02em' }}
+          >
+            Your next chapter<br />
+            <span className="qx-grad">starts in orbit.</span>
+          </h2>
+          <p style={{ fontSize: 15, color: '#4b5563', lineHeight: 1.7, maxWidth: 500, margin: '0 auto 38px' }}>
+            Join thousands of students already connecting, collaborating, and building impressive portfolios on Quasar.
+          </p>
+          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link to="/register" style={{ textDecoration: 'none' }}>
+              <button className="qx-shimmer" style={{ color: '#fff', fontSize: 15, fontWeight: 700, padding: '13px 36px', borderRadius: 40, display: 'flex', alignItems: 'center', gap: 8 }}>
+                Get Started Free <ArrowRight style={{ width: 18, height: 18 }} />
+              </button>
+            </Link>
+            <Link to="/projects" style={{ textDecoration: 'none' }}>
+              <button className="qx-btn-out" style={{ fontSize: 15, fontWeight: 600, padding: '13px 28px', borderRadius: 40 }}>
+                Browse Projects
+              </button>
+            </Link>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 26, marginTop: 38, flexWrap: 'wrap' }}>
+            {['Free to join', 'No credit card', 'Open to all colleges'].map((t, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#374151' }}>
+                <CheckCircle style={{ width: 14, height: 14, color: '#22c55e' }} />
+                {t}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ─────────────────────────────────────────────────────── */}
+      <footer className="qx-footer qx-layer" style={{ padding: '58px 24px 34px', background: 'rgba(3,5,13,0.95)' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr', gap: 48, marginBottom: 48 }} className="qx-r1">
+
+            {/* Brand */}
+            <div>
+              <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', marginBottom: 16 }}>
+                <img src="/Logo.png" alt="Quasar Logo" style={{ width: 34, height: 34, borderRadius: 9, objectFit: 'cover' }} />
+                <span className="qx-syne qx-grad" style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.02em' }}>Quasar</span>
+              </Link>
+              <p style={{ fontSize: 13, lineHeight: 1.7, maxWidth: 300, marginBottom: 14, color: '#374151' }}>
+                The collaboration platform for college students to connect, share skills, and build a professional portfolio together.
+              </p>
+              <p style={{ fontSize: 12, fontWeight: 500, color: '#374151' }}>Built with ❤️ for students.</p>
+            </div>
+
+            {/* Platform */}
+            <div>
+              <h4 className="qx-syne" style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#e2e8f0', marginBottom: 20 }}>Platform</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[['Sign In', '/login'], ['Register', '/register'], ['Browse Projects', '/projects']].map(([l, to]) => (
+                  <Link key={l} to={to} style={{ fontSize: 14 }}>{l}</Link>
                 ))}
               </div>
             </div>
-          </section>
-        )
-      }
 
-      {/* Footer */}
-      <footer className="pt-20 pb-10 px-4" style={{ background: 'var(--bg-secondary)', borderTop: '1px solid var(--border-subtle)' }}>
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-start mb-16 gap-12">
-            <div className="max-w-sm">
-              <Link to="/" className="flex items-center gap-2 mb-6">
-                <img src="/data/Logo.png" alt="Logo" className="h-8 w-8 rounded-lg object-cover" />
-                <span className="text-xl font-bold" style={{ color: 'var(--text-bright)' }}>Quasar</span>
-              </Link>
-              <p className="leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                The leading collaboration platform for college students to connect, share skills, and build a professional portfolio together.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-12 sm:gap-24">
-              <div>
-                <h4 className="font-bold mb-6" style={{ color: 'var(--text-bright)' }}>Platform</h4>
-                <ul className="space-y-4 text-slate-600 dark:text-slate-400">
-                  <li><Link to="/login" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Sign In</Link></li>
-                  <li><Link to="/register" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Register</Link></li>
-                  <li><Link to="/projects" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Browse Projects</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold mb-6" style={{ color: 'var(--text-bright)' }}>Support</h4>
-                <ul className="space-y-4 text-slate-600 dark:text-slate-400">
-                  <li><Link to="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Help Center</Link></li>
-                  <li><Link to="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Privacy Policy</Link></li>
-                  <li><Link to="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Terms of Service</Link></li>
-                </ul>
+            {/* Support */}
+            <div>
+              <h4 className="qx-syne" style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', color: '#e2e8f0', marginBottom: 20 }}>Support</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {[['Help Center', '#'], ['Privacy Policy', '#'], ['Terms of Service', '#']].map(([l, to]) => (
+                  <Link key={l} to={to} style={{ fontSize: 14 }}>{l}</Link>
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium" style={{ borderTop: '1px solid var(--border-subtle)', color: 'var(--text-muted)' }}>
-            <p>© 2025 Quasar. Built with ❤️ for students.</p>
-            <div className="flex gap-6">
-              <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">Twitter</a>
-              <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">LinkedIn</a>
-              <a href="#" className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors">GitHub</a>
+          {/* Bottom bar */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 26, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+            <span style={{ fontSize: 12, color: '#374151' }}>© 2025 Quasar. Built with ❤️ for students.</span>
+            <div style={{ display: 'flex', gap: 22 }}>
+              {['Twitter', 'LinkedIn', 'GitHub'].map(l => (
+                <a key={l} href="#" style={{ fontSize: 12, fontWeight: 500 }}
+                  onMouseEnter={e => e.target.style.color = '#a78bfa'}
+                  onMouseLeave={e => e.target.style.color = ''}>
+                  {l}
+                </a>
+              ))}
             </div>
           </div>
         </div>
       </footer>
 
-      {/* Scroll to Top Button */}
-      <AnimatePresence>
-        {showScrollTop && (
-          <motion.button
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            whileHover={{ scale: 1.1 }}
-            onClick={scrollToTop}
-            className="fixed bottom-8 right-8 z-50 p-3 text-white rounded-full shadow-xl focus:outline-none hover-spring" style={{ background: 'var(--indigo-primary)', boxShadow: 'var(--shadow-glow-indigo)' }}
-            aria-label="Scroll to top"
-          >
-            <ArrowUp className="h-6 w-6" />
-          </motion.button>
-        )}
-      </AnimatePresence>
-    </div >
+      {/* ── SCROLL TO TOP ───────────────────────────────────────────────── */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="qx-scroll-top"
+          style={{
+            position: 'fixed', bottom: 28, right: 28, zIndex: 50,
+            width: 46, height: 46, borderRadius: '50%',
+            border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}
+          aria-label="Scroll to top"
+        >
+          <ArrowUp style={{ width: 20, height: 20, color: '#fff' }} />
+        </button>
+      )}
+    </div>
   );
 }

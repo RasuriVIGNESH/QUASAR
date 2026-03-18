@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap');
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
@@ -420,4 +421,31 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
+}
+/* ========================================================================
+   QUASAR BRAND STYLES (qx-*)
+   ======================================================================== */
+.qx-root {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: #03050d;
+  color: #f0f4ff;
+  -webkit-font-smoothing: antialiased;
+}
+.qx-syne { font-family: 'Space Grotesk', system-ui, sans-serif; }
+.qx-layer { position: relative; z-index: 1; }
+
+.qx-grad {
+  background: linear-gradient(135deg, #c4b5fd 0%, #8b5cf6 45%, #22d3ee 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 18px rgba(139,92,246,0.35); }
+  50%       { box-shadow: 0 0 42px rgba(139,92,246,0.65), 0 0 80px rgba(139,92,246,0.18); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px);   }
+  50%       { transform: translateY(-9px);  }
 }

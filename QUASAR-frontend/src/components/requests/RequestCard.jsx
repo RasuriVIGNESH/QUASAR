@@ -54,7 +54,7 @@ export default function RequestCard({ item, type, onAccept, onReject, onCancel }
             <div className="flex items-start gap-4">
               <div className="relative">
                 <Avatar className="h-14 w-14 ring-4 ring-slate-50 dark:ring-slate-800 group-hover:ring-blue-50 dark:group-hover:ring-blue-900/20 transition-all">
-                  <AvatarImage src={relevantUser?.profileImage || relevantUser?.profilePictureUrl} />
+                  <AvatarImage src={relevantUser?.profilePictureUrl} />
                   <AvatarFallback className="bg-blue-600 text-white font-black">
                     {relevantUser?.firstName?.[0]}
                   </AvatarFallback>

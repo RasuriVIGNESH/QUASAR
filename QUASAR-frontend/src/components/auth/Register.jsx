@@ -15,6 +15,7 @@ import {
 import { ModeToggle } from '@/components/mode-toggle';
 import { dataService } from '../../services/dataService.js';
 import ValidationAlert from '@/components/common/ValidationAlert';
+import SpaceBackground from '@/components/common/SpaceBackground';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -158,7 +159,7 @@ export default function Register() {
         <div className="flex items-center justify-between relative">
           <div className="absolute top-5 left-0 right-0 h-[2px] bg-slate-200 dark:bg-slate-700">
             <motion.div
-              className="h-full" style={{ background: 'var(--indigo-primary)' }}
+              className="h-full" style={{ background: '#8b5cf6' }}
               initial={{ width: "0%" }}
               animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
               transition={{ duration: 0.4, ease: "easeInOut" }}
@@ -174,15 +175,15 @@ export default function Register() {
                     : ''
                   }`}
                 style={s.id === currentStep
-                  ? { background: 'var(--indigo-primary)', borderColor: 'var(--indigo-primary)', boxShadow: 'var(--shadow-glow-indigo)' }
+                  ? { background: '#8b5cf6', borderColor: '#8b5cf6', boxShadow: '0 0 20px rgba(139,92,246,0.4)' }
                   : s.id < currentStep
-                    ? { background: 'var(--success)', borderColor: 'var(--success)' }
-                    : { background: 'var(--surface-card)', borderColor: 'var(--border-subtle)', color: 'var(--text-muted)' }
+                    ? { background: '#22c55e', borderColor: '#22c55e' }
+                    : { background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#4b5563' }
                 }
               >
                 {s.id < currentStep ? <CheckCircle2 className="h-5 w-5" /> : s.icon}
               </div>
-              <span className={`text-xs mt-3 font-bold uppercase tracking-wider`} style={{ color: s.id === currentStep ? 'var(--indigo-primary)' : 'var(--text-muted)' }}>
+              <span className={`text-xs mt-3 font-bold uppercase tracking-wider`} style={{ color: s.id === currentStep ? '#a78bfa' : '#4b5563' }}>
                 {s.label}
               </span>
             </div>
@@ -193,7 +194,8 @@ export default function Register() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative" style={{ background: '#03050d' }}>
+      <SpaceBackground />
       <div className="absolute top-4 right-4 z-50">
         <ModeToggle />
       </div>
@@ -201,18 +203,18 @@ export default function Register() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full mx-auto space-y-8"
+        className="max-w-md w-full mx-auto space-y-8 relative z-10"
       >
         <div className="text-center">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
-            <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
-            <span className="text-2xl font-bold" style={{ color: 'var(--text-bright)' }}>Quasar</span>
-          </Link>
-          <h2 className="text-3xl font-extrabold" style={{ color: 'var(--text-bright)' }}>Create your account</h2>
-          <p className="mt-2 text-sm" style={{ color: 'var(--text-secondary)' }}>Join the networking platform for innovators</p>
+          {/* <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
+            <img src="Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+            <span className="text-2xl font-bold" style={{ color: '#f0f4ff' }}>Quasar</span>
+          </Link> */}
+          <h2 className="text-3xl font-extrabold" style={{ color: '#f0f4ff' }}>Create your account</h2>
+          <p className="mt-2 text-sm" style={{ color: '#6b7280' }}>Join the networking platform for innovators</p>
         </div>
 
-        <Card className="glass-surface overflow-hidden" style={{ boxShadow: 'var(--shadow-float)', border: '1px solid var(--border-subtle)' }}>
+        <Card className="overflow-hidden" style={{ boxShadow: '0 24px 64px rgba(0,0,0,0.45)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
           <CardContent className="p-8">
             <StepProgress currentStep={step} />
 
@@ -230,33 +232,35 @@ export default function Register() {
                   >
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label htmlFor="firstName" className="text-slate-700 dark:text-white font-semibold text-sm">First Name</Label>
+                        <Label htmlFor="firstName" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>First Name</Label>
                         <Input
                           id="firstName"
                           name="firstName"
                           placeholder="John"
                           value={formData.firstName}
                           onChange={handleInputChange}
-                          className="h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                          className="h-11 focus:ring-2 focus:ring-violet-500 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
                         />
                         {fieldErrors.firstName && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.firstName}</p>}
                       </div>
                       <div className="space-y-1.5">
-                        <Label htmlFor="lastName" className="text-slate-700 dark:text-white font-semibold text-sm">Last Name</Label>
+                        <Label htmlFor="lastName" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Last Name</Label>
                         <Input
                           id="lastName"
                           name="lastName"
                           placeholder="Doe"
                           value={formData.lastName}
                           onChange={handleInputChange}
-                          className="h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                          className="h-11 focus:ring-2 focus:ring-violet-500 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
                         />
                         {fieldErrors.lastName && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.lastName}</p>}
                       </div>
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="email" className="text-slate-700 dark:text-white font-semibold text-sm">College Email</Label>
+                      <Label htmlFor="email" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>College Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
@@ -266,7 +270,8 @@ export default function Register() {
                           placeholder="john.doe@university.edu"
                           value={formData.email}
                           onChange={handleInputChange}
-                          className="pl-10 h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                          className="pl-10 h-11 focus:ring-2 focus:ring-violet-500 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
                         />
                       </div>
                       {fieldErrors.email && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.email}</p>}
@@ -294,9 +299,9 @@ export default function Register() {
                   >
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
-                        <Label className="text-slate-700 dark:text-white font-semibold text-sm">Graduation</Label>
+                        <Label className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Graduation</Label>
                         <Select onValueChange={(v) => handleSelectChange('graduationYear', v)} value={formData.graduationYear}>
-                          <SelectTrigger className="h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+                          <SelectTrigger className="h-11 focus:ring-2 focus:ring-violet-500" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}>
                             <SelectValue placeholder="Year" />
                           </SelectTrigger>
                           <SelectContent>
@@ -309,9 +314,9 @@ export default function Register() {
                       </div>
 
                       <div className="space-y-1.5">
-                        <Label className="text-slate-700 dark:text-white font-semibold text-sm">Branch</Label>
+                        <Label className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Branch</Label>
                         <Select onValueChange={(v) => handleSelectChange('branch', v)} value={formData.branch}>
-                          <SelectTrigger className="h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500">
+                          <SelectTrigger className="h-11 focus:ring-2 focus:ring-violet-500" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}>
                             <SelectValue placeholder="Select" />
                           </SelectTrigger>
                           <SelectContent>
@@ -327,9 +332,9 @@ export default function Register() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label className="text-slate-700 dark:text-white font-semibold text-sm">Institute</Label>
+                      <Label className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Institute</Label>
                       <Select onValueChange={(v) => handleSelectChange('collegeId', v)} value={formData.collegeId || undefined}>
-                        <SelectTrigger className="h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:ring-2 focus:ring-blue-500 w-full">
+                        <SelectTrigger className="h-11 focus:ring-2 focus:ring-violet-500 w-full" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}>
                           <SelectValue placeholder="Select" />
                         </SelectTrigger>
                         <SelectContent>
@@ -370,7 +375,7 @@ export default function Register() {
                     className="space-y-4"
                   >
                     <div className="space-y-1.5">
-                      <Label htmlFor="password" className="text-slate-700 dark:text-white font-semibold text-sm">Password</Label>
+                      <Label htmlFor="password" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
@@ -380,7 +385,8 @@ export default function Register() {
                           placeholder="••••••••"
                           value={formData.password}
                           onChange={handleInputChange}
-                          className="pl-10 pr-10 h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                          className="pl-10 pr-10 h-11 focus:ring-2 focus:ring-violet-500 transition-all"
+                          style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
                         />
                         <button
                           type="button"
@@ -394,7 +400,7 @@ export default function Register() {
                     </div>
 
                     <div className="space-y-1.5">
-                      <Label htmlFor="confirmPassword" className="text-slate-700 dark:text-white font-semibold text-sm">Confirm Password</Label>
+                      <Label htmlFor="confirmPassword" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Confirm Password</Label>
                       <Input
                         id="confirmPassword"
                         name="confirmPassword"
@@ -402,7 +408,8 @@ export default function Register() {
                         placeholder="••••••••"
                         value={formData.confirmPassword}
                         onChange={handleInputChange}
-                        className="h-11 focus:ring-2 focus:ring-blue-500 transition-all border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                        className="h-11 focus:ring-2 focus:ring-violet-500 transition-all"
+                        style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
                       />
                       {fieldErrors.confirmPassword && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.confirmPassword}</p>}
                     </div>
@@ -416,7 +423,7 @@ export default function Register() {
                     type="button"
                     variant="outline"
                     onClick={handleBack}
-                    className="flex-1 h-11 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-white hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white"
+                    className="flex-1 h-11" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#e2e8f0', background: 'rgba(255,255,255,0.04)' }}
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" /> Back
                   </Button>
@@ -425,7 +432,7 @@ export default function Register() {
                   type="submit"
                   disabled={loading}
                   onClick={step < 3 ? (e) => { e.preventDefault(); handleNext(); } : undefined}
-                  className="flex-1 h-11 text-white font-semibold hover-spring" style={{ background: 'linear-gradient(135deg, var(--indigo-primary), var(--violet))', boxShadow: 'var(--shadow-button)' }}
+                  className="flex-1 h-11 text-white font-semibold hover-spring" style={{ background: 'linear-gradient(90deg, #7c3aed, #a855f7, #06b6d4, #a855f7, #7c3aed)', backgroundSize: '300% auto', animation: 'shimmer 5s linear infinite', boxShadow: '0 14px 44px rgba(139,92,246,0.35)' }}
                 >
                   {loading ? (
                     <div className="flex items-center gap-2">
@@ -473,9 +480,9 @@ export default function Register() {
             )}
 
             <div className="mt-8 text-center">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm" style={{ color: '#6b7280' }}>
                 Already have an account?{' '}
-                <Link to="/login" className="font-bold text-blue-600 hover:text-blue-700 hover:underline">
+                <Link to="/login" className="font-bold hover:underline" style={{ color: '#a78bfa' }}>
                   Sign in
                 </Link>
               </p>
@@ -483,7 +490,7 @@ export default function Register() {
           </CardContent>
         </Card>
 
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs" style={{ color: '#4b5563' }}>
           By joining, you agree to our Terms of Service and Privacy Policy.
         </p>
       </motion.div>
@@ -496,7 +503,7 @@ export default function Register() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: 'var(--bg-primary)' }}
+            className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: '#03050d' }}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -506,9 +513,9 @@ export default function Register() {
               className="text-center"
             >
               <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl mx-auto mb-6 shadow-2xl flex items-center justify-center p-2 border border-slate-100 dark:border-slate-800">
-                <img src="/data/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
+                <img src="/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
               </div>
-              <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight" style={{ color: 'var(--text-bright)' }}>
+              <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight" style={{ color: '#f0f4ff' }}>
                 Welcome to Quasar
               </h1>
               <p className="text-lg text-slate-500 dark:text-slate-400">Your journey starts now.</p>

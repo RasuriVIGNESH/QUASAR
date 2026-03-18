@@ -57,13 +57,12 @@ export default function OAuth2RedirectHandler() {
         }
 
         if (user.profilePictureUrl) {
-          user.profileImage = user.profilePictureUrl;
+          // All set
         } else if (user.profilePhoto) {
           const photoData = user.profilePhoto;
           const photoUrl = photoData.startsWith('data:image')
             ? photoData
             : `data:image/png;base64,${photoData}`;
-          user.profileImage = photoUrl;
           user.profilePictureUrl = photoUrl;
         }
 

@@ -92,7 +92,7 @@ export default function InviteMembers() {
           }) || [],
           collegeName: s.college?.name || s.collage?.name,
           // Handle base64 photo if it doesn't have prefix, prioritize existing URLs
-          profilePictureUrl: s.profilePictureUrl || s.profileImage ||
+          profilePictureUrl: s.profilePictureUrl ||
             (s.profilePhoto ? (s.profilePhoto.startsWith('data:') ? s.profilePhoto : `data:image/jpeg;base64,${s.profilePhoto}`) : null)
         }));
 
@@ -285,7 +285,7 @@ export default function InviteMembers() {
                     <CardContent className="p-6 flex-1 flex flex-col">
                       <div className="flex items-center gap-4 mb-4">
                         <Avatar className="h-14 w-14 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                          <AvatarImage src={student.profilePictureUrl || student.profileImage} />
+                          <AvatarImage src={student.profilePictureUrl} />
                           <AvatarFallback className="bg-blue-600 text-white font-black text-lg">{student.displayName?.[0]}</AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">

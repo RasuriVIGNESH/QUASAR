@@ -44,6 +44,7 @@ import { useTheme } from 'next-themes';
 import ProjectDetailModal from './discovery/ProjectDetailModal';
 import MagneticButton from './common/MagneticButton';
 import TiltCard from './common/TiltCard';
+import ShootingStarsCanvas from './common/ShootingStarsCanvas';
 
 // Scroll-triggered section component
 const ScrollSection = ({ children, delay = 0 }) => {
@@ -263,9 +264,16 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
-      {/* Animated Background */}
-      {/* Background handled by global AnimatedBackground */}
+    <div className="min-h-screen qx-root" style={{ background: '#03050d', color: 'var(--text-primary)', position: 'relative' }}>
+      {/* Fixed background layers */}
+      <ShootingStarsCanvas />
+
+      {/* Nebula glow orbs (fixed, sit above canvas, behind content) */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+        <div style={{ position: 'absolute', top: '-18%', left: '-12%', width: '60%', height: '55%', background: 'rgba(139,92,246,0.11)', borderRadius: '50%', filter: 'blur(100px)' }} />
+        <div style={{ position: 'absolute', bottom: '-12%', right: '-10%', width: '50%', height: '45%', background: 'rgba(6,182,212,0.07)', borderRadius: '50%', filter: 'blur(90px)' }} />
+        <div style={{ position: 'absolute', top: '38%', left: '25%', width: '40%', height: '32%', background: 'rgba(249,115,22,0.05)', borderRadius: '50%', filter: 'blur(80px)' }} />
+      </div>
 
       {/* Floating Header */}
       <motion.header
@@ -279,7 +287,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, x: 0 }}
               className="flex items-center gap-3"
             >
-              <img src="/data/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
+              <img src="/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
               <span className="text-xl font-bold text-gradient-indigo">
                 Quasar
               </span>
@@ -299,7 +307,7 @@ export default function Dashboard() {
               )}
 
               <span className="text-sm font-bold hidden md:block" style={{ color: 'var(--text-primary)' }}>
-                {userProfile?.firstName} {userProfile?.lastName}
+                {userProfile?.firstName}
               </span>
 
               {pendingCount > 0 && (
@@ -338,8 +346,8 @@ export default function Dashboard() {
                         onClick={() => { navigate('/profile'); setShowMenu(false); }}
                         className="w-full px-4 py-3 text-left hover-spring flex items-center gap-2" style={{ color: 'var(--text-primary)' }}
                       >
-                        {userProfile?.profileImage ? (
-                          <img src={userProfile.profileImage} alt="Profile" className="w-5 h-5 rounded-full object-cover" />
+                        {userProfile?.profilePictureUrl ? (
+                          <img src={userProfile.profilePictureUrl} alt="Profile" className="w-5 h-5 rounded-full object-cover" />
                         ) : (
                           <User className="h-4 w-4 text-blue-500" />
                         )}
