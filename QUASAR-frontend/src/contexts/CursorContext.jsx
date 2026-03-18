@@ -1,11 +1,6 @@
-import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useRef } from 'react';
 
-const CursorContext = createContext({
-    x: 0,
-    y: 0,
-    normalizedX: 0,
-    normalizedY: 0,
-});
+const CursorContext = createContext(null);
 
 export function useCursor() {
     return useContext(CursorContext);
@@ -16,66 +11,72 @@ function lerp(start, end, factor) {
 }
 
 export function CursorProvider({ children }) {
-    const [cursor, setCursor] = useState({ x: 0, y: 0, normalizedX: 0.5, normalizedY: 0.5 });
+    const cursorRef = useRef({
+        x: 0,
+        y: 0,
+        normalizedX: 0.5,
+        normalizedY: 0.5,
+    });
+
     const targetRef = useRef({ x: 0, y: 0 });
     const primaryRef = useRef({ x: 0, y: 0 });
     const trailRef = useRef({ x: 0, y: 0 });
+
     const primaryGlowRef = useRef(null);
     const trailGlowRef = useRef(null);
+
     const rafRef = useRef(null);
-    const isTouch = useRef(false);
 
-    const handleMouseMove = useCallback((e) => {
-        targetRef.current = { x: e.clientX, y: e.clientY };
-        const nx = e.clientX / window.innerWidth;
-        const ny = e.clientY / window.innerHeight;
-        setCursor({ x: e.clientX, y: e.clientY, normalizedX: nx, normalizedY: ny });
-    }, []);
-
-    const handleTouchStart = useCallback(() => {
-        isTouch.current = true;
-    }, []);
-
+    // ✅ NO STATE → NO RE-RENDER
     useEffect(() => {
+        const handleMouseMove = (e) => {
+            targetRef.current = { x: e.clientX, y: e.clientY };
+
+            cursorRef.current.x = e.clientX;
+            cursorRef.current.y = e.clientY;
+            cursorRef.current.normalizedX = e.clientX / window.innerWidth;
+            cursorRef.current.normalizedY = e.clientY / window.innerHeight;
+        };
+
         window.addEventListener('mousemove', handleMouseMove, { passive: true });
-        window.addEventListener('touchstart', handleTouchStart, { passive: true });
+
         return () => {
             window.removeEventListener('mousemove', handleMouseMove);
-            window.removeEventListener('touchstart', handleTouchStart);
         };
-    }, [handleMouseMove, handleTouchStart]);
+    }, []);
 
+    // Animation loop
     useEffect(() => {
         const animate = () => {
-            // Lerp primary glow — tight follow
             primaryRef.current.x = lerp(primaryRef.current.x, targetRef.current.x, 0.12);
             primaryRef.current.y = lerp(primaryRef.current.y, targetRef.current.y, 0.12);
 
-            // Lerp trail glow — lazy follow
             trailRef.current.x = lerp(trailRef.current.x, targetRef.current.x, 0.04);
             trailRef.current.y = lerp(trailRef.current.y, targetRef.current.y, 0.04);
 
             if (primaryGlowRef.current) {
-                primaryGlowRef.current.style.transform = `translate3d(${primaryRef.current.x - 200}px, ${primaryRef.current.y - 200}px, 0)`;
+                primaryGlowRef.current.style.transform =
+                    `translate3d(${primaryRef.current.x - 200}px, ${primaryRef.current.y - 200}px, 0)`;
             }
+
             if (trailGlowRef.current) {
-                trailGlowRef.current.style.transform = `translate3d(${trailRef.current.x - 300}px, ${trailRef.current.y - 300}px, 0)`;
+                trailGlowRef.current.style.transform =
+                    `translate3d(${trailRef.current.x - 300}px, ${trailRef.current.y - 300}px, 0)`;
             }
 
             rafRef.current = requestAnimationFrame(animate);
         };
 
         rafRef.current = requestAnimationFrame(animate);
-        return () => {
-            if (rafRef.current) cancelAnimationFrame(rafRef.current);
-        };
+
+        return () => cancelAnimationFrame(rafRef.current);
     }, []);
 
     return (
-        <CursorContext.Provider value={cursor}>
+        <CursorContext.Provider value={cursorRef}>
             {children}
 
-            {/* Primary Glow — tight follow */}
+            {/* Primary Glow */}
             <div
                 ref={primaryGlowRef}
                 style={{
@@ -91,10 +92,9 @@ export function CursorProvider({ children }) {
                     willChange: 'transform',
                     mixBlendMode: 'screen',
                 }}
-                aria-hidden="true"
             />
 
-            {/* Trailing Glow — lazy follow */}
+            {/* Trail Glow */}
             <div
                 ref={trailGlowRef}
                 style={{
@@ -110,10 +110,7 @@ export function CursorProvider({ children }) {
                     willChange: 'transform',
                     mixBlendMode: 'screen',
                 }}
-                aria-hidden="true"
             />
         </CursorContext.Provider>
     );
 }
-
-export default CursorContext;

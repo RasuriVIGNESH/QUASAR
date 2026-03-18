@@ -1,17 +1,18 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { teamService } from '../services/TeamService';
 import { joinRequestService } from '../services/JoinRequestService';
 import { projectService } from '../services/projectService';
 
 const RequestContext = createContext();
-
 export const useRequests = () => useContext(RequestContext);
 
 export const RequestProvider = ({ children }) => {
-  const auth = useAuth();
-  console.log('RequestProvider useAuth result:', auth);
-  const { isAuthenticated, userProfile } = auth;
+  const { isAuthenticated, userProfile } = useAuth();
+
+  const cacheRef = useRef(null); // ✅ caching
+  const isFetchingRef = useRef(false); // ✅ prevent duplicate calls
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -19,57 +20,70 @@ export const RequestProvider = ({ children }) => {
   const [receivedInvitations, setReceivedInvitations] = useState([]);
   const [receivedJoinRequests, setReceivedJoinRequests] = useState([]);
 
-  const fetchAllData = useCallback(async (currentUserId) => {
+  const fetchAllData = useCallback(async (userId, force = false) => {
+
+    // ✅ USE CACHE
+    if (!force && cacheRef.current) {
+      const cached = cacheRef.current;
+      setSentJoinRequests(cached.sent);
+      setReceivedInvitations(cached.invites);
+      setReceivedJoinRequests(cached.received);
+      return;
+    }
+
+    // ✅ PREVENT DUPLICATE CALLS
+    if (isFetchingRef.current) return;
+    isFetchingRef.current = true;
+
     setLoading(true);
     setError(null);
-    try {
-      console.log("RequestContext: Fetching all data for user:", currentUserId);
 
+    try {
       const [joinRequestsRes, invitationsRes, myProjectsResponse] = await Promise.all([
         joinRequestService.getMyJoinRequests(),
         teamService.getUserInvitations(),
         projectService.getMyProjects()
       ]);
 
-      console.log("RequestContext: API Responses:", {
-        joinRequests: joinRequestsRes,
-        invitations: invitationsRes,
-        myProjects: myProjectsResponse
-      });
+      const sentRequests = joinRequestsRes?.data || joinRequestsRes || [];
+      const invitations = invitationsRes?.data || invitationsRes || [];
+      const myProjects = myProjectsResponse?.content || [];
 
-      // Fix: Backend returns invitations directly as array, not nested in data.content
-      const invitations = invitationsRes.data || invitationsRes || [];
-      console.log("RequestContext: Processed invitations:", invitations);
-      setReceivedInvitations(invitations);
+      const ownedProjects = myProjects.filter(p => p.Lead?.id === userId);
 
-      // Fix: Backend returns join requests directly as array
-      const sentRequests = joinRequestsRes.data || joinRequestsRes || [];
-      console.log("RequestContext: Processed sent join requests:", sentRequests);
-      setSentJoinRequests(sentRequests);
+      // ✅ LIMIT API CALLS (max 3 projects only)
+      const limitedProjects = ownedProjects.slice(0, 3);
 
-      const myProjects = myProjectsResponse.content || [];
-      const ownedProjects = myProjects.filter(p => p.Lead?.id === currentUserId);
-      console.log("RequestContext: Owned projects:", ownedProjects);
+      let allJoinRequests = [];
 
-      if (ownedProjects.length > 0) {
-        const requestsPromises = ownedProjects.map(project =>
-          joinRequestService.getProjectJoinRequests(project.id)
+      if (limitedProjects.length > 0) {
+        const results = await Promise.all(
+          limitedProjects.map(project =>
+            joinRequestService.getProjectJoinRequests(project.id)
+          )
         );
-        const results = await Promise.all(requestsPromises);
-        console.log("RequestContext: Received join requests results:", results);
-        // Fix: Backend returns join requests directly as array
-        const allJoinRequests = results.map(res => res.data || res || []).flat();
-        console.log("RequestContext: Processed received join requests:", allJoinRequests);
-        setReceivedJoinRequests(allJoinRequests);
-      } else {
-        setReceivedJoinRequests([]);
+
+        allJoinRequests = results.map(res => res?.data || res || []).flat();
       }
 
+      // ✅ SET STATE
+      setSentJoinRequests(sentRequests);
+      setReceivedInvitations(invitations);
+      setReceivedJoinRequests(allJoinRequests);
+
+      // ✅ SAVE CACHE
+      cacheRef.current = {
+        sent: sentRequests,
+        invites: invitations,
+        received: allJoinRequests
+      };
+
     } catch (err) {
-      console.error("RequestContext: Failed to fetch requests data:", err);
-      setError("Could not load requests and invitations.");
+      console.error("RequestContext error:", err);
+      setError("Could not load requests.");
     } finally {
       setLoading(false);
+      isFetchingRef.current = false;
     }
   }, []);
 
@@ -77,27 +91,31 @@ export const RequestProvider = ({ children }) => {
     if (isAuthenticated && userProfile?.id) {
       fetchAllData(userProfile.id);
     }
-  }, [isAuthenticated, userProfile, fetchAllData]);
+  }, [isAuthenticated, userProfile?.id, fetchAllData]);
 
-  const pendingInvitationCount = receivedInvitations.filter(inv => inv.status === 'PENDING').length;
-  const pendingJoinRequestCount = receivedJoinRequests.filter(req => req.status === 'PENDING').length;
-
-  const value = {
-    loading,
-    error,
-    sentJoinRequests,
-    receivedInvitations,
-    receivedJoinRequests,
-    refresh: () => {
-      if (isAuthenticated && userProfile?.id) {
-        fetchAllData(userProfile.id);
-      }
-    },
-    pendingCount: pendingInvitationCount + pendingJoinRequestCount,
+  const refresh = () => {
+    if (userProfile?.id) {
+      cacheRef.current = null; // clear cache
+      fetchAllData(userProfile.id, true);
+    }
   };
 
+  const pendingInvitationCount =
+    receivedInvitations.filter(inv => inv.status === 'PENDING').length;
+
+  const pendingJoinRequestCount =
+    receivedJoinRequests.filter(req => req.status === 'PENDING').length;
+
   return (
-    <RequestContext.Provider value={value}>
+    <RequestContext.Provider value={{
+      loading,
+      error,
+      sentJoinRequests,
+      receivedInvitations,
+      receivedJoinRequests,
+      refresh,
+      pendingCount: pendingInvitationCount + pendingJoinRequestCount,
+    }}>
       {children}
     </RequestContext.Provider>
   );
