@@ -225,21 +225,5 @@ public class UserService implements iUserService, UserDetailsService {
         return save(user);
     }
 
-    /**
-     * Update user profile photo
-     */
-    public User updateProfilePhoto(String userId, byte[] profilePhotoData) {
-        User user = findById(userId);
-        user.setProfilePhoto(profilePhotoData);
-        return save(user);
-    }
 
-    /**
-     * Delete user profile photo
-     */
-    public void deleteProfilePhoto(String userId) {
-        User user = findById(userId);
-        user.setProfilePhoto(null);
-        save(user);
-    }
 }

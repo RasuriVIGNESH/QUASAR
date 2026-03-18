@@ -95,6 +95,7 @@ public class SecurityConfig {
                     .antMatchers(publicStaticEndpoints).permitAll()
                     .antMatchers(
                             "/swagger-ui/**",
+                            "/images/**",
                             "/swagger-ui.html",
                             "/v3/api-docs/**",
                             "/v3/api-docs",

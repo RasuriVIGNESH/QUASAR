@@ -20,6 +20,8 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
 
     Optional<Skill> findByNameIgnoreCase(String name);
 
+    List<Skill> findByNameIn(List<String> names);
+
     boolean existsByNameIgnoreCase(String name);
 
     Optional<Skill> findByNormalizedName(String normalizedName);

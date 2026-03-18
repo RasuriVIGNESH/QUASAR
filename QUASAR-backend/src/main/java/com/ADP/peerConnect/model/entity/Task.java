@@ -18,6 +18,7 @@ import java.time.LocalDate;
         @Index(name = "idx_task_status", columnList = "status"),
         @Index(name = "idx_task_priority", columnList = "priority"),
         @Index(name = "idx_task_due_date", columnList = "due_date"),
+        @Index(name = "idx_task_project_status", columnList = "project_id, status"),
         @Index(name = "idx_task_status_due_date", columnList = "status, due_date"),
         @Index(name = "idx_task_assignee_status", columnList = "assigned_to_id, status")
 })

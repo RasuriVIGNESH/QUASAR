@@ -17,7 +17,6 @@ public class UpdateUserRequest {
     private Integer graduationYear;
     private AvailabilityStatus availabilityStatus;
     private String profilePictureUrl;
-    private byte[] profilePhoto;
     private String githubUrl;
     private String linkedinUrl;
     private String portfolioUrl;
@@ -103,11 +102,7 @@ public class UpdateUserRequest {
         this.profilePictureUrl = profilePictureUrl;
     }
 
-    public byte[] getProfilePhoto() {
-        return profilePhoto;
-    }
 
-    public void setProfilePhoto(byte[] profilePhoto) {
-        this.profilePhoto = profilePhoto;
-    }
+
+
 }

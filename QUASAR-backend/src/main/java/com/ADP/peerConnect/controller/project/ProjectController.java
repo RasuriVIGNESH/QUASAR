@@ -30,7 +30,6 @@ import java.util.stream.Collectors;
 @Tag(name = "Project Management", description = "Project management APIs")
 @RestController
 @RequestMapping("/api/projects")
-@CrossOrigin(origins = "*", maxAge = 3600)
 public class ProjectController {
 
     @Autowired
@@ -59,7 +58,7 @@ public class ProjectController {
         try {
             Project project = projectService.createProject(request, currentUser.getId());
             return ResponseEntity.ok(
-                    new ApiResponse(true, "Project created successfully", project)
+                    new ApiResponse(true, "Project created successfully", new ProjectResponse(project))
             );
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
@@ -215,7 +214,7 @@ public class ProjectController {
         try {
             Task task = taskService.createTask(projectId, request, currentUser.getId());
             return ResponseEntity.ok(
-                    new ApiResponse(true, "Task created successfully", task)
+                    new ApiResponse(true, "Task created successfully", new TaskResponse(task))
             );
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
@@ -224,19 +223,31 @@ public class ProjectController {
         }
     }
 
-    @Operation(summary = "Get project tasks")
     @GetMapping("/{projectId}/tasks")
-    public ResponseEntity<List<TaskResponse>> getProjectTasks(
+    public ResponseEntity<PagedResponse<TaskResponse>> getProjectTasks(
             @PathVariable String projectId,
-            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            List<Task> tasks = taskService.getProjectTasks(projectId);
-            return ResponseEntity.ok(tasks.stream()
-                    .map(task -> new TaskResponse(task))
-                    .collect(Collectors.toList()));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<Task> tasks = taskService.getProjectTasks(projectId, pageable);
+
+        List<TaskResponse> responses = tasks.getContent()
+                .stream()
+                .map(TaskResponse::new)
+                .collect(Collectors.toList());
+
+        PagedResponse<TaskResponse> response = new PagedResponse<>(
+                responses,
+                tasks.getNumber(),
+                tasks.getSize(),
+                tasks.getTotalElements(),
+                tasks.getTotalPages()
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @Operation(summary = "Update task")

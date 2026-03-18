@@ -16,10 +16,6 @@ import java.util.List;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, String>, JpaSpecificationExecutor<Project> {
 
-    static int countProjectsInCollege(String collegeId) {
-        throw new UnsupportedOperationException("Unimplemented method 'countProjectsInCollege'");
-    }
-
     // Find projects by Event ID
     List<Project> findByEventId(Long eventId);
 
@@ -48,9 +44,12 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
     Page<Project> searchByKeyword(@Param("query") String query, Pageable pageable);
 
     // Find projects with available spots
-    @Query("SELECT p FROM Project p WHERE p.status = 'RECRUITING' AND SIZE(p.projectMembers) < p.maxTeamSize")
+    @Query("""
+        SELECT p FROM Project p
+        WHERE p.status = 'RECRUITING'
+        AND (SELECT COUNT(pm) FROM ProjectMember pm WHERE pm.project.id = p.id) < p.maxTeamSize
+        """)
     Page<Project> findProjectsWithAvailableSpots(Pageable pageable);
-
     // Generic search supporting multiple filters via Specification
     Page<Project> findAll(Specification<Project> spec, Pageable pageable);
 

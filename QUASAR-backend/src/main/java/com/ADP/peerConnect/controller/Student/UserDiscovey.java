@@ -2,6 +2,7 @@ package com.ADP.peerConnect.controller.Student;
 
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
+import com.ADP.peerConnect.model.dto.response.UserCardResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.model.enums.AvailabilityStatus;
@@ -36,6 +37,7 @@ public class UserDiscovey {
         @Autowired
         private iUserService userService;
 
+        private int defaultPageSize = 10;
         /**
          * Search users
          */
@@ -44,7 +46,7 @@ public class UserDiscovey {
         @ApiResponses(value = {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Users retrieved successfully")
         })
-        public ResponseEntity<ApiResponse<PagedResponse<UserResponse>>> searchUsers(
+        public ResponseEntity<ApiResponse<PagedResponse<UserCardResponse>>> searchUsers(
                         @Parameter(description = "Search by name") @RequestParam(required = false) String name,
                         @Parameter(description = "Filter by branch") @RequestParam(required = false) String branch,
                         @Parameter(description = "Filter by graduation year") @RequestParam(required = false) Integer graduationYear,
@@ -62,15 +64,15 @@ public class UserDiscovey {
                 Page<User> users = userService.searchUsers(name, branch, graduationYear,
                                 availabilityStatus, skills, pageable);
 
-                List<UserResponse> userResponses = users.getContent().stream()
-                                .map(UserResponse::new)
+                List<UserCardResponse> userResponses = users.getContent().stream()
+                                .map(UserCardResponse::new)
                                 .collect(Collectors.toList());
 
-                PagedResponse<UserResponse> pagedResponse = new PagedResponse<>(
+                PagedResponse<UserCardResponse> pagedResponse = new PagedResponse<>(
                                 userResponses, users.getNumber(), users.getSize(),
                                 users.getTotalElements(), users.getTotalPages());
 
-                ApiResponse<PagedResponse<UserResponse>> response = ApiResponse.success(
+                ApiResponse<PagedResponse<UserCardResponse>> response = ApiResponse.success(
                                 "Users retrieved successfully", pagedResponse);
 
                 return ResponseEntity.ok(response);
@@ -81,7 +83,7 @@ public class UserDiscovey {
         @ApiResponses(value = {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Users retrieved successfully")
         })
-        public ResponseEntity<ApiResponse<PagedResponse<UserResponse>>> getAllUsers(
+        public ResponseEntity<ApiResponse<PagedResponse<UserCardResponse>>> getAllUsers(
                         @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
                         @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
                         @Parameter(description = "Sort by field") @RequestParam(defaultValue = "firstName") String sortBy,
@@ -93,15 +95,15 @@ public class UserDiscovey {
 
                 Page<User> users = userService.findAll(pageable);
 
-                List<UserResponse> userResponses = users.getContent().stream()
-                                .map(UserResponse::new)
+                List<UserCardResponse> userResponses = users.getContent().stream()
+                                .map(UserCardResponse::new)
                                 .collect(Collectors.toList());
 
-                PagedResponse<UserResponse> pagedResponse = new PagedResponse<>(
+                PagedResponse<UserCardResponse> pagedResponse = new PagedResponse<>(
                                 userResponses, users.getNumber(), users.getSize(),
                                 users.getTotalElements(), users.getTotalPages());
 
-                ApiResponse<PagedResponse<UserResponse>> response = ApiResponse.success(
+                ApiResponse<PagedResponse<UserCardResponse>> response = ApiResponse.success(
                                 "Users retrieved successfully", pagedResponse);
 
                 return ResponseEntity.ok(response);
@@ -145,35 +147,114 @@ public class UserDiscovey {
         }
 
         @GetMapping("/{branch}")
-        public ResponseEntity<ApiResponse<Page<User>>> findUsersByBranch(@PathVariable String branch) {
-                ApiResponse<Page<User>> response = ApiResponse.success(
-                                "Users retrieved successfully", userService.findByBranch(branch, Pageable.unpaged()));
-                return new ResponseEntity<>(response, HttpStatus.OK);
+        public ResponseEntity<PagedResponse<UserCardResponse>> findUsersByBranch(@PathVariable String branch) {
+
+                Page<User> users = userService.findByBranch(branch, PageRequest.of(0, defaultPageSize));
+
+                List<UserCardResponse> content = users.getContent()
+                        .stream()
+                        .map(UserCardResponse::new)
+                        .collect(Collectors.toList());
+
+                PagedResponse<UserCardResponse> response = new PagedResponse<>(
+                        content,
+                        users.getNumber(),
+                        users.getSize(),
+                        users.getTotalElements(),
+                        users.getTotalPages()
+                );
+
+                return ResponseEntity.ok(response);
         }
 
         @GetMapping("/year/{graduationYear}")
-        public ResponseEntity<Page<User>> findUsersByBranch(@PathVariable Integer graduationYear) {
-                return new ResponseEntity<>(userService.findByGraduationYear(graduationYear, Pageable.unpaged()),
-                                HttpStatus.OK);
+        public ResponseEntity<PagedResponse<UserCardResponse>> findUsersByGraduationYear(@PathVariable Integer graduationYear) {
+
+                Page<User> users = userService.findByGraduationYear(graduationYear, PageRequest.of(0, defaultPageSize));
+
+                List<UserCardResponse> content = users.getContent()
+                        .stream()
+                        .map(UserCardResponse::new)
+                        .collect(Collectors.toList());
+
+                PagedResponse<UserCardResponse> response = new PagedResponse<>(
+                        content,
+                        users.getNumber(),
+                        users.getSize(),
+                        users.getTotalElements(),
+                        users.getTotalPages()
+                );
+
+                return ResponseEntity.ok(response);
         }
 
         @GetMapping("/users/skills-search")
-        @Operation(summary = "Find users by skill names", description = "Retrieve users who possess any of the specified skills")
-        public ResponseEntity<Page<User>> findBySkillNames(@RequestParam List<String> Skillname) {
-                return new ResponseEntity<>(userService.findBySkillNames(Skillname, Pageable.unpaged()), HttpStatus.OK);
+        public ResponseEntity<PagedResponse<UserCardResponse>> findBySkillNames(@RequestParam List<String> skillNames) {
+
+                Page<User> users = userService.findBySkillNames(skillNames, PageRequest.of(0, defaultPageSize));
+
+                List<UserCardResponse> content = users.getContent()
+                        .stream()
+                        .map(UserCardResponse::new)
+                        .collect(Collectors.toList());
+
+                PagedResponse<UserCardResponse> response = new PagedResponse<>(
+                        content,
+                        users.getNumber(),
+                        users.getSize(),
+                        users.getTotalElements(),
+                        users.getTotalPages()
+                );
+
+                return ResponseEntity.ok(response);
         }
 
         @GetMapping("/available-with-skills/{excludeUserId}")
-        public ResponseEntity<Page<User>> findAvailableUsersWithSkills(@RequestParam List<String> skillNames,
-                        @RequestParam String excludeUserId) {
-                return new ResponseEntity<>(
-                                userService.findAvailableUsersWithSkills(skillNames, excludeUserId, Pageable.unpaged()),
-                                HttpStatus.OK);
+        public ResponseEntity<PagedResponse<UserCardResponse>> findAvailableUsersWithSkills(
+                @RequestParam List<String> skillNames,
+                @PathVariable String excludeUserId) {
+
+                Page<User> users = userService.findAvailableUsersWithSkills(
+                        skillNames, excludeUserId, PageRequest.of(0, defaultPageSize)
+                );
+
+                List<UserCardResponse> content = users.getContent()
+                        .stream()
+                        .map(UserCardResponse::new)
+                        .collect(Collectors.toList());
+
+                PagedResponse<UserCardResponse> response = new PagedResponse<>(
+                        content,
+                        users.getNumber(),
+                        users.getSize(),
+                        users.getTotalElements(),
+                        users.getTotalPages()
+                );
+
+                return ResponseEntity.ok(response);
         }
 
         @GetMapping("/availability/{status}")
-        public ResponseEntity<Page<User>> findByAvailabilityStatus(@RequestParam AvailabilityStatus status) {
-                return new ResponseEntity<>(userService.findByAvailabilityStatus(status, Pageable.unpaged()),
-                                HttpStatus.OK);
+        public ResponseEntity<PagedResponse<UserCardResponse>> findByAvailabilityStatus(
+                @PathVariable AvailabilityStatus status) {
+
+                Page<User> users = userService.findByAvailabilityStatus(
+                        status, PageRequest.of(0, defaultPageSize)
+                );
+
+                List<UserCardResponse> content = users.getContent()
+                        .stream()
+                        .map(UserCardResponse::new)
+                        .collect(Collectors.toList());
+
+                PagedResponse<UserCardResponse> response = new PagedResponse<>(
+                        content,
+                        users.getNumber(),
+                        users.getSize(),
+                        users.getTotalElements(),
+                        users.getTotalPages()
+                );
+
+                return ResponseEntity.ok(response);
         }
 }

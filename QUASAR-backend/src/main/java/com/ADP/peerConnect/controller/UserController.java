@@ -11,6 +11,7 @@ import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.model.entity.UserSkill;
 import com.ADP.peerConnect.model.enums.AvailabilityStatus;
 import com.ADP.peerConnect.security.UserPrincipal;
+import com.ADP.peerConnect.service.Impl.FileStorageService;
 import com.ADP.peerConnect.service.Interface.iUserService;
 import com.ADP.peerConnect.service.Interface.iUserSkillService;
 import com.ADP.peerConnect.util.Constants;
@@ -42,7 +43,7 @@ public class UserController {
         private iUserService userService;
 
         @Autowired
-        private iUserSkillService userSkillService;
+        private FileStorageService fileStorageService;
 
         /**
          * Get user profile by ID
@@ -104,9 +105,6 @@ public class UserController {
                 if (updateRequest.getProfilePictureUrl() != null) {
                         user.setProfilePictureUrl(updateRequest.getProfilePictureUrl());
                 }
-                if (updateRequest.getProfilePhoto() != null) {
-                        user.setProfilePhoto(updateRequest.getProfilePhoto());
-                }
                 if (updateRequest.getGithubUrl() != null)
                         user.setGithubUrl(updateRequest.getGithubUrl());
                 if (updateRequest.getLinkedinUrl() != null)
@@ -134,36 +132,35 @@ public class UserController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
         })
         public ResponseEntity<ApiResponse<UserResponse>> updateProfilePhoto(
-                        @RequestParam("profilePhoto") MultipartFile file,
-                        @Parameter(hidden = true)
-                        @AuthenticationPrincipal UserPrincipal currentUser) throws IOException {
+                @RequestParam("profilePhoto") MultipartFile file,
+                @AuthenticationPrincipal UserPrincipal currentUser) throws IOException {
 
                 if (file == null || file.isEmpty()) {
                         return ResponseEntity.badRequest().body(
-                                        ApiResponse.error("File is required", null));
+                                ApiResponse.error("File is required", null));
                 }
 
-                // Validate file size (limit to 5MB)
                 if (file.getSize() > 5 * 1024 * 1024) {
                         return ResponseEntity.badRequest().body(
-                                        ApiResponse.error("File size must not exceed 5MB", null));
+                                ApiResponse.error("File size must not exceed 5MB", null));
                 }
 
-                // Validate file type (only images)
                 String contentType = file.getContentType();
                 if (contentType == null || !contentType.startsWith("image/")) {
                         return ResponseEntity.badRequest().body(
-                                        ApiResponse.error("Only image files are allowed", null));
+                                ApiResponse.error("Only image files are allowed", null));
                 }
+                User oldUser = userService.findById(currentUser.getId());
 
-                byte[] imageData = file.getBytes();
-                User user = userService.updateProfilePhoto(currentUser.getId(), imageData);
-                UserResponse userResponse = new UserResponse(user);
+                fileStorageService.deleteFile(oldUser.getProfilePictureUrl());
+                // ✅ NEW LOGIC
+                String imageUrl = fileStorageService.saveFile(file);
 
-                ApiResponse<UserResponse> response = ApiResponse.success(
-                                "Profile photo updated successfully", userResponse);
+                User user = userService.updateProfilePicture(currentUser.getId(), imageUrl);
 
-                return ResponseEntity.ok(response);
+                return ResponseEntity.ok(
+                        ApiResponse.success("Profile photo updated successfully", new UserResponse(user))
+                );
         }
 
         /**
@@ -176,15 +173,19 @@ public class UserController {
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized")
         })
         public ResponseEntity<ApiResponse<String>> deleteProfilePhoto(
-                        @Parameter(hidden = true)
-                        @AuthenticationPrincipal UserPrincipal currentUser) {
+                @AuthenticationPrincipal UserPrincipal currentUser) {
 
-                userService.deleteProfilePhoto(currentUser.getId());
+                User user = userService.findById(currentUser.getId());
 
-                ApiResponse<String> response = ApiResponse.success(
-                                "Profile photo deleted successfully", null);
+                fileStorageService.deleteFile(user.getProfilePictureUrl());
 
-                return ResponseEntity.ok(response);
+                // remove URL from DB
+                user.setProfilePictureUrl(null);
+                userService.update(user);
+
+                return ResponseEntity.ok(
+                        ApiResponse.success("Profile photo deleted successfully", null)
+                );
         }
 
 

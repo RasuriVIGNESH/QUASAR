@@ -29,7 +29,6 @@ public interface iProjectService {
     public long countProjectsForUser(String userId);
     public Long getCurrentTeamSize(String projectId);
 
-    public int countProjectsInCollege(String collegeId);
 
     public int countAllProjects();
 

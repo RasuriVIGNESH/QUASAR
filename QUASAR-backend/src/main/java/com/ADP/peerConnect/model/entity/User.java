@@ -7,12 +7,14 @@ import javax.validation.constraints.*;
 import com.ADP.peerConnect.model.enums.Role;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.ADP.peerConnect.model.entity.College;
+import org.springframework.transaction.annotation.Transactional;
 
 @Entity
 @Table(
@@ -74,9 +76,9 @@ public class User {
     @Column(name = "profile_picture_url")
     private String profilePictureUrl;
 
-    @Lob
-    @Column(name = "profile_photo")
-    private byte[] profilePhoto;
+//    @Column(name = "profile_photo")
+//    @Type(type = "org.hibernate.type.BinaryType")
+//    private byte[] profilePhoto;
 
 
     @ManyToOne
@@ -232,13 +234,15 @@ public class User {
         this.profilePictureUrl = profilePictureUrl;
     }
 
-    public byte[] getProfilePhoto() {
-        return profilePhoto;
-    }
 
-    public void setProfilePhoto(byte[] profilePhoto) {
-        this.profilePhoto = profilePhoto;
-    }
+//    public byte[] getProfilePhoto() {
+//        return profilePhoto;
+//    }
+//
+//
+//    public void setProfilePhoto(byte[] profilePhoto) {
+//        this.profilePhoto = profilePhoto;
+//    }
 
     public String getGithubUrl() {
         return githubUrl;

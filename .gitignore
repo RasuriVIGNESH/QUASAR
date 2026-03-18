@@ -10,6 +10,7 @@ QUASAR-backend/*.iws
 QUASAR-backend/*.iml
 QUASAR-backend/*.ipr
 
+QUASAR-backend\images
 
 # Ignore local environment files
 QUASAR-backend/.env

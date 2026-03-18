@@ -45,10 +45,6 @@ public interface iUserService  {
                                   Pageable pageable);
     public User updateAvailabilityStatus(String userId, AvailabilityStatus status);
 
-    public User updateProfilePhoto(String userId, byte[] profilePhotoData);
-    public void deleteProfilePhoto(String userId);
-
-
     public Page<User> findByBranch(String branch, Pageable pageable);
     public Page<User> findByGraduationYear(Integer graduationYear, Pageable pageable);
     public Page<User> searchByName(String name, Pageable pageable);

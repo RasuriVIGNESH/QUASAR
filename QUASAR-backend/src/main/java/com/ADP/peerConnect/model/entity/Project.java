@@ -126,7 +126,7 @@ public class Project {
     @JsonManagedReference
     private List<MeetingRoom> meetingRooms = new ArrayList<>();
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
 

@@ -23,9 +23,7 @@ public class UserResponse {
     private Integer graduationYear;
     private AvailabilityStatus availabilityStatus;
     private String profilePictureUrl;
-    private byte[] profilePhoto;
     private List<UserSkillResponse> skills;
-
     private String githubUrl;
     private String linkedinUrl;
     private String portfolioUrl;
@@ -48,7 +46,6 @@ public class UserResponse {
         this.linkedinUrl = user.getLinkedinUrl();
         this.portfolioUrl = user.getPortfolioUrl();
         this.profilePictureUrl = user.getProfilePictureUrl();
-        this.profilePhoto = user.getProfilePhoto();
         this.skills = user.getUserSkills() == null ? null : user.getUserSkills().stream()
                 .map(UserSkillResponse::new)
                 .collect(Collectors.toList());
@@ -160,14 +157,6 @@ public class UserResponse {
 
     public void setProfilePictureUrl(String profilePictureUrl) {
         this.profilePictureUrl = profilePictureUrl;
-    }
-
-    public byte[] getProfilePhoto() {
-        return profilePhoto;
-    }
-
-    public void setProfilePhoto(byte[] profilePhoto) {
-        this.profilePhoto = profilePhoto;
     }
 
     public List<UserSkillResponse> getSkills() {

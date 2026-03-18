@@ -26,6 +26,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -156,6 +157,7 @@ public class ProjectService implements iProjectService {
     }
 
     // Get project by ID
+    @Transactional(readOnly = true)
     public Project findById(String projectId) {
         return projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
@@ -252,15 +254,15 @@ public class ProjectService implements iProjectService {
         }
     }
 
+    @Override
     public boolean isUserMemberOrLead(String projectId, String userId) {
         Project project = findById(projectId);
-        // Check if the user is the lead of the project
+
         if (project.getLead().getId().equals(userId)) {
             return true;
         }
-        // Check if the user is in the project's member list
-        return project.getProjectMembers().stream()
-                .anyMatch(member -> member.getUser().getId().equals(userId));
+
+        return projectMemberRepository.existsByProjectIdAndUserId(projectId, userId);
     }
 
     public boolean isProjectLead(String projectId, String userId) {
@@ -352,10 +354,6 @@ public class ProjectService implements iProjectService {
         return projectMemberRepository.countByProjectId(projectId);
     }
 
-    @Override
-    public int countProjectsInCollege(String collegeId) {
-        return ProjectRepository.countProjectsInCollege(collegeId);
-    }
 
     @Override
     public int countAllProjects() {
@@ -365,48 +363,82 @@ public class ProjectService implements iProjectService {
     // Helper to map ProjectSkillRequest list into Project.projectSkills (create or
     // update)
     private void applySkillsToProject(Project project, List<ProjectSkillRequest> skillRequests) {
-        if (skillRequests == null)
-            return;
+        if (skillRequests == null) return;
 
-        // Deduplicate by skillName (case-insensitive) or skillId
+        // Deduplicate
         Map<String, ProjectSkillRequest> dedup = skillRequests.stream()
                 .collect(Collectors.toMap(
-                        r -> (r.getSkillId() != null) ? String.valueOf(r.getSkillId()) : r.getSkillName().toLowerCase(),
+                        r -> (r.getSkillId() != null)
+                                ? String.valueOf(r.getSkillId())
+                                : r.getSkillName().toLowerCase(),
                         r -> r,
                         (a, b) -> a));
 
-        List<ProjectSkill> newProjectSkills = new java.util.ArrayList<>();
+        // ✅ Fetch existing project skills ONCE
+        List<ProjectSkill> existingList =
+                projectSkillRepository.findByProjectIdOrderByIsRequiredDescSkillNameAsc(project.getId());
+
+        Map<Long, ProjectSkill> existingMap = existingList.stream()
+                .filter(ps -> ps.getSkill() != null && ps.getSkill().getId() != null)
+                .collect(Collectors.toMap(ps -> ps.getSkill().getId(), ps -> ps));
+
+        // ✅ Collect IDs & Names
+        List<Long> skillIds = dedup.values().stream()
+                .map(ProjectSkillRequest::getSkillId)
+                .filter(id -> id != null)
+                .toList();
+
+        List<String> skillNames = dedup.values().stream()
+                .filter(r -> r.getSkillId() == null)
+                .map(r -> r.getSkillName().trim().toLowerCase())
+                .toList();
+
+        // ✅ Batch fetch by ID
+        Map<Long, Skill> skillMap = skillRepository.findAllById(skillIds)
+                .stream()
+                .collect(Collectors.toMap(Skill::getId, s -> s));
+
+        // ✅ Batch fetch by name
+        Map<String, Skill> skillNameMap = skillRepository.findByNameIn(skillNames)
+                .stream()
+                .collect(Collectors.toMap(
+                        s -> s.getName().toLowerCase(),
+                        s -> s
+                ));
+
+        List<ProjectSkill> newProjectSkills = new ArrayList<>();
+
         for (ProjectSkillRequest req : dedup.values()) {
-            final Skill skill;
+
+            Skill skill;
+
             if (req.getSkillId() != null) {
-                // Use SkillService to find by id (keeps central behavior and conversions
-                // consistent)
-                skill = skillService.findById(req.getSkillId());
+                skill = skillMap.get(req.getSkillId());
             } else {
-                // Find or create skill by name using SkillService so the same Skill row is
-                // reused
-                String name = req.getSkillName().trim();
-                skill = skillService.findOrCreateSkill(name);
+                String name = req.getSkillName().trim().toLowerCase();
+
+                skill = skillNameMap.get(name);
+
+                if (skill == null) {
+                    skill = new Skill();
+                    skill.setName(name);
+                    skill = skillRepository.save(skill); // only for new
+                }
             }
 
             boolean requiredFlag = (req.getRequired() == null) || req.getRequired();
 
-            // Try to find an existing ProjectSkill for this project and skill by scanning
-            // existing project skills
-            java.util.List<ProjectSkill> existingList = projectSkillRepository
-                    .findByProjectIdOrderByIsRequiredDescSkillNameAsc(project.getId());
-            ProjectSkill ps = existingList.stream()
-                    .filter(p -> p.getSkill() != null && p.getSkill().getId() != null
-                            && p.getSkill().getId().equals(skill.getId()))
-                    .findFirst()
-                    .orElseGet(() -> new ProjectSkill(project, skill, requiredFlag));
-            ps.setIsRequired(requiredFlag);
+            ProjectSkill ps = existingMap.get(skill.getId());
+
+            if (ps == null) {
+                ps = new ProjectSkill(project, skill, requiredFlag);
+            } else {
+                ps.setIsRequired(requiredFlag);
+            }
 
             newProjectSkills.add(ps);
         }
 
-        // Replace existing project skills with new list (orphanRemoval will delete
-        // removed)
         project.getProjectSkills().clear();
         project.getProjectSkills().addAll(newProjectSkills);
     }

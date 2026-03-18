@@ -17,7 +17,6 @@ public interface iTaskService {
     public Task updateTask(Long taskId, UpdateTaskRequest request, String userId) ;
     public void deleteTask(Long taskId, String userId) ;
     public Task toggleTaskCompletion(Long taskId, boolean completed, String userId);
-    public List<Task> getProjectTasks(String projectId) ;
     public List<Task> getOverdueTasks(String projectId) ;
     public List<Task> getTasksDueToday(String projectId);
 

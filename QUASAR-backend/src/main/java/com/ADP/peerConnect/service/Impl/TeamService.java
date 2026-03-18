@@ -277,7 +277,7 @@ public class TeamService implements iTeamService {
 
         List<ProjectMember> members = memberRepository.findByProject_IdOrderByCreatedAtAsc(projectId);
 
-        // Map entities to DTOs here, inside the transactional method
+
         return members.stream()
                 .map(member -> modelMapper.map(member, ProjectMemberResponse.class))
                 .collect(Collectors.toList());

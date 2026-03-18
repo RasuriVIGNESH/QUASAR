@@ -1,6 +1,7 @@
 package com.ADP.peerConnect.controller.project;
 
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
+import com.ADP.peerConnect.model.dto.response.Project.ProjectCardResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.enums.ProjectStatus;
@@ -33,7 +34,7 @@ public class projectDiscovery {
 
     @Operation(summary = "Discover projects")
     @GetMapping("/api/discover")
-    public ResponseEntity<PagedResponse<ProjectResponse>> discoverProjects(
+    public ResponseEntity<PagedResponse<ProjectCardResponse>> discoverProjects(
             @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
             @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser){
@@ -42,12 +43,12 @@ public class projectDiscovery {
         Page<Project> projectPage = projectService.discoverProjects(currentUser.getId(), pageable);
 
         // Convert the Page<Project> to a List<ProjectResponse>
-        List<ProjectResponse> projectResponses = projectPage.getContent().stream()
-                .map(ProjectResponse::new) // Uses the constructor we fixed
+        List<ProjectCardResponse> projectResponses = projectPage.getContent().stream()
+                .map(ProjectCardResponse::new) // Uses the constructor we fixed
                 .collect(Collectors.toList());
 
         // Create the final PagedResponse object
-        PagedResponse<ProjectResponse> response = new PagedResponse<>(
+        PagedResponse<ProjectCardResponse> response = new PagedResponse<>(
                 projectResponses,
                 projectPage.getNumber(),
                 projectPage.getSize(),
@@ -65,7 +66,7 @@ public class projectDiscovery {
 
     @Operation(summary = "Get projects in College", description = "Get a paginated list of projects associated with a specific college ID.")
     @GetMapping("/by-college/{collegeId}")
-    public ResponseEntity<PagedResponse<ProjectResponse>> getProjectsInCollege(
+    public ResponseEntity<PagedResponse<ProjectCardResponse>> getProjectsInCollege(
             @PathVariable String collegeId,
             @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size) {
@@ -73,11 +74,11 @@ public class projectDiscovery {
         Pageable pageable = PageRequest.of(page, size);
         Page<Project> projects = projectService.findProjetsInCollege(collegeId, pageable);
 
-        List<ProjectResponse> projectResponses = projects.getContent().stream()
-                .map(ProjectResponse::new)
+        List<ProjectCardResponse> projectResponses = projects.getContent().stream()
+                .map(ProjectCardResponse::new)
                 .collect(Collectors.toList());
 
-        PagedResponse<ProjectResponse> response = new PagedResponse<>(
+        PagedResponse<ProjectCardResponse> response = new PagedResponse<>(
                 projectResponses,
                 projects.getNumber(),
                 projects.getSize(),
@@ -94,7 +95,7 @@ public class projectDiscovery {
 
     @Operation(summary = "Search projects", description = "use project status only RECRUITING, IN_PROGRESS, COMPLETED, CANCELLED")
     @GetMapping("/api/searchProjects")
-    public ResponseEntity<PagedResponse<ProjectResponse>> searchProjects(
+    public ResponseEntity<PagedResponse<ProjectCardResponse>> searchProjects(
             @Parameter(description = "Search query") @RequestParam(required = false) String query,
             @Parameter(description = "Category filter") @RequestParam(required = false) String category,
             @Parameter(description = "Status filter") @RequestParam(required = false) ProjectStatus status,
@@ -107,12 +108,12 @@ public class projectDiscovery {
         Pageable pageable = PageRequest.of(page, size);
         String currentUserId = currentUser != null ? currentUser.getId() : null;
         Page<Project> projects = projectService.searchProjects(query, category, status, skills, availableOnly, pageable, currentUserId);
-        List<ProjectResponse> content = projects.getContent()
+        List<ProjectCardResponse> content = projects.getContent()
                 .stream()
-                .map(ProjectResponse::new)
+                .map(ProjectCardResponse::new)
                 .collect(Collectors.toList());
 
-        PagedResponse<ProjectResponse> response = new PagedResponse<>(
+        PagedResponse<ProjectCardResponse> response = new PagedResponse<>(
                 content,
                 projects.getNumber(),
                 projects.getSize(),
@@ -148,7 +149,7 @@ public class projectDiscovery {
     }
     @Operation(summary = "Get projects by Lead", description = "Get a paginated list of projects owned by a specific user.")
     @GetMapping("/by-lead/{leadId}")
-    public ResponseEntity<PagedResponse<ProjectResponse>> getProjectsByLead(
+    public ResponseEntity<PagedResponse<ProjectCardResponse>> getProjectsByLead(
             @PathVariable String leadId,
             @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size) {
@@ -156,11 +157,11 @@ public class projectDiscovery {
         Pageable pageable = PageRequest.of(page, size);
         Page<Project> projects = projectService.findByLead(leadId, pageable);
 
-        List<ProjectResponse> projectResponses = projects.getContent().stream()
-                .map(ProjectResponse::new)
+        List<ProjectCardResponse> projectResponses = projects.getContent().stream()
+                .map(ProjectCardResponse::new)
                 .collect(Collectors.toList());
 
-        PagedResponse<ProjectResponse> response = new PagedResponse<>(
+        PagedResponse<ProjectCardResponse> response = new PagedResponse<>(
                 projectResponses,
                 projects.getNumber(),
                 projects.getSize(),

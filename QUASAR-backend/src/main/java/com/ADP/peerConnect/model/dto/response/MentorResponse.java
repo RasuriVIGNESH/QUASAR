@@ -11,10 +11,9 @@ public class MentorResponse {
     private String branch;
     private String department;
     private String designation;
-    private byte[] profilePhoto;
 
 
-    public MentorResponse(String bio, String branch, String department, String designation, String email, String firstName, String id, String lastName, byte[] profilePhoto) {
+    public MentorResponse(String bio, String branch, String department, String designation, String email, String firstName, String id, String lastName) {
         this.bio = bio;
         this.branch = branch;
         this.department = department;
@@ -23,7 +22,6 @@ public class MentorResponse {
         this.firstName = firstName;
         this.id = id;
         this.lastName = lastName;
-        this.profilePhoto = profilePhoto;
     }
 
     public MentorResponse(){
@@ -91,13 +89,5 @@ public class MentorResponse {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
-    }
-
-    public byte[] getProfilePhoto() {
-        return profilePhoto;
-    }
-
-    public void setProfilePhoto(byte[] profilePhoto) {
-        this.profilePhoto = profilePhoto;
     }
 }

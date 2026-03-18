@@ -24,21 +24,29 @@ public interface UserRepository extends JpaRepository<User, String> {
        // Find user by LinkedIn ID
        Optional<User> findByLinkedinId(String linkedinId);
 
-       // Discover users with filters, excluding current user
-       @Query("SELECT DISTINCT u FROM User u LEFT JOIN u.userSkills us LEFT JOIN us.skill s " +
-                     "WHERE u.id != :currentUserId " +
-                     "AND u.role = com.ADP.peerConnect.model.enums.Role.STUDENT " +
-                     "AND (:branch IS NULL OR u.branch = :branch) " +
-                     "AND (:graduationYear IS NULL OR u.graduationYear = :graduationYear) " +
-                     "AND (:availabilityStatus IS NULL OR u.availabilityStatus = :availabilityStatus) " +
-                     "AND (:skills IS NULL OR s.name IN :skills)")
-       Page<User> discoverUsers(@Param("currentUserId") String currentUserId,
-                     @Param("branch") String branch,
-                     @Param("graduationYear") Integer graduationYear,
-                     @Param("availabilityStatus") AvailabilityStatus availabilityStatus,
-                     @Param("skills") List<String> skills,
-                     Pageable pageable);
-
+       @Query("""
+    SELECT u FROM User u
+    WHERE u.id != :currentUserId
+    AND u.role = com.ADP.peerConnect.model.enums.Role.STUDENT
+    AND (:branch IS NULL OR u.branch = :branch)
+    AND (:graduationYear IS NULL OR u.graduationYear = :graduationYear)
+    AND (:availabilityStatus IS NULL OR u.availabilityStatus = :availabilityStatus)
+    AND (
+        :skills IS NULL OR EXISTS (
+            SELECT 1 FROM UserSkill us2
+            JOIN us2.skill s2
+            WHERE us2.user = u AND s2.name IN :skills
+        )
+    )
+""")
+       Page<User> discoverUsers(
+               @Param("currentUserId") String currentUserId,
+               @Param("branch") String branch,
+               @Param("graduationYear") Integer graduationYear,
+               @Param("availabilityStatus") AvailabilityStatus availabilityStatus,
+               @Param("skills") List<String> skills,
+               Pageable pageable
+       );
        // Check if email exists
        boolean existsByEmail(String email);
 
@@ -70,7 +78,7 @@ public interface UserRepository extends JpaRepository<User, String> {
        Page<User> findByNameContainingIgnoreCase(@Param("name") String name, Pageable pageable);
 
        // Find users with specific skills
-       @Query("SELECT DISTINCT u FROM User u " +
+       @Query("SELECT u FROM User u " +
                      "JOIN u.userSkills us " +
                      "JOIN us.skill s " +
                      "WHERE s.name IN :skillNames")
@@ -79,7 +87,7 @@ public interface UserRepository extends JpaRepository<User, String> {
        /**
         * Find users available for projects with complementary skills
         */
-       @Query("SELECT DISTINCT u FROM User u " +
+       @Query("SELECT u FROM User u " +
                      "JOIN u.userSkills us " +
                      "JOIN us.skill s " +
                      "WHERE u.availabilityStatus = 'AVAILABLE' " +
@@ -92,17 +100,23 @@ public interface UserRepository extends JpaRepository<User, String> {
        /**
         * Search users by multiple criteria
         */
-       @Query("SELECT DISTINCT u FROM User u " +
-                     "LEFT JOIN u.userSkills us " +
-                     "LEFT JOIN us.skill s " +
-                     "WHERE (:name IS NULL OR " +
-                     "       LOWER(u.firstName) LIKE LOWER(CONCAT('%', :name, '%')) OR " +
-                     "       LOWER(u.lastName) LIKE LOWER(CONCAT('%', :name, '%')) OR " +
-                     "       LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :name, '%'))) " +
-                     "AND (:branch IS NULL OR u.branch = :branch) " +
-                     "AND (:graduationYear IS NULL OR u.graduationYear = :graduationYear) " +
-                     "AND (:availabilityStatus IS NULL OR u.availabilityStatus = :availabilityStatus) " +
-                     "AND (:skillNames IS NULL OR s.name IN :skillNames)")
+       @Query("""
+              SELECT u FROM User u
+              WHERE (:name IS NULL OR 
+                     LOWER(u.firstName) LIKE LOWER(CONCAT('%', :name, '%')) OR 
+                     LOWER(u.lastName) LIKE LOWER(CONCAT('%', :name, '%')) OR 
+                     LOWER(CONCAT(u.firstName, ' ', u.lastName)) LIKE LOWER(CONCAT('%', :name, '%')))
+              AND (:branch IS NULL OR u.branch = :branch)
+              AND (:graduationYear IS NULL OR u.graduationYear = :graduationYear)
+              AND (:availabilityStatus IS NULL OR u.availabilityStatus = :availabilityStatus)
+              AND (
+                  :skillNames IS NULL OR EXISTS (
+                      SELECT 1 FROM UserSkill us2
+                      JOIN us2.skill s2
+                      WHERE us2.user = u AND s2.name IN :skillNames
+                  )
+              )
+              """)
        Page<User> searchUsers(@Param("name") String name,
                      @Param("branch") String branch,
                      @Param("graduationYear") Integer graduationYear,
