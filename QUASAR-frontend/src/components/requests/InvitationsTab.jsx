@@ -89,7 +89,7 @@ export default function InvitationsTab() {
                 item={inv}
                 type="invitation"
                 onAccept={() => handleInvitationResponse(inv.invitationId, 'ACCEPTED')}
-                onReject={() => handleInvitationResponse(inv.invitationId, 'DECLINED')}
+                onReject={() => handleInvitationResponse(inv.invitationId, 'REJECTED')}
               />
             ))}
           </div>

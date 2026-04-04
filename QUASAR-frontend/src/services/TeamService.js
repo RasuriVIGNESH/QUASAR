@@ -34,14 +34,14 @@ class TeamService {
     }
   }
 
-  // Respond to invitation (accept/decline) - matches TeamController endpoint
+  // Respond to invitation (accept/REJECTED) - matches TeamController endpoint
   async respondToInvitation(invitationId, response) {
     try {
       if (!invitationId) {
         throw new Error('Invitation ID is required');
       }
-      if (!['ACCEPTED', 'DECLINED'].includes(response)) {
-        throw new Error('Response must be ACCEPTED or DECLINED');
+      if (!['ACCEPTED', 'REJECTED'].includes(response)) {
+        throw new Error('Response must be ACCEPTED or REJECTED');
       }
 
       console.log('TeamService: Responding to invitation:', invitationId, response);
@@ -227,9 +227,9 @@ class TeamService {
   // Decline invitation (shorthand)
   async declineInvitation(invitationId) {
     try {
-      return await this.respondToInvitation(invitationId, 'DECLINED');
+      return await this.respondToInvitation(invitationId, 'REJECTED');
     } catch (error) {
-      throw new Error(error.message || 'Failed to decline invitation');
+      throw new Error(error.message || 'Failed to REJECTED invitation');
     }
   }
 
@@ -340,7 +340,7 @@ class TeamService {
         total: invitationList.length,
         pending: invitationList.filter(inv => inv.status === 'PENDING').length,
         accepted: invitationList.filter(inv => inv.status === 'ACCEPTED').length,
-        declined: invitationList.filter(inv => inv.status === 'DECLINED').length,
+        REJECTED: invitationList.filter(inv => inv.status === 'REJECTED').length,
         cancelled: invitationList.filter(inv => inv.status === 'CANCELLED').length
       };
 
@@ -383,7 +383,7 @@ class TeamService {
           memberCount: (members?.data || []).length,
           pendingInvitations: stats?.data?.pending || 0,
           responseRate: stats?.data?.total > 0
-            ? Math.round(((stats?.data?.accepted + stats?.data?.declined) / stats?.data?.total) * 100)
+            ? Math.round(((stats?.data?.accepted + stats?.data?.REJECTED) / stats?.data?.total) * 100)
             : 0
         }
       };

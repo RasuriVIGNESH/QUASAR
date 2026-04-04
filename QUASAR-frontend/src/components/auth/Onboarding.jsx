@@ -47,7 +47,7 @@ export default function Onboarding() {
                 setLoading(true);
                 const [staticSkills, userSkillsData] = await Promise.all([
                     skillsService.getStaticPredefinedSkills(),
-                    skillsService.getUserSkills()
+                    skillsService.getUserSkillsByUserId(currentUser?.id)
                 ]);
 
                 setPredefinedSkills(staticSkills?.data || staticSkills || []);
@@ -168,7 +168,7 @@ export default function Onboarding() {
                 if (newSkills.length > 0) {
                     await skillsService.addBatchSkills(newSkills, currentUser);
                     // Refresh skills from backend to get real IDs
-                    const res = await skillsService.getUserSkills();
+                    const res = await skillsService.getUserSkillsByUserId(currentUser?.id);
                     setUserSkills(res?.data || res || []);
                 }
                 setStep(2);

@@ -71,7 +71,7 @@ export default function StickyNotes({ notes = [], onCreate, onUpdate, onDelete }
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={addNote}
-                className="fixed bottom-8 right-8 w-14 h-14 bg-indigo-600 text-white rounded-2xl shadow-2xl shadow-indigo-200 flex items-center justify-center pointer-events-auto transition-colors hover:bg-indigo-700"
+                className="fixed bottom-8 right-8 w-14 h-14 bg-indigo-600 text-white rounded-2xl shadow-2xl shadow-indigo-900/40 flex items-center justify-center pointer-events-auto transition-colors hover:bg-indigo-700"
             >
                 <Plus size={28} />
             </motion.button>

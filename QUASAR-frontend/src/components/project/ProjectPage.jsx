@@ -598,7 +598,13 @@ const TaskBoard = ({ projectId, project }) => {
   const [members, setMembers] = useState([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTaskId, setEditingTaskId] = useState(null);
-  const [newTask, setNewTask] = useState({ title: '', description: '', priority: 'MEDIUM', status: 'TODO', assignedToId: '' });
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    priority: 'MEDIUM',
+    status: 'TODO',
+    assignedToId: ''
+  });
 
   const fetchData = async () => {
     try {
@@ -606,12 +612,25 @@ const TaskBoard = ({ projectId, project }) => {
         projectService.getProjectTasks(projectId),
         projectService.getProjectMembers(projectId)
       ]);
-      setTasks(tasksRes || []);
-      setMembers(membersRes.data?.content || membersRes.data || []);
-    } catch (e) { console.error(e); }
+
+      // --- FIX 1: Handle Spring Boot Page Object for Tasks ---
+      // If tasksRes has a .content property, use that. Otherwise, check if it's an array.
+      const taskList = tasksRes?.content || (Array.isArray(tasksRes) ? tasksRes : []);
+      setTasks(taskList);
+
+      // --- FIX 2: Handle Spring Boot Page Object for Members ---
+      const memberList = membersRes?.data?.content || membersRes?.content || (Array.isArray(membersRes) ? membersRes : []);
+      setMembers(memberList);
+
+    } catch (e) {
+      console.error("TaskBoard Fetch Error:", e);
+      setTasks([]); // Fallback to empty array to prevent .filter() crash
+    }
   };
 
-  useEffect(() => { fetchData(); }, [projectId]);
+  useEffect(() => {
+    if (projectId) fetchData();
+  }, [projectId]);
 
   const handleSaveTask = async () => {
     if (!newTask.title) return;
@@ -625,7 +644,7 @@ const TaskBoard = ({ projectId, project }) => {
       setNewTask({ title: '', description: '', priority: 'MEDIUM', status: 'TODO', assignedToId: '' });
       setEditingTaskId(null);
       fetchData();
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Save Task Error:", e); }
   };
 
   const handleDeleteTask = async (taskId) => {
@@ -633,16 +652,16 @@ const TaskBoard = ({ projectId, project }) => {
       try {
         await projectService.deleteTask(projectId, taskId);
         fetchData();
-      } catch (e) { console.error(e); }
+      } catch (e) { console.error("Delete Task Error:", e); }
     }
   };
 
   const openEditDialog = (task) => {
     setNewTask({
-      title: task.title,
-      description: task.description,
-      priority: task.priority,
-      status: task.status,
+      title: task.title || '',
+      description: task.description || '',
+      priority: task.priority || 'MEDIUM',
+      status: task.status || 'TODO',
       assignedToId: task.assignedTo?.id || ''
     });
     setEditingTaskId(task.id);
@@ -664,37 +683,58 @@ const TaskBoard = ({ projectId, project }) => {
           </DialogTrigger>
           <DialogContent className="bg-white dark:bg-slate-900 rounded-2xl border-none shadow-2xl dark:shadow-slate-900/50">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold dark:text-white">{editingTaskId ? 'Edit Task' : 'New Task'}</DialogTitle>
+              <DialogTitle className="text-xl font-bold dark:text-white">
+                {editingTaskId ? 'Edit Task' : 'New Task'}
+              </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-1">
                 <Label className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Task Title</Label>
-                <Input value={newTask.title} onChange={e => setNewTask({ ...newTask, title: e.target.value })} className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-indigo-500" />
+                <Input
+                  value={newTask.title}
+                  onChange={e => setNewTask({ ...newTask, title: e.target.value })}
+                  className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-indigo-500"
+                />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold">Description</Label>
-                <Textarea value={newTask.description} onChange={e => setNewTask({ ...newTask, description: e.target.value })} className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-indigo-500" />
+                <Textarea
+                  value={newTask.description}
+                  onChange={e => setNewTask({ ...newTask, description: e.target.value })}
+                  className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg focus:ring-indigo-500"
+                />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <Select onValueChange={v => setNewTask({ ...newTask, priority: v })}>
-                  <SelectTrigger className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white">Priority</SelectTrigger>
+                <Select value={newTask.priority} onValueChange={v => setNewTask({ ...newTask, priority: v })}>
+                  <SelectTrigger className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
                   <SelectContent className="bg-white dark:bg-slate-900 dark:border-slate-800 dark:text-white">
                     <SelectItem value="LOW">Low</SelectItem>
                     <SelectItem value="MEDIUM">Medium</SelectItem>
                     <SelectItem value="HIGH">High</SelectItem>
                   </SelectContent>
                 </Select>
-                <Select onValueChange={v => setNewTask({ ...newTask, assignedToId: v })}>
-                  <SelectTrigger className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white">Assigned To</SelectTrigger>
+                <Select value={newTask.assignedToId} onValueChange={v => setNewTask({ ...newTask, assignedToId: v })}>
+                  <SelectTrigger className="border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                    <SelectValue placeholder="Assigned To" />
+                  </SelectTrigger>
                   <SelectContent className="bg-white dark:bg-slate-900 dark:border-slate-800 dark:text-white">
-                    {members.map(m => <SelectItem key={m.user.id} value={m.user.id}>{m.user.firstName}</SelectItem>)}
+                    {/* Unique keys for dropdown items */}
+                    {members?.map(m => (
+                      <SelectItem key={m.user?.id || m.userId} value={m.user?.id || m.userId}>
+                        {m.user?.firstName || 'Member'}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <DialogFooter>
-
-              <Button onClick={handleSaveTask} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20">
+              <Button
+                onClick={handleSaveTask}
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-indigo-200 dark:shadow-indigo-900/20"
+              >
                 {editingTaskId ? 'Save Changes' : 'Create Task'}
               </Button>
             </DialogFooter>
@@ -706,16 +746,21 @@ const TaskBoard = ({ projectId, project }) => {
         {['TODO', 'IN_PROGRESS', 'COMPLETED'].map(status => (
           <div key={status} className="flex flex-col gap-4">
             <div className="flex items-center gap-2 px-1">
-              <div className={`w-1.5 h-1.5 rounded-full ${status === 'COMPLETED' ? 'bg-emerald-500' : status === 'IN_PROGRESS' ? 'bg-indigo-500' : 'bg-slate-300 dark:bg-slate-600'}`} />
+              <div className={`w-1.5 h-1.5 rounded-full ${status === 'COMPLETED' ? 'bg-emerald-500' : status === 'IN_PROGRESS' ? 'bg-indigo-50' : 'bg-slate-300 dark:bg-slate-600'}`} />
               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">{status.replace('_', ' ')}</span>
             </div>
 
             <div className="space-y-4">
-              {tasks.filter(t => t.status === status).map(task => (
-                <Card key={task.id} className="p-5 border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all cursor-pointer group bg-white dark:bg-slate-900 rounded-2xl">
+              {/* --- FIX 3: Robust Array filtering to prevent crash --- */}
+              {(Array.isArray(tasks) ? tasks : []).filter(t => t.status === status).map((task, idx) => (
+                <Card
+                  key={task.id || `task-${status}-${idx}`}
+                  className="p-5 border-slate-200/60 dark:border-slate-800 shadow-sm hover:shadow-md hover:border-indigo-200 dark:hover:border-indigo-900/50 transition-all cursor-pointer group bg-white dark:bg-slate-900 rounded-2xl"
+                >
                   <div className="flex justify-between items-start mb-3">
                     <Badge className={`px-2 py-0 text-[9px] font-bold border-none ${task.priority === 'HIGH' ? 'bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400' :
-                      task.priority === 'MEDIUM' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                        task.priority === 'MEDIUM' ? 'bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400' :
+                          'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                       }`}>
                       {task.priority}
                     </Badge>
@@ -726,10 +771,10 @@ const TaskBoard = ({ projectId, project }) => {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-white dark:bg-slate-900 dark:border-slate-800">
-                        <DropdownMenuItem onClick={() => openEditDialog(task)} className="dark:text-slate-300 dark:focus:bg-slate-800">
+                        <DropdownMenuItem onClick={() => openEditDialog(task)} className="dark:text-slate-300 dark:focus:bg-slate-800 cursor-pointer">
                           <Edit className="w-3.5 h-3.5 mr-2" /> Edit Task
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20" onClick={() => handleDeleteTask(task.id)}>
+                        <DropdownMenuItem className="text-red-600 focus:bg-red-50 dark:focus:bg-red-900/20 cursor-pointer" onClick={() => handleDeleteTask(task.id)}>
                           <Trash2 className="w-3.5 h-3.5 mr-2" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -738,12 +783,14 @@ const TaskBoard = ({ projectId, project }) => {
                   <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2 leading-snug">{task.title}</h4>
                   <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">{task.description}</p>
 
-                  {task.assignedToName && (
+                  {(task.assignedToName || task.assignedTo?.firstName) && (
                     <div className="flex items-center gap-2 pt-3 border-t border-slate-50 dark:border-slate-800">
-                      <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[9px] font-bold text-indigo-700 dark:text-indigo-400">
-                        {task.assignedToName[0]}
+                      <div className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-[9px] font-bold text-indigo-700 dark:text-indigo-400 uppercase">
+                        {(task.assignedToName || task.assignedTo?.firstName)[0]}
                       </div>
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">{task.assignedToName}</span>
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">
+                        {task.assignedToName || task.assignedTo?.firstName}
+                      </span>
                     </div>
                   )}
                 </Card>

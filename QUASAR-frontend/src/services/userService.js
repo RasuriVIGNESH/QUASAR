@@ -246,6 +246,16 @@ class UserService {
             return [];
         }
     }
+
+    // GET /api/skills/predefined — Get list of predefined skills
+    async getPredefinedSkills() {
+        try {
+            return await apiService.get('/skills/predefined');
+        } catch (error) {
+            console.error('UserService: Error fetching predefined skills:', error);
+            return [];
+        }
+    }
 }
 
 export const userService = new UserService();

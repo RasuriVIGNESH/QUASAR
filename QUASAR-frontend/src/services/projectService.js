@@ -113,7 +113,7 @@ class ProjectService {
       }
 
       console.log('Creating project with data:', projectData);
-      const response = await apiService.post('/projects', projectData);
+      const response = await apiService.post('/projects/Create', projectData);
       console.log('Project created successfully:', response);
       return response;
     } catch (error) {
@@ -170,7 +170,7 @@ class ProjectService {
   // Get all project categories
   async getProjectCategories() {
     try {
-      const response = await apiService.get('/project-categories');
+      const response = await apiService.get('/projects/categories');
       // Handle both { data: [...] } and [...] response formats
       return Array.isArray(response) ? response : (response.data || []);
     } catch (error) {
@@ -185,7 +185,7 @@ class ProjectService {
       if (!categoryData.name) {
         throw new Error('Category name is required');
       }
-      const response = await apiService.post('/project-categories', categoryData);
+      const response = await apiService.post('/projects/categories', categoryData);
       return response.data; // Return the newly created category object
     } catch (error) {
       console.error('Failed to create project category:', error);
@@ -401,6 +401,20 @@ class ProjectService {
     } catch (error) {
       console.error(`Failed to reject invitation:`, error);
       throw new Error(error.message || 'Failed to reject invitation');
+    }
+  }
+
+  // Cancel invitation - matches ProjectController endpoint
+  async cancelInvitation(invitationId) {
+    try {
+      if (!invitationId) {
+        throw new Error('Invitation ID is required');
+      }
+
+      return await apiService.post(`/projects/invitations/${invitationId}/cancel`);
+    } catch (error) {
+      console.error(`Failed to cancel invitation:`, error);
+      throw new Error(error.message || 'Failed to cancel invitation');
     }
   }
 

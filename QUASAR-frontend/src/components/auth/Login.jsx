@@ -146,7 +146,7 @@ export default function Login() {
                   <div className="flex justify-end">
                     <Link
                       to="/forgot-password"
-                      className="text-sm font-semibold transition-colors hover-spring" style={{ color: '#a78bfa' }}
+                      className="text-sm font-semibold transition-colors hover:text-white" style={{ color: '#94a3b8' }}
                     >
                       Forgot password?
                     </Link>
@@ -160,8 +160,7 @@ export default function Login() {
                     >
                       <Button
                         type="submit"
-                        className="w-full h-12 text-white rounded-xl font-bold text-base flex items-center justify-center gap-2 hover-spring"
-                        style={{ background: 'linear-gradient(90deg, #7c3aed, #a855f7, #06b6d4, #a855f7, #7c3aed)', backgroundSize: '300% auto', animation: 'shimmer 5s linear infinite', boxShadow: '0 14px 44px rgba(139,92,246,0.35)' }}
+                        className="w-full h-12 bg-white text-black hover:bg-white/90 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg"
                         disabled={loading}
                       >
                         {loading ? (
@@ -231,7 +230,7 @@ export default function Login() {
                     Don't have an account?{' '}
                     <Link
                       to="/register"
-                      className="font-bold transition-colors" style={{ color: '#a78bfa' }}
+                      className="font-bold transition-colors hover:text-white" style={{ color: '#94a3b8' }}
                     >
                       Sign up
                     </Link>

@@ -87,9 +87,43 @@ export default function CreateProject() {
   const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
   const validateStep = (step) => {
-    if (step === 1) return formData.title.length >= 5 && formData.category;
-    if (step === 2) return formData.goals.length > 0 && formData.skillsRequired.length > 0;
-    if (step === 3) return formData.maxTeamSize >= 2;
+    if (step === 1) {
+      if (formData.title.length < 5 || formData.title.length > 100) {
+        setError('Project title must be between 5 and 100 characters');
+        return false;
+      }
+      if (!formData.description || formData.description.length < 10 || formData.description.length > 1000) {
+        setError('Project description must be between 10 and 1000 characters');
+        return false;
+      }
+      if (!formData.category) {
+        setError('Please select a project category');
+        return false;
+      }
+      setError('');
+      return true;
+    }
+    if (step === 2) {
+      if (!formData.goals || formData.goals.length < 10) {
+        setError('Please provide more detailed goals (at least 10 chars)');
+        return false;
+      }
+      if (formData.skillsRequired.length === 0) {
+        setError('Please add at least one required skill');
+        return false;
+      }
+      setError('');
+      return true;
+    }
+    if (step === 3) {
+      const size = parseInt(formData.maxTeamSize);
+      if (isNaN(size) || size < 2 || size > 20) {
+        setError('Team size must be between 2 and 20 members');
+        return false;
+      }
+      setError('');
+      return true;
+    }
     return true;
   };
 
@@ -97,10 +131,8 @@ export default function CreateProject() {
     if (validateStep(currentStep)) {
       setDirection(1);
       setCurrentStep(prev => prev + 1);
-      setError('');
-    } else {
-      setError('Please complete the required fields.');
     }
+    // Validation error is already set by validateStep
   };
 
   const handleBack = () => {
@@ -110,6 +142,7 @@ export default function CreateProject() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateStep(3)) return; // Final validation check
     setLoading(true);
     try {
       const payload = { ...formData, maxTeamSize: parseInt(formData.maxTeamSize), categoryName: formData.category, skills: formData.skillsRequired };
@@ -316,6 +349,8 @@ export default function CreateProject() {
                         placeholder="What's the name of your masterpiece?"
                         value={formData.title}
                         onChange={e => handleInputChange('title', e.target.value)}
+                        minLength={5}
+                        maxLength={100}
                         className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 shadow-sm focus:ring-2 focus:ring-indigo-500/20"
                       />
                     </div>
@@ -334,6 +369,8 @@ export default function CreateProject() {
                         placeholder="A short, catchy description for the feed..."
                         value={formData.description}
                         onChange={e => handleInputChange('description', e.target.value)}
+                        minLength={10}
+                        maxLength={1000}
                         className="min-h-[100px] rounded-2xl border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
                       />
                     </div>
@@ -344,7 +381,11 @@ export default function CreateProject() {
                           <SelectValue placeholder="Pick a domain" />
                         </SelectTrigger>
                         <SelectContent className="dark:bg-slate-800 dark:border-slate-700 dark:text-white">
-                          {projectCategories.map(cat => <SelectItem key={cat.id} value={cat.name}>{cat.name}</SelectItem>)}
+                          {projectCategories.map((cat, index) => (
+                            <SelectItem key={cat.id || `cat-${index}`} value={cat.name}>
+                              {cat.name}
+                            </SelectItem>
+                          ))}
                           <SelectItem value="create_new" className="text-indigo-600 font-bold">+ New Category</SelectItem>
                         </SelectContent>
                       </Select>
@@ -433,7 +474,14 @@ export default function CreateProject() {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
                         <Label className="text-slate-700 dark:text-slate-200 font-semibold">Max Team Size *</Label>
-                        <Input type="number" value={formData.maxTeamSize} onChange={e => handleInputChange('maxTeamSize', e.target.value)} className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                        <Input 
+                          type="number" 
+                          value={formData.maxTeamSize} 
+                          onChange={e => handleInputChange('maxTeamSize', e.target.value)} 
+                          min={2}
+                          max={20}
+                          className="h-14 rounded-2xl border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+                        />
                       </div>
                       <div className="grid gap-2">
                         <Label className="text-slate-700 dark:text-slate-200 font-semibold">Expected Start</Label>

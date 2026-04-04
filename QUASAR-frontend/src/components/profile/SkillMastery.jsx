@@ -99,7 +99,7 @@ export default function Skills() {
         try {
             setLoading(true);
             const [uSkills, cats, staticSkills] = await Promise.all([
-                skillsService.getUserSkills(),
+                skillsService.getUserSkillsByUserId(currentUser?.id),
                 skillsService.getSkillCategories(),
                 skillsService.getStaticPredefinedSkills()
             ]);
@@ -122,7 +122,7 @@ export default function Skills() {
         try {
             setLoading(true);
             await skillsService.addBatchSkills(newSkills, currentUser);
-            const response = await skillsService.getUserSkills();
+            const response = await skillsService.getUserSkillsByUserId(currentUser?.id);
             setUserSkills(response?.data || response || []);
             setMessage('Changes saved successfully!');
             setTimeout(() => setMessage(''), 3000);

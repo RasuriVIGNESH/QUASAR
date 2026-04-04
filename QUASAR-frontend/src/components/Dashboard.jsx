@@ -5,16 +5,14 @@ import { useAuth } from '../contexts/AuthContext';
 import { useRequests } from '../contexts/RequestContext';
 import { dashboardService } from '../services/dashboardService';
 import dataService from '../services/dataService';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Users, FolderOpen, TrendingUp, LogOut, Plus, Menu, User, Mail,
   Search, ArrowRight, Bell, Clock, CheckCircle, Star, GitBranch,
-  ChevronRight, Calendar, Sun, Moon, Code
+  ChevronRight, Calendar, Sun, Moon, Code, Settings
 } from 'lucide-react';
-import { useTheme } from 'next-themes';
 import ProjectDetailModal from './discovery/ProjectDetailModal';
 import MagneticButton from './common/MagneticButton';
 import TiltCard from './common/TiltCard';
@@ -80,7 +78,6 @@ const ScrollSection = ({ children, delay = 0 }) => {
 };
 
 export default function Dashboard() {
-  const { theme, setTheme } = useTheme();
   const { userProfile, logout } = useAuth();
   const { pendingCount } = useRequests();
   const navigate = useNavigate();
@@ -101,6 +98,21 @@ export default function Dashboard() {
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.95]);
   const heroScale = useTransform(scrollYProgress, [0, 0.3], [1, 0.95]);
+
+  const menuRef = useRef(null);
+
+  // Close menu on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMenu]);
 
   useEffect(() => {
     if (userProfile?.role === 'ADMIN') navigate('/admin/overview', { replace: true });
@@ -170,11 +182,75 @@ export default function Dashboard() {
               <img src="/Logo.png" alt="Quasar" className="w-10 h-10 rounded-xl" loading="lazy" />
               <span className="text-xl font-bold text-gradient-indigo">Quasar</span>
             </div>
-            <div className="flex items-center gap-3">
-              <motion.button whileTap={{ scale: 0.95 }} onClick={() => setShowMenu(!showMenu)} className="p-2 rounded-xl glass-surface">
+            <div className="flex items-center gap-3 relative" ref={menuRef}>
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setShowMenu(!showMenu)}
+                className={`p-2 rounded-xl glass-surface transition-colors ${showMenu ? 'bg-white/10 border-[var(--indigo-primary)]' : ''}`}
+              >
                 <Menu className="h-5 w-5 text-[var(--text-secondary)]" />
               </motion.button>
-              {/* Menu dropdown logic remains same... */}
+
+              <AnimatePresence>
+                {showMenu && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
+                    animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95, filter: 'blur(10px)' }}
+                    transition={{ duration: 0.2, ease: "easeOut" }}
+                    className="absolute right-0 top-full mt-3 w-64 glass-surface border border-[var(--border-subtle)] rounded-2xl shadow-2xl overflow-hidden z-[60]"
+                  >
+                    <div className="p-3 border-b border-[var(--border-subtle)] bg-white/5">
+                      <div className="flex items-center gap-3 px-2 py-1">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--indigo-primary)] to-[var(--violet)] flex items-center justify-center text-white font-bold">
+                          {userProfile?.firstName?.[0] || 'U'}
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-[var(--text-bright)] truncate max-w-[140px]">
+                            {userProfile?.firstName} {userProfile?.lastName}
+                          </span>
+                          <span className="text-[10px] text-[var(--text-secondary)] uppercase tracking-wider font-black">
+                            {userProfile?.role || 'STUDENT'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="p-2 space-y-1">
+                      <button
+                        onClick={() => { navigate('/profile'); setShowMenu(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-left group"
+                      >
+                        <User className="h-4 w-4 text-[var(--text-secondary)] group-hover:text-[var(--indigo-primary)] transition-colors" />
+                        <span className="font-medium text-sm">View Profile</span>
+                      </button>
+
+                      <button
+                        onClick={() => { navigate('/requests'); setShowMenu(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5 transition-colors text-left group relative"
+                      >
+                        <Mail className="h-4 w-4 text-[var(--text-secondary)] group-hover:text-[var(--indigo-primary)] transition-colors" />
+                        <span className="font-medium text-sm">Messages</span>
+                        {pendingCount > 0 && (
+                          <span className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 bg-[var(--indigo-primary)] text-[10px] font-bold text-white rounded-lg flex items-center justify-center shadow-lg">
+                            {pendingCount}
+                          </span>
+                        )}
+                      </button>
+
+                      <div className="h-px bg-[var(--border-subtle)] mx-2 my-1" />
+
+                      <button
+                        onClick={() => { setShowLogoutConfirm(true); setShowMenu(false); }}
+                        className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-500/10 text-red-400 transition-colors text-left group"
+                      >
+                        <LogOut className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        <span className="font-medium text-sm">Sign Out</span>
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
         </div>
@@ -281,7 +357,42 @@ export default function Dashboard() {
 
       <ProjectDetailModal project={selectedProject} open={isModalOpen} onOpenChange={setIsModalOpen} />
 
-      {/* Logout Modal and Menu Overlay Logic... */}
+      {/* Logout Modal */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="glass-surface border border-[var(--border-subtle)] p-8 rounded-[2rem] max-w-sm w-full shadow-2xl relative overflow-hidden"
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-orange-500 to-red-500" />
+              <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 mb-6 mx-auto">
+                <LogOut className="h-8 w-8" />
+              </div>
+              <h3 className="text-2xl font-black mb-3 text-center text-[var(--text-bright)]">Sign Out</h3>
+              <p className="text-[var(--text-secondary)] mb-8 text-center leading-relaxed">
+                Are you sure you want to exit? Your session will be terminated and you'll need to sign back in.
+              </p>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={() => { logout(); navigate('/login'); }}
+                  className="w-full px-6 py-4 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-bold shadow-xl shadow-red-500/20 transition-all active:scale-[0.98]"
+                >
+                  Yes, Sign Out
+                </button>
+                <button
+                  onClick={() => setShowLogoutConfirm(false)}
+                  className="w-full px-6 py-4 glass-surface rounded-2xl font-bold hover:bg-white/5 transition-all text-[var(--text-primary)] border border-[var(--border-subtle)]"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

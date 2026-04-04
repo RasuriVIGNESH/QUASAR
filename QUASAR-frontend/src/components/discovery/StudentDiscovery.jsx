@@ -93,7 +93,7 @@ export default function StudentDiscovery() {
       // Load current user's skills
       if (currentUser) {
         try {
-          const userSkillsResponse = await skillsService.getUserSkills();
+          const userSkillsResponse = await skillsService.getUserSkillsByUserId(currentUser?.id);
           console.log('User skills response:', userSkillsResponse);
 
           const currentUserSkills = userSkillsResponse?.data?.map(userSkill =>

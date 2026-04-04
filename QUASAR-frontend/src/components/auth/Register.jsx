@@ -432,7 +432,7 @@ export default function Register() {
                   type="submit"
                   disabled={loading}
                   onClick={step < 3 ? (e) => { e.preventDefault(); handleNext(); } : undefined}
-                  className="flex-1 h-11 text-white font-semibold hover-spring" style={{ background: 'linear-gradient(90deg, #7c3aed, #a855f7, #06b6d4, #a855f7, #7c3aed)', backgroundSize: '300% auto', animation: 'shimmer 5s linear infinite', boxShadow: '0 14px 44px rgba(139,92,246,0.35)' }}
+                  className="flex-1 h-11 bg-white text-black hover:bg-white/90 font-bold transition-all shadow-lg"
                 >
                   {loading ? (
                     <div className="flex items-center gap-2">
@@ -482,7 +482,7 @@ export default function Register() {
             <div className="mt-8 text-center">
               <p className="text-sm" style={{ color: '#6b7280' }}>
                 Already have an account?{' '}
-                <Link to="/login" className="font-bold hover:underline" style={{ color: '#a78bfa' }}>
+                <Link to="/login" className="font-bold hover:text-white" style={{ color: '#94a3b8' }}>
                   Sign in
                 </Link>
               </p>

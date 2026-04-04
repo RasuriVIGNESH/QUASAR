@@ -53,7 +53,12 @@ function GradientCanvas() {
         ];
 
         const draw = (timestamp) => {
-            // --- 30FPS THROTTLE LOGIC (Fix 4) ---
+            // 1. Safety check for timestamp
+            if (!timestamp || isNaN(timestamp)) {
+                animRef.current = requestAnimationFrame(draw);
+                return;
+            }
+
             const elapsedSinceLastFrame = timestamp - lastFrameTime.current;
             if (elapsedSinceLastFrame < FRAME_INTERVAL) {
                 animRef.current = requestAnimationFrame(draw);
@@ -64,7 +69,12 @@ function GradientCanvas() {
             const w = canvas.width;
             const h = canvas.height;
 
-            // Fill background instead of clear for better performance on some GPUs
+            // 2. Prevent division by zero or NaN dimensions
+            if (!w || !h || w === 0 || h === 0) {
+                animRef.current = requestAnimationFrame(draw);
+                return;
+            }
+
             ctx.fillStyle = '#03050d';
             ctx.fillRect(0, 0, w, h);
 
@@ -76,15 +86,23 @@ function GradientCanvas() {
                 const y = (blob.cy + Math.cos(timestamp * blob.freqY) * blob.ampY) * h + parallaxY;
                 const r = blob.radius * Math.min(w, h);
 
-                const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
-                gradient.addColorStop(0, `rgba(${blob.color.join(',')}, ${blob.alpha})`);
-                gradient.addColorStop(0.5, `rgba(${blob.color.join(',')}, ${blob.alpha * 0.4})`);
-                gradient.addColorStop(1, `rgba(${blob.color.join(',')}, 0)`);
+                // 3. FINAL CRITICAL SAFETY CHECK
+                if (isNaN(x) || isNaN(y) || isNaN(r) || r <= 0) continue;
 
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(x, y, r, 0, Math.PI * 2);
-                ctx.fill();
+                try {
+                    const gradient = ctx.createRadialGradient(x, y, 0, x, y, r);
+                    gradient.addColorStop(0, `rgba(${blob.color.join(',')}, ${blob.alpha})`);
+                    gradient.addColorStop(0.5, `rgba(${blob.color.join(',')}, ${blob.alpha * 0.4})`);
+                    gradient.addColorStop(1, `rgba(${blob.color.join(',')}, 0)`);
+
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(x, y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                } catch (e) {
+                    // Silently catch any remaining canvas math errors
+                    console.warn("Canvas draw skip:", e);
+                }
             }
 
             animRef.current = requestAnimationFrame(draw);

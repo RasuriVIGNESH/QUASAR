@@ -25,11 +25,12 @@ export default function InviteMembers() {
   const { userProfile } = useAuth();
 
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [error, setError] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [invitedUserIds, setInvitedUserIds] = useState([]);
+  const [invitationsMap, setInvitationsMap] = useState({}); // userId -> invitationId
   const [showFilters, setShowFilters] = useState(false);
   const [applyLoading, setApplyLoading] = useState(false);
 
@@ -51,8 +52,8 @@ export default function InviteMembers() {
   useEffect(() => {
     const term = searchTerm.toLowerCase();
     setFilteredStudents(students.filter(s =>
-      s.displayName.toLowerCase().includes(term) ||
-      s.studentSkills.some(skill => skill.toLowerCase().includes(term))
+      (s.displayName || '').toLowerCase().includes(term) ||
+      (s.studentSkills || []).some(sk => (sk.name || '').toLowerCase().includes(term))
     ));
   }, [searchTerm, students]);
 
@@ -65,25 +66,38 @@ export default function InviteMembers() {
       if (customFilters.availabilityStatus && customFilters.availabilityStatus !== 'ALL') apiParams.availabilityStatus = customFilters.availabilityStatus;
       if (customFilters.skills) apiParams.skills = customFilters.skills.split(',').map(s => s.trim()).filter(Boolean);
 
-      const [usersRes, membersRes, projectRes] = await Promise.all([
+      const [usersRes, membersRes, projectRes, invitesRes] = await Promise.all([
         userService.discoverUsers(apiParams),
         projectService.getProjectMembers(projectId),
-        projectService.getProject(projectId)
+        projectService.getProject(projectId),
+        projectService.getProjectInvitations(projectId)
       ]);
 
-      const allStudents = usersRes?.data?.content || usersRes?.data || [];
-      const currentMembers = membersRes?.data || [];
-      const memberIds = new Set(currentMembers.map(m => m.user.id));
-      const leadId = projectRes?.lead?.id || projectRes?.Lead?.id;
+      // Safely extract students from response
+      let allStudents = [];
+      if (usersRes?.data?.content) allStudents = usersRes.data.content;
+      else if (Array.isArray(usersRes?.data)) allStudents = usersRes.data;
+      else if (usersRes?.content) allStudents = usersRes.content;
+      else if (Array.isArray(usersRes)) allStudents = usersRes;
+
+      // Safely extract members
+      const currentMembers = membersRes?.data || (Array.isArray(membersRes) ? membersRes : []);
+      const memberIds = new Set(currentMembers.map(m => m.user?.id || m.userId || m.id));
+      
+      // Project Lead
+      const projectData = projectRes?.data || projectRes || {};
+      const leadId = projectData.lead?.id || projectData.Lead?.id || projectData.leadId;
       if (leadId) memberIds.add(leadId);
 
       const processed = allStudents
-        .filter(s => !memberIds.has(s.id || s.userId || s._id))
+        .filter(s => {
+          const sid = s.id || s.userId || s._id;
+          return sid && !memberIds.has(sid);
+        })
         .map(s => ({
           ...s,
           id: s.id || s.userId || s._id,
           displayName: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
-          // Handle nested skill objects from response structure
           studentSkills: s.skills?.map(sk => {
             if (typeof sk === 'string') return { name: sk };
             if (sk.skill?.name) return { name: sk.skill.name, level: sk.level };
@@ -91,14 +105,28 @@ export default function InviteMembers() {
             return { name: 'Unknown' };
           }) || [],
           collegeName: s.college?.name || s.collage?.name,
-          // Handle base64 photo if it doesn't have prefix, prioritize existing URLs
           profilePictureUrl: s.profilePictureUrl ||
             (s.profilePhoto ? (s.profilePhoto.startsWith('data:') ? s.profilePhoto : `data:image/jpeg;base64,${s.profilePhoto}`) : null)
         }));
 
+      // Safely extract invites
+      const invites = invitesRes?.data?.content || invitesRes?.data || (Array.isArray(invitesRes) ? invitesRes : []);
+      const newInvitesMap = {};
+      if (Array.isArray(invites)) {
+        invites.forEach(inv => {
+          if (inv.status === 'PENDING') {
+            const uId = inv.invitedUser?.id || inv.invitedUserId;
+            if (uId) newInvitesMap[uId] = inv.invitationId || inv.id;
+          }
+        });
+      }
+      
+      setInvitationsMap(newInvitesMap);
+      setInvitedUserIds(Object.keys(newInvitesMap));
       setStudents(processed);
       setFilteredStudents(processed);
     } catch (err) {
+      console.error('InviteMembers: Fetch Error:', err);
       setError('Failed to fetch the talent pool.');
     } finally {
       setLoading(false);
@@ -108,14 +136,36 @@ export default function InviteMembers() {
 
   const handleInvite = async (student) => {
     try {
-      await projectService.sendInvitation(projectId, {
+      const resp = await projectService.sendInvitation(projectId, {
         invitedUserId: student.id,
         role: 'MEMBER',
         message: `Join our team for this project!`
       });
+      // Response logic might vary, let's assume it has the new invitation
+      const invId = resp?.data?.id || resp?.id;
+      if (invId) {
+        setInvitationsMap(prev => ({ ...prev, [student.id]: invId }));
+      }
       setInvitedUserIds(prev => [...prev, student.id]);
     } catch (err) {
       alert("Invitation failed to send.");
+    }
+  };
+
+  const handleCancelInvite = async (studentId) => {
+    const invId = invitationsMap[studentId];
+    if (!invId) return;
+
+    try {
+      await projectService.cancelInvitation(invId);
+      setInvitedUserIds(prev => prev.filter(id => id !== studentId.toString() && id !== studentId));
+      setInvitationsMap(prev => {
+        const next = { ...prev };
+        delete next[studentId];
+        return next;
+      });
+    } catch (err) {
+      alert("Failed to cancel invitation.");
     }
   };
 
@@ -337,17 +387,18 @@ export default function InviteMembers() {
                       </div>
 
                       <Button
-                        onClick={() => handleInvite(student)}
-                        disabled={isInvited || !student.id}
+                        onClick={() => isInvited ? handleCancelInvite(student.id) : handleInvite(student)}
+                        disabled={!student.id}
                         className={`w-full h-11 rounded-lg font-bold transition-all ${isInvited
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/30'
+                          ? 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30'
                           : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                       >
                         {isInvited ? (
-                          <span className="flex items-center gap-2"><Check className="h-4 w-4" /> Invited</span>
+                          <span className="flex items-center gap-2 group-hover:hidden animate-in fade-in"><Check className="h-4 w-4" /> Invited</span>
                         ) : (
-                          <span className="flex items-center gap-2"><UserPlus className="h-4 w-4" /> Send Invitation</span>
+                          <span className="flex items-center gap-2 animate-in slide-in-from-bottom-2"><UserPlus className="h-4 w-4" /> Send Invitation</span>
                         )}
+                        {isInvited && <span className="hidden group-hover:flex items-center gap-2 animate-in zoom-in-95 text-rose-600 dark:text-rose-400 font-black tracking-widest"><X className="h-4 w-4" /> CANCEL</span>}
                       </Button>
                     </CardContent>
                   </Card>
