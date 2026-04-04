@@ -1,33 +1,44 @@
 # ===============================
 # Build Stage
 # ===============================
-FROM maven:3.9.9-eclipse-temurin-23 AS build
+FROM maven:3.9.9-eclipse-temurin-21 AS build
 
 WORKDIR /app
 
-# Copy pom.xml first (dependency caching)
+# Cache dependencies
 COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
-# Copy source code
+# Copy source and build
 COPY src ./src
-
-# Build Spring Boot jar
 RUN mvn clean package -DskipTests
 
 
 # ===============================
 # Runtime Stage
 # ===============================
-FROM eclipse-temurin:23-jre
+FROM eclipse-temurin:21-jre-jammy
+
+# Create non-root user (SECURITY BEST PRACTICE)
+RUN useradd -ms /bin/bash springuser
 
 WORKDIR /app
 
-# Copy built JAR from build stage
+# Copy jar
 COPY --from=build /app/target/QUASAR-backend-0.0.1-SNAPSHOT.jar app.jar
 
-# Expose Spring Boot port
+# Change ownership
+RUN chown -R springuser:springuser /app
+
+# Switch to non-root user
+USER springuser
+
+# Expose port
 EXPOSE 8080
 
-# JVM optimized for containers
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-jar", "app.jar"]
+# JVM tuning for containers
+ENTRYPOINT ["java", \
+"-XX:+UseContainerSupport", \
+"-XX:MaxRAMPercentage=75.0", \
+"-XX:+UseG1GC", \
+"-jar", "app.jar"]

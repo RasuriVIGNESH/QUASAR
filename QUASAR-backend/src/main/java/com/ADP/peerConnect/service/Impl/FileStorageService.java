@@ -1,49 +1,67 @@
 package com.ADP.peerConnect.service.Impl;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.UUID;
+import java.util.Map;
 
 @Service
 public class FileStorageService {
 
-    @Value("${imagesFolderURL}")
-    private String uploadDir;
+    @Autowired
+    private Cloudinary cloudinary;
 
-    public String saveFile(MultipartFile file) throws IOException {
+    // 🔼 Upload Image to Cloudinary
+    public String saveFile(MultipartFile file) {
 
-        String originalName = file.getOriginalFilename();
-        String extension = originalName.substring(originalName.lastIndexOf("."));
+        try {
+            // Optional: Validate file type
+            if (!file.getContentType().startsWith("image")) {
+                throw new RuntimeException("Only image files are allowed");
+            }
 
-        String fileName = UUID.randomUUID() + extension;
+            Map uploadResult = cloudinary.uploader().upload(
+                    file.getBytes(),
+                    ObjectUtils.asMap(
+                            "folder", "peerconnect/uploads"
+                    )
+            );
 
-        Path path = Paths.get(uploadDir + fileName);
+            // Return secure CDN URL
+            return uploadResult.get("secure_url").toString();
 
-        Files.createDirectories(path.getParent());
-        Files.write(path, file.getBytes());
-
-        // IMPORTANT → return accessible URL
-        return "http://localhost:8080/images/" + fileName;
+        } catch (Exception e) {
+            throw new RuntimeException("Image upload failed: " + e.getMessage());
+        }
     }
+
+    // 🔽 Delete Image from Cloudinary
     public void deleteFile(String fileUrl) {
+
         if (fileUrl == null || fileUrl.isEmpty()) return;
 
         try {
-            // Extract filename from URL
-            String fileName = fileUrl.substring(fileUrl.lastIndexOf("/") + 1);
+            // Extract public_id from URL
+            String publicId = extractPublicId(fileUrl);
 
-            Path path = Paths.get(uploadDir + fileName);
-
-            Files.deleteIfExists(path);
+            cloudinary.uploader().destroy(publicId, ObjectUtils.emptyMap());
 
         } catch (Exception e) {
             System.out.println("Failed to delete file: " + e.getMessage());
         }
+    }
+
+    // 🔍 Helper: Extract public_id from Cloudinary URL
+    private String extractPublicId(String fileUrl) {
+
+        // Example URL:
+        // https://res.cloudinary.com/demo/image/upload/v12345/folder/file.jpg
+
+        String[] parts = fileUrl.split("/upload/")[1].split("\\.");
+
+        return parts[0]; // folder/file
     }
 }

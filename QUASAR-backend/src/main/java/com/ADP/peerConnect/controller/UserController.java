@@ -1,26 +1,20 @@
 package com.ADP.peerConnect.controller;
 
-import com.ADP.peerConnect.model.dto.request.User.AddUserSkillRequest;
-import com.ADP.peerConnect.model.dto.request.User.AddUserSkillsRequest;
+
 import com.ADP.peerConnect.model.dto.request.User.UpdateUserRequest;
-import com.ADP.peerConnect.model.dto.request.User.UpdateUserSkillRequest;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
-import com.ADP.peerConnect.model.dto.response.UserSkillResponse;
 import com.ADP.peerConnect.model.entity.User;
-import com.ADP.peerConnect.model.entity.UserSkill;
 import com.ADP.peerConnect.model.enums.AvailabilityStatus;
 import com.ADP.peerConnect.security.UserPrincipal;
 import com.ADP.peerConnect.service.Impl.FileStorageService;
 import com.ADP.peerConnect.service.Interface.iUserService;
-import com.ADP.peerConnect.service.Interface.iUserSkillService;
 import com.ADP.peerConnect.util.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -28,8 +22,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * REST controller for user management operations

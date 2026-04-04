@@ -92,7 +92,7 @@ public class TeamController {
         })
         public ResponseEntity<ApiResponse<ProjectInvitationResponse>> respondToInvitation(
                         @Parameter(description = "Invitation ID") @PathVariable Long invitationId,
-                        @Parameter(description = "Response (ACCEPTED or DECLINED)") @RequestParam InvitationStatus response,
+                        @Parameter(description = "Response (ACCEPTED or REJECTED)") @RequestParam InvitationStatus response,
                         @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
                 ProjectInvitation invitation = teamService.respondToInvitation(invitationId, response,
@@ -160,69 +160,6 @@ public class TeamController {
                 return ResponseEntity.ok(response);
         }
 
-        /**
-         * Get user invitations
-         */
-        @GetMapping("/students/{userId}/invitations")
-        @Operation(summary = "Get pending invitations for user", description = "Get all pending team invitations for a user")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "user invitations retrieved successfully")
-        })
-        public PagedResponse<ProjectInvitationResponse> getUserInvitations(
-                        @Parameter(description = "User ID") @PathVariable String userId,
-                        @Parameter(description = "Invitation status (e.g., PENDING, ACCEPTED, DECLINED)") @RequestParam(required = false) InvitationStatus status,
-                        @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-                        @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
-
-                Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-                Page<ProjectInvitation> invitationsPage;
-
-                if (status != null) {
-                        invitationsPage = invitationRepository.findByInvitedUserIdAndStatusOrderByCreatedAtDesc(userId,
-                                        status, pageable);
-                } else {
-                        invitationsPage = invitationRepository.findByInvitedUserIdOrderByCreatedAtDesc(userId,
-                                        pageable);
-                }
-
-                List<ProjectInvitationResponse> invitationDtos = invitationsPage.getContent().stream()
-                                .map(invitation -> modelMapper.map(invitation, ProjectInvitationResponse.class))
-                                .collect(Collectors.toList());
-                return new PagedResponse<>(
-                                invitationDtos,
-                                invitationsPage.getNumber(),
-                                invitationsPage.getSize(),
-                                invitationsPage.getTotalElements(),
-                                invitationsPage.getTotalPages());
-        }
-
-        @GetMapping("/invitations/pending")
-        @Operation(summary = "Get pending invitations", description = "Get pending invitations for current user")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Pending invitations retrieved successfully")
-        })
-        public ResponseEntity<ApiResponse<PagedResponse<ProjectInvitationResponse>>> getPendingInvitations(
-                        @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-                        @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size,
-                        @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-
-                Pageable pageable = PageRequest.of(page, size, Sort.by("invitedAt").descending());
-                Page<ProjectInvitation> invitations = teamService.getPendingInvitationsForUser(currentUser.getId(),
-                                pageable);
-
-                List<ProjectInvitationResponse> invitationResponses = invitations.getContent().stream()
-                                .map(invitation -> modelMapper.map(invitation, ProjectInvitationResponse.class))
-                                .collect(Collectors.toList());
-
-                PagedResponse<ProjectInvitationResponse> pagedResponse = new PagedResponse<>(
-                                invitationResponses, invitations.getNumber(), invitations.getSize(),
-                                invitations.getTotalElements(), invitations.getTotalPages());
-
-                ApiResponse<PagedResponse<ProjectInvitationResponse>> response = ApiResponse.success(
-                                "Pending invitations retrieved successfully", pagedResponse);
-
-                return ResponseEntity.ok(response);
-        }
 
         @GetMapping("/projects/{projectId}/members")
         @Operation(summary = "Get project members", description = "Get all members of a project")

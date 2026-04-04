@@ -123,57 +123,9 @@ public class projectDiscovery {
         return ResponseEntity.ok(response);
     }
 
-    @Operation(summary = "Get available projects")
-    @GetMapping("/available")
-    public ResponseEntity<PagedResponse<ProjectResponse>> getAvailableProjects(
-            @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Project> projects = projectService.findProjectsWithAvailableSpots(pageable);
-        PagedResponse<ProjectResponse> response = new PagedResponse<>();
-        return ResponseEntity.ok(response);
-    }
 
-    @Operation(summary = "Get joined projects")
-    @GetMapping("/joined")
-    public ResponseEntity<PagedResponse<ProjectResponse>> getJoinedProjects(
-            @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
-            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Project> projects = projectService.findProjectsByMember(currentUser.getId(), pageable);
-        PagedResponse<ProjectResponse> response = new PagedResponse<>();
-        return ResponseEntity.ok(response);
-    }
-    @Operation(summary = "Get projects by Lead", description = "Get a paginated list of projects owned by a specific user.")
-    @GetMapping("/by-lead/{leadId}")
-    public ResponseEntity<PagedResponse<ProjectCardResponse>> getProjectsByLead(
-            @PathVariable String leadId,
-            @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
-            @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Project> projects = projectService.findByLead(leadId, pageable);
-
-        List<ProjectCardResponse> projectResponses = projects.getContent().stream()
-                .map(ProjectCardResponse::new)
-                .collect(Collectors.toList());
-
-        PagedResponse<ProjectCardResponse> response = new PagedResponse<>(
-                projectResponses,
-                projects.getNumber(),
-                projects.getSize(),
-                projects.getTotalElements(),
-                projects.getTotalPages()
-        );
-        response.setFirst(projects.isFirst());
-        response.setLast(projects.isLast());
-        response.setNumberOfElements(projects.getNumberOfElements());
-
-        return ResponseEntity.ok(response);
-    }
 
 
 }

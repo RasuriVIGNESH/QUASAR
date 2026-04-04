@@ -2,6 +2,7 @@ package com.ADP.peerConnect.controller.Student;
 
 import com.ADP.peerConnect.model.dto.request.User.AddUserSkillRequest;
 import com.ADP.peerConnect.model.dto.request.User.AddUserSkillsRequest;
+import com.ADP.peerConnect.model.dto.request.User.UpdateUserSkillRequest;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
 import com.ADP.peerConnect.model.dto.response.SkillResponse;
@@ -83,35 +84,64 @@ public class SkillController {
 
         return ResponseEntity.ok(response);
     }
+
     /**
-     * Update user skill
+     * Search skills by name
      */
-    // @PutMapping("/skills/{skillId}")
-    // @Operation(summary = "Update user skill", description = "Update a skill for
-    // current user")
-    // @ApiResponses(value = {
-    // @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200",
-    // description = "Skill updated successfully"),
-    // @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400",
-    // description = "Invalid input"),
-    // @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404",
-    // description = "Skill not found")
-    // })
-    // public ResponseEntity<ApiResponse<UserSkillResponse>> updateUserSkill(
-    // @Parameter(description = "User skill ID") @PathVariable Long skillId,
-    // @Valid @RequestBody UpdateUserSkillRequest updateRequest,
-    // @Parameter(hidden = true)
-    // @AuthenticationPrincipal UserPrincipal currentUser) {
-    //
-    // UserSkill userSkill = userSkillService.updateUserSkill(
-    // currentUser.getId(), skillId,
-    // updateRequest.getLevel(), updateRequest.getExperience());
-    //
-    // UserSkillResponse skillResponse = new UserSkillResponse(userSkill);
-    // ApiResponse<UserSkillResponse> response = ApiResponse.success(
-    // "Skill updated successfully", skillResponse);
-    // return ResponseEntity.ok(response);
-    // }
+    @GetMapping("/search")
+    @Operation(summary = "Search skills", description = "Search skills by name with pagination")
+    public ResponseEntity<ApiResponse<PagedResponse<SkillResponse>>> searchSkills(
+            @Parameter(description = "Search query") @RequestParam String query,
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Skill> skills = skillService.searchByName(query, pageable);
+
+        List<SkillResponse> skillResponses = skills.getContent().stream()
+                .map(skill -> modelMapper.map(skill, SkillResponse.class))
+                .collect(Collectors.toList());
+
+        PagedResponse<SkillResponse> pagedResponse = new PagedResponse<>(
+                skillResponses, skills.getNumber(), skills.getSize(),
+                skills.getTotalElements(), skills.getTotalPages());
+
+        return ResponseEntity.ok(ApiResponse.success("Skills searched successfully", pagedResponse));
+    }
+
+    /**
+     * Get all skill categories
+     */
+    @GetMapping("/categories")
+    @Operation(summary = "Get skill categories", description = "Get a list of all unique skill categories")
+    public ResponseEntity<ApiResponse<List<String>>> getCategories() {
+        List<String> categories = skillService.getAllCategories();
+        return ResponseEntity.ok(ApiResponse.success("Categories retrieved successfully", categories));
+    }
+
+    /**
+     * Get skills by category
+     */
+    @GetMapping("/category/{category}")
+    @Operation(summary = "Get skills by category", description = "Get skills filtered by category with pagination")
+    public ResponseEntity<ApiResponse<PagedResponse<SkillResponse>>> getSkillsByCategory(
+            @Parameter(description = "Category name") @PathVariable String category,
+            @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Skill> skills = skillService.findByCategory(category, pageable);
+
+        List<SkillResponse> skillResponses = skills.getContent().stream()
+                .map(skill -> modelMapper.map(skill, SkillResponse.class))
+                .collect(Collectors.toList());
+
+        PagedResponse<SkillResponse> pagedResponse = new PagedResponse<>(
+                skillResponses, skills.getNumber(), skills.getSize(),
+                skills.getTotalElements(), skills.getTotalPages());
+
+        return ResponseEntity.ok(ApiResponse.success("Skills by category retrieved successfully", pagedResponse));
+    }
 
     /**
      * Get predefined skills
@@ -122,8 +152,6 @@ public class SkillController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Predefined skills retrieved successfully")
     })
     public ResponseEntity<ApiResponse<Map<String, String>>> getPredefinedSkills() {
-        // List<Skill> skills = skillService.getPredefinedSkills();
-
         Map<String, String> skills = Constants.PREDEFINED_SKILLS_MAP;
         ApiResponse<Map<String, String>> response = ApiResponse.success(
                 "Predefined skills retrieved successfully", skills);
@@ -134,7 +162,7 @@ public class SkillController {
     /**
      * Add skill to current user
      */
-    @PostMapping("/skills")
+    @PostMapping
     @Operation(summary = "Add user skill", description = "Add a skill to current user profile")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Skill added successfully"),
@@ -160,7 +188,7 @@ public class SkillController {
     /**
      * Add multiple skills to current user in batch
      */
-    @PostMapping("/skills/batch")
+    @PostMapping("/batch")
     @Operation(summary = "Add multiple user skills", description = "Add multiple skills to current user profile in a single request")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Skills added successfully"),
@@ -181,33 +209,11 @@ public class SkillController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
-    /**
-     * Get current user skills
-     */
-    @GetMapping("/skills")
-    @Operation(summary = "Get user skills", description = "Get current user skills")
-    @ApiResponses(value = {
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skills retrieved successfully")
-    })
-    public ResponseEntity<ApiResponse<List<UserSkillResponse>>> getUserSkills(
-            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-
-        List<UserSkill> userSkills = userSkillService.getUserSkills(currentUser.getId());
-
-        List<UserSkillResponse> skillResponses = userSkills.stream()
-                .map(UserSkillResponse::new)
-                .collect(Collectors.toList());
-
-        ApiResponse<List<UserSkillResponse>> response = ApiResponse.success(
-                "Skills retrieved successfully", skillResponses);
-
-        return ResponseEntity.ok(response);
-    }
 
     /**
      * Remove skill from current user
      */
-    @DeleteMapping("/skills/{skillId}")
+    @DeleteMapping("/{skillId}")
     @Operation(summary = "Remove user skill", description = "Remove a skill from current user profile")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skill removed successfully"),
@@ -223,19 +229,28 @@ public class SkillController {
 
         return ResponseEntity.ok(response);
     }
-    // @GetMapping("/user/count")
-    // @Operation(summary = "Get current user's skills count")
-    // @ApiResponses(value = {
-    // @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200",
-    // description = "skills count retrieved successfully")
-    // })
-    // public ResponseEntity<ApiResponse<Long>> getCurrentUserSkillsCount(
-    // @Parameter(hidden = true)
-    // @AuthenticationPrincipal UserPrincipal currentUser) {
-    // long count = userSkillService.getUserSkillCount(currentUser.getId());
-    // ApiResponse<Long> response = ApiResponse.success("User skills count retrieved
-    // successfully", count);
-    // return ResponseEntity.ok(response);
-    // }
+    @PutMapping("/{skillId}")
+    @Operation(summary = "Update user skill", description = "Update a skill for current user")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Skill updated successfully"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Skill not found")
+    })
+    public ResponseEntity<ApiResponse<UserSkillResponse>> updateUserSkill(
+            @PathVariable Long skillId,
+            @Valid @RequestBody UpdateUserSkillRequest request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+
+        UserSkill updated = userSkillService.updateUserSkill(
+                currentUser.getId(),
+                skillId,
+                request.getLevel(),
+                request.getExperience()
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Skill updated successfully", new UserSkillResponse(updated))
+        );
+    }
 
 }

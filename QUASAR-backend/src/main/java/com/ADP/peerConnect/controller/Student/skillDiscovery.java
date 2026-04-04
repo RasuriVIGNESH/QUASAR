@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@RestController("api/skills/")
+@RestController("/api/skills/")
 public class skillDiscovery {
 
     @Autowired
@@ -35,7 +35,7 @@ public class skillDiscovery {
     /**
      * Find skills by name
      */
-    @GetMapping("skills/")
+    @GetMapping("/by-name/{name}")
     public ResponseEntity<List<SkillResponse>> findByName(String name ) {
         List<Skill> skills = skillService.findByName(name);
         List<SkillResponse> skillResponses = skills.stream()
@@ -106,7 +106,7 @@ public class skillDiscovery {
     /**
      * Get all skill categories
      */
-    @GetMapping("api/skills/categories")
+    @GetMapping("/categories")
     @Operation(summary = "Get skill categories", description = "Get all available skill categories")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Categories retrieved successfully")

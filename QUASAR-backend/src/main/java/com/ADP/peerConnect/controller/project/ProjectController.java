@@ -2,11 +2,13 @@ package com.ADP.peerConnect.controller.project;
 
 import com.ADP.peerConnect.model.dto.request.Project.*;
 import com.ADP.peerConnect.model.dto.response.*;
+import com.ADP.peerConnect.model.dto.response.Project.ProjectCategoryResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
 import com.ADP.peerConnect.model.dto.response.Project.TaskResponse;
 import com.ADP.peerConnect.model.entity.*;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.security.UserPrincipal;
+import com.ADP.peerConnect.service.Interface.iProjectCategoryService;
 import com.ADP.peerConnect.service.Interface.iProjectInvitationService;
 import com.ADP.peerConnect.service.Interface.iProjectService;
 import com.ADP.peerConnect.service.Interface.iTaskService;
@@ -18,8 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +44,9 @@ public class ProjectController {
     private iTaskService taskService;
 
     @Autowired
+    private iProjectCategoryService projectCategoryService;
+
+    @Autowired
     private com.ADP.peerConnect.service.Impl.ProjectRecommendationService projectRecommendationService;
 
 
@@ -51,7 +56,7 @@ public class ProjectController {
     // ===== CORE PROJECT ENDPOINTS =====
 
     @Operation(summary = "Create project")
-    @PostMapping
+    @PostMapping("/Create")
     public ResponseEntity<ApiResponse> createProject(
             @Valid @RequestBody CreateProjectRequest request,
             @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
@@ -306,24 +311,6 @@ public class ProjectController {
         }
     }
 
-    @Operation(summary = "Add recommended candidate to project (admin only)")
-    @PostMapping("/{projectId}/recommendations")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiResponse> addRecommendation(
-            @PathVariable String projectId,
-            @Valid @RequestBody List<com.ADP.peerConnect.model.dto.request.Project.RecommendedCandidateRequest> requests
-    ) {
-        try {
-            List<com.ADP.peerConnect.model.entity.ProjectRecommendedCandidate> added = requests.stream()
-                    .map(r -> projectRecommendationService.addRecommendation(projectId, r.getUserId(), r.getMatchScore(), r.getPriority(), r.getMissingSkills() == null ? null : r.getMissingSkills().toArray(new String[0])))
-                    .collect(Collectors.toList());
-
-            return ResponseEntity.ok(new ApiResponse(true, "Recommendations added", added));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
-    }
-
     @Operation(summary = "Get recommended candidates for a project")
     @GetMapping("/{projectId}/recommendations")
     public ResponseEntity<ApiResponse> getRecommendations(@PathVariable String projectId) {
@@ -331,10 +318,23 @@ public class ProjectController {
         return ResponseEntity.ok(new ApiResponse(true, "Recommendations fetched", list));
     }
 
+    @Operation(summary = "List all project categories")
+    @GetMapping("/categories")
+    public ResponseEntity<ApiResponse<List<ProjectCategoryResponse>>> listAll() {
+        List<ProjectCategory> cats = projectCategoryService.listAll();
+        List<ProjectCategoryResponse> responses = cats.stream()
+                .map(ProjectCategoryResponse::new)
+                .collect(Collectors.toList());
+        ApiResponse<List<ProjectCategoryResponse>> resp = ApiResponse.success("Categories retrieved successfully", responses);
+        return ResponseEntity.ok(resp);
+    }
 
-
-
-
-
-
+    @Operation(summary = "Create a project category")
+    @PostMapping("/categories")
+    public ResponseEntity<ApiResponse<ProjectCategoryResponse>> create(@Valid @RequestBody CreateProjectCategoryRequest request) {
+        ProjectCategory category = new ProjectCategory(request.getName());
+        ProjectCategory created = projectCategoryService.create(category);
+        ApiResponse<ProjectCategoryResponse> resp = ApiResponse.success("Category created successfully", new ProjectCategoryResponse(created));
+        return new ResponseEntity<>(resp, HttpStatus.CREATED);
+    }
 }
