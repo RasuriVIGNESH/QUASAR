@@ -1,6 +1,7 @@
 package com.ADP.peerConnect.service.Impl;
 
 import com.ADP.peerConnect.exception.*;
+import com.ADP.peerConnect.model.dto.response.Project.ProjectInvitationResponse;
 import com.ADP.peerConnect.model.entity.*;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.User;
@@ -8,6 +9,7 @@ import com.ADP.peerConnect.model.enums.*;
 import com.ADP.peerConnect.repository.*;
 import com.ADP.peerConnect.service.Interface.iProjectInvitationService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,7 +41,7 @@ public class ProjectInvitationService implements iProjectInvitationService {
     public ProjectInvitation sendInvitation(String projectId, String invitedUserId,
                                             String message, ProjectRole role, String inviterId) {
         // Validate project exists and sender has permission
-        Project project = projectRepository.findById(projectId)
+        Project project = projectRepository.findByIdWithAssociations(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
         // Check if inviter is project Lead or has permission
@@ -85,43 +87,42 @@ public class ProjectInvitationService implements iProjectInvitationService {
      * Accept invitation
      */
     public void acceptInvitation(Long invitationId, String userId) {
-        ProjectInvitation invitation = projectInvitationRepository.findById(invitationId)
+
+        ProjectInvitation invitation = projectInvitationRepository
+                .findByIdWithAssociations(invitationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found"));
 
-        // Validate invitation belongs to user
         if (!invitation.getInvitedUser().getId().equals(userId)) {
             throw new UnauthorizedException("Cannot accept invitation for another user");
         }
 
-        // Check if invitation is still pending
         if (!invitation.isPending()) {
             throw new ConflictException("Invitation is no longer pending");
         }
 
-        // Check if project still has space
         Project project = invitation.getProject();
+
         long currentMembers = projectMemberRepository.countByProjectId(project.getId());
+
         if (currentMembers >= project.getMaxTeamSize()) {
             throw new ConflictException("Project is now at maximum capacity");
         }
 
-        // Accept invitation
         invitation.accept();
         projectInvitationRepository.save(invitation);
 
-        // Add user as project member
         ProjectMember member = new ProjectMember();
         member.setProject(project);
         member.setUser(invitation.getInvitedUser());
         member.setRole(invitation.getRole());
+
         projectMemberRepository.save(member);
     }
-
     /**
      * Reject invitation
      */
     public void rejectInvitation(Long invitationId, String userId) {
-        ProjectInvitation invitation = projectInvitationRepository.findById(invitationId)
+        ProjectInvitation invitation = projectInvitationRepository.findByIdWithAssociations(invitationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found"));
 
         // Validate invitation belongs to user
@@ -142,37 +143,56 @@ public class ProjectInvitationService implements iProjectInvitationService {
     /**
      * Get project invitations (for project Lead)
      */
-    public List<ProjectInvitation> getProjectInvitations(String projectId, String userId) {
-        Project project = projectRepository.findById(projectId)
+    @Transactional(readOnly = true)
+    public Page<ProjectInvitationResponse> getProjectInvitations(
+            String projectId,
+            String userId,
+            Pageable pageable
+    ) {
+
+        Project project = projectRepository.findByIdWithAssociations(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
 
-        // Check if user is project Lead
-        if (!project.getLead().getId().equals(userId)) {
-            throw new UnauthorizedException("Only project Lead can view invitations");
-        }
+//        if (!project.getLead().getId().equals(userId)) {
+//            throw new UnauthorizedException("Only project Lead can view invitations");
+//        }
 
-        return projectInvitationRepository.findByProjectIdOrderByCreatedAtDesc(projectId);
+        Page<ProjectInvitation> invitations =
+                projectInvitationRepository.findByProjectIdWithAssociations(projectId, pageable);
+
+        return invitations.map(ProjectInvitationResponse::new);
     }
 
     /**
      * Get user invitations (for invited users)
      */
-    public List<ProjectInvitation> getUserInvitations(String userId, Pageable pageable) {
-        return projectInvitationRepository.findByInvitedUserIdOrderByCreatedAtDesc(userId, pageable).getContent();
+    @Transactional(readOnly = true)
+    public Page<ProjectInvitationResponse> getUserInvitations(String userId, Pageable pageable) {
+
+        Page<ProjectInvitation> invitations =
+                projectInvitationRepository.findByInvitedUserIdWithAssociations(userId, pageable);
+
+        return invitations.map(ProjectInvitationResponse::new);
     }
 
     /**
      * Get pending invitations for user
      */
     public List<ProjectInvitation> getPendingInvitations(String userId, Pageable pageable) {
-        return projectInvitationRepository.findByInvitedUserIdAndStatusOrderByCreatedAtDesc(userId, InvitationStatus.PENDING, pageable).getContent();
+
+        return projectInvitationRepository
+                .findByInvitedUserIdAndStatusWithAssociations(
+                        userId,
+                        InvitationStatus.PENDING,
+                        pageable
+                ).getContent();
     }
 
     /**
      * Cancel invitation (by project Lead)
      */
     public void cancelInvitation(Long invitationId, String userId) {
-        ProjectInvitation invitation = projectInvitationRepository.findById(invitationId)
+        ProjectInvitation invitation = projectInvitationRepository.findByIdWithAssociations(invitationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found"));
 
         // Check if user is project Lead

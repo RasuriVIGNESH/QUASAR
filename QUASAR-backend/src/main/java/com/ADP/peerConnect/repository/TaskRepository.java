@@ -9,75 +9,130 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
-/**
- * Repository interface for Task entity
- */
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    // Find tasks by project ID
-    List<Task> findByProjectIdOrderByCreatedAtAsc(String projectId);
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.id = :id")
+    Optional<Task> findByIdWithAssociations(@Param("id") Long id);
 
-    // Find tasks by project ID with pagination
-    Page<Task> findByProjectIdOrderByCreatedAtAsc(String projectId, Pageable pageable);
+    @Query(value = "SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.project.id = :projectId " +
+            "ORDER BY t.createdAt ASC",
+            countQuery = "SELECT count(t) FROM Task t WHERE t.project.id = :projectId")
+    Page<Task> findByProjectIdWithAssociations(@Param("projectId") String projectId, Pageable pageable);
 
-    // Find tasks by assignee
-    List<Task> findByAssignedToIdOrderByCreatedAtAsc(String assignedToId);
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.project.id = :projectId " +
+            "ORDER BY t.createdAt ASC")
+    List<Task> findByProjectIdWithAssociations(@Param("projectId") String projectId);
 
-    // Find tasks by creator
-    List<Task> findByCreatedByIdOrderByCreatedAtAsc(String createdById);
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.assignedTo.id = :assignedToId " +
+            "ORDER BY t.createdAt ASC")
+    List<Task> findByAssignedToIdWithAssociations(@Param("assignedToId") String assignedToId);
 
-    // Find tasks by status
-    List<Task> findByProjectIdAndStatusOrderByCreatedAtAsc(String projectId, TaskStatus status);
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.project.id = :projectId AND t.status = :status " +
+            "ORDER BY t.createdAt ASC")
+    List<Task> findByProjectIdAndStatusWithAssociations(@Param("projectId") String projectId,
+                                                        @Param("status") TaskStatus status);
 
-    // Find tasks by priority
-    List<Task> findByProjectIdAndPriorityOrderByDueDateAsc(String projectId, TaskPriority priority);
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.project.id = :projectId " +
+            "AND t.dueDate < CURRENT_DATE AND t.status != 'COMPLETED'")
+    List<Task> findOverdueTasksByProjectWithAssociations(@Param("projectId") String projectId);
 
-    // Find completed tasks
-    List<Task> findByProjectIdAndStatusOrderByCompletedAtDesc(String projectId, TaskStatus status);
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.project.id = :projectId " +
+            "AND t.dueDate = CURRENT_DATE AND t.status != 'COMPLETED'")
+    List<Task> findTasksDueTodayByProjectWithAssociations(@Param("projectId") String projectId);
 
-    // Find overdue tasks
-    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND t.dueDate < CURRENT_DATE AND t.status != 'COMPLETED'")
-    List<Task> findOverdueTasksByProject(@Param("projectId") String projectId);
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.project.id = :projectId " +
+            "AND t.dueDate BETWEEN CURRENT_DATE AND :endDate AND t.status != 'COMPLETED'")
+    List<Task> findTasksDueWithinDaysWithAssociations(@Param("projectId") String projectId,
+                                                      @Param("endDate") LocalDate endDate);
 
-    // Find tasks due today
-    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND t.dueDate = CURRENT_DATE AND t.status != 'COMPLETED'")
-    List<Task> findTasksDueTodayByProject(@Param("projectId") String projectId);
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.project.id = :projectId " +
+            "AND LOWER(t.title) LIKE LOWER(CONCAT('%', :query, '%')) " +
+            "ORDER BY t.createdAt ASC")
+    List<Task> searchTasksByTitleWithAssociations(@Param("projectId") String projectId,
+                                                  @Param("query") String query);
 
-    // Find tasks due within days
-    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND t.dueDate BETWEEN CURRENT_DATE AND :endDate AND t.status != 'COMPLETED'")
-    List<Task> findTasksDueWithinDays(@Param("projectId") String projectId, @Param("endDate") LocalDate endDate);
-
-    // Count tasks by status
-    long countByProjectIdAndStatus(String projectId, TaskStatus status);
-
-    // Count total tasks for project
-    long countByProjectId(String projectId);
-
-    // Find unassigned tasks
-    List<Task> findByProjectIdAndAssignedToIsNullOrderByCreatedAtAsc(String projectId);
-
-    // Find tasks assigned to user in project
-    List<Task> findByProjectIdAndAssignedToIdOrderByCreatedAtAsc(String projectId, String userId);
-
-    // Search tasks by title
-    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId AND LOWER(t.title) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY t.createdAt ASC")
-    List<Task> searchTasksByTitle(@Param("projectId") String projectId, @Param("query") String query);
-
-    // Find tasks with multiple criteria
-    @Query("SELECT t FROM Task t WHERE t.project.id = :projectId " +
+    @Query("SELECT t FROM Task t " +
+            "JOIN FETCH t.project p " +
+            "JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH t.assignedTo " +
+            "JOIN FETCH t.createdBy " +
+            "LEFT JOIN FETCH t.completedBy " +
+            "WHERE t.project.id = :projectId " +
             "AND (:status IS NULL OR t.status = :status) " +
             "AND (:priority IS NULL OR t.priority = :priority) " +
             "AND (:assignedToId IS NULL OR t.assignedTo.id = :assignedToId) " +
             "ORDER BY t.priority DESC, t.dueDate ASC")
-    List<Task> findTasksByFilters(@Param("projectId") String projectId,
-                                  @Param("status") TaskStatus status,
-                                  @Param("priority") TaskPriority priority,
-                                  @Param("assignedToId") String assignedToId);
+    List<Task> findTasksByFiltersWithAssociations(@Param("projectId") String projectId,
+                                                  @Param("status") TaskStatus status,
+                                                  @Param("priority") TaskPriority priority,
+                                                  @Param("assignedToId") String assignedToId);
 
-    // Delete all tasks for a project
-    void deleteByProjectId(String projectId);
+    // -------------------------------------------------------------------------
+    // Count / delete operations — these never load entities so no lazy issue
+    // -------------------------------------------------------------------------
+
+    long countByProjectIdAndStatus(String projectId, TaskStatus status);
+
+    long countByProjectId(String projectId);
+
 }

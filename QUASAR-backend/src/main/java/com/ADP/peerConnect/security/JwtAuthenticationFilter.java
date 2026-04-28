@@ -63,7 +63,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Skip filter for OAuth2 endpoints
         if (path.startsWith("/oauth2/") ||
-                path.startsWith("/login/oauth2/")) {
+                path.startsWith("/login/oauth2/") ||
+                path.startsWith("/error")) {
             return true;
         }
 

@@ -45,11 +45,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
      */
     long countByUserIdAndIsReadFalse(String userId);
     
-    /**
-     * Count notifications by user and type
-     */
-    long countByUserIdAndType(String userId, NotificationType type);
-    
+
     /**
      * Mark notification as read
      */
@@ -70,12 +66,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Modifying
     @Query("DELETE FROM Notification n WHERE n.createdAt < :cutoffDate")
     int deleteOldNotifications(@Param("cutoffDate") LocalDateTime cutoffDate);
-    
-    /**
-     * Find notifications by related entity
-     */
-    List<Notification> findByRelatedEntityIdAndRelatedEntityType(String relatedEntityId, String relatedEntityType);
-    
+
     /**
      * Delete notifications by user ID
      */

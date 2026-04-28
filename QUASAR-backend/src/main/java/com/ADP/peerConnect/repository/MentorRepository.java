@@ -9,7 +9,5 @@ import java.util.Optional;
 public interface MentorRepository extends JpaRepository<Mentor, Long> {
     Optional<Mentor> findByUserId(String userId);
 
-    boolean existsByUserId(String userId);
-
     List<Mentor> findByActiveTrue();
 }

@@ -6,6 +6,7 @@ import javax.validation.constraints.*;
 
 import com.ADP.peerConnect.model.enums.Role;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -66,6 +67,7 @@ public class User {
     @Column(name = "role", nullable = false)
     private Role role = Role.STUDENT;
 
+    @BatchSize(size = 25)
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @JsonManagedReference
     private Set<UserSkill> userSkills = new HashSet<>();
@@ -114,6 +116,7 @@ public class User {
     @Column(name = "github_id")
     private String githubId;
 
+    @BatchSize(size = 25)
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "user_recommended_projects",

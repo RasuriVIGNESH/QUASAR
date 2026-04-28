@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { teamService } from '../services/TeamService';
 import { joinRequestService } from '../services/JoinRequestService';
 import { projectService } from '../services/projectService';
 
@@ -41,12 +40,14 @@ export const RequestProvider = ({ children }) => {
     try {
       const [joinRequestsRes, invitationsRes, myProjectsResponse] = await Promise.all([
         joinRequestService.getMyJoinRequests(),
-        teamService.getUserInvitations(),
+        projectService.getReceivedInvitations(0, 10),
         projectService.getMyProjects()
       ]);
 
       const sentRequests = joinRequestsRes?.data || joinRequestsRes || [];
-      const invitations = invitationsRes?.data || invitationsRes || [];
+      const invitations = Array.isArray(invitationsRes)
+        ? invitationsRes
+        : invitationsRes?.content || invitationsRes?.data || [];
       const myProjects = myProjectsResponse?.content || [];
 
       const ownedProjects = myProjects.filter(p => p.Lead?.id === userId);

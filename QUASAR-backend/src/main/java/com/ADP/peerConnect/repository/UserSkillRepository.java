@@ -18,7 +18,8 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
     /**
      * Find user skills by user ID
      */
-    List<UserSkill> findByUserIdOrderByCreatedAtDesc(String userId);
+    @Query("SELECT us FROM UserSkill us JOIN FETCH us.skill WHERE us.user.id = :userId ORDER BY us.createdAt DESC")
+    List<UserSkill> findByUserIdWithSkill(@Param("userId") String userId);
     
     /**
      * Find user skill by user ID and skill ID
@@ -36,14 +37,6 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
      */
     @Query("SELECT COUNT(us) > 0 FROM UserSkill us JOIN us.skill s WHERE us.user.id = :userId AND LOWER(s.name) = LOWER(:skillName)")
     boolean existsByUserIdAndSkillNameIgnoreCase(@Param("userId") String userId, @Param("skillName") String skillName);
-    
-    /**
-     * Delete user skill by user ID and skill ID
-     */
-    void deleteByUserIdAndId(String userId, Long userSkillId);
 
-    /**
-     * Count skills for a user
-     */
     long countByUserId(String userId);
 }

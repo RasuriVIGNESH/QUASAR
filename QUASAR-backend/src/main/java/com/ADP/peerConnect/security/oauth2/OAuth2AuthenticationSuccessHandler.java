@@ -25,8 +25,8 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         this.tokenProvider = tokenProvider;
     }
 
-    // Set default to localhost:3000 for frontend origin (adjust if your frontend uses a different port)
-    @Value("${app.cors.allowed-origins:http://localhost:3000}")
+
+    @Value("${frontendURL}")
     private String frontendOrigins;
 
     @Override
@@ -44,10 +44,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
             getRedirectStrategy().sendRedirect(request, response, targetUrl);
         } catch (Exception ex) {
             logger.error("Error in OAuth2AuthenticationSuccessHandler: {}", ex.getMessage(), ex);
-            // fallback - send to frontend root so user doesn't hit 404
-            String fallback = frontendOrigins.split(",")[0].trim();
-            if (fallback.isEmpty()) fallback = "http://localhost:3000";
-            getRedirectStrategy().sendRedirect(request, response, fallback + "/");
+            getRedirectStrategy().sendRedirect(request, response, frontendOrigins + "/");
         } finally {
             clearAuthenticationAttributes(request);
         }
@@ -56,9 +53,9 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     protected String determineTargetUrl(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) {
 
-        String redirectBase = frontendOrigins.split(",")[0].trim(); // take first origin
+        String redirectBase = frontendOrigins;
         if (redirectBase.isEmpty()) {
-            redirectBase = "http://localhost:3000";
+            redirectBase = "http://localhost:5173";
         }
 
         UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();

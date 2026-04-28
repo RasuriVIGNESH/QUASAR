@@ -6,12 +6,14 @@ import com.ADP.peerConnect.model.dto.response.Project.ProjectInvitationResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectJoinRequestResponse;
 import com.ADP.peerConnect.model.entity.ProjectInvitation;
 import com.ADP.peerConnect.security.UserPrincipal;
+import com.ADP.peerConnect.exception.BadRequestException;
 import com.ADP.peerConnect.service.Interface.iProjectInvitationService;
 import com.ADP.peerConnect.service.Interface.iProjectJoinRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -69,25 +71,19 @@ public class JoinRequestController {
         return ResponseEntity.ok(new ApiResponse(true, "Join request canceled."));
     }
 
-    @Operation(summary = "Get paginated invitations received by current user")
-    @GetMapping("/invitations")
-    public ResponseEntity<List<ProjectInvitationResponse>> getReceivedInvitationsPaginated(
+    @GetMapping("/projects/invitations/received")
+    public ResponseEntity<Page<ProjectInvitationResponse>> getReceivedInvitationsPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
+            @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            List<ProjectInvitation> invitations = projectInvitationService.getUserInvitations(currentUser.getId(), pageable);
-            List<ProjectInvitationResponse> response = invitations.stream()
-                    .map(ProjectInvitationResponse::new)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<ProjectInvitationResponse> response =
+                projectInvitationService.getUserInvitations(currentUser.getId(), pageable);
+
+        return ResponseEntity.ok(response);
     }
-
     @GetMapping("/projects/{projectId}/join-requests")
     @Operation(summary = "Get all join requests for a project (Lead only)")
     public ResponseEntity<List<ProjectJoinRequestResponse>> getProjectJoinRequests(

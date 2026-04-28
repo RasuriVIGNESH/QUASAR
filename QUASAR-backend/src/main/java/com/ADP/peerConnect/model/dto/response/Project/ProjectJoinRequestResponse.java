@@ -7,7 +7,8 @@ import java.time.LocalDateTime;
 
 public class ProjectJoinRequestResponse {
 
-    private ProjectResponse project;
+    private ProjectCardResponse project;
+
     private UserResponse user;
     private InvitationStatus status;
     private String message;
@@ -18,7 +19,7 @@ public class ProjectJoinRequestResponse {
 
     // Constructor to map from the entity
     public ProjectJoinRequestResponse(ProjectJoinRequest joinRequest) {
-        this.project = new ProjectResponse(joinRequest.getProject());
+        this.project = new ProjectCardResponse(joinRequest.getProject());
         this.user = new UserResponse(joinRequest.getUser());
         this.status = joinRequest.getStatus();
         this.message = joinRequest.getMessage();
@@ -28,8 +29,8 @@ public class ProjectJoinRequestResponse {
 
     // Getters and Setters
 
-    public ProjectResponse getProject() { return project; }
-    public void setProject(ProjectResponse project) { this.project = project; }
+    public ProjectCardResponse getProject() { return project; }
+    public void setProject(ProjectCardResponse project) { this.project = project; }
 
     public UserResponse getUser() { return user; }
     public void setUser(UserResponse user) { this.user = user; }

@@ -3,6 +3,7 @@ package com.ADP.peerConnect.service.Interface;
 
 import com.ADP.peerConnect.model.dto.request.Project.CreateProjectRequest;
 import com.ADP.peerConnect.model.dto.request.Project.UpdateProjectRequest;
+import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.ProjectMember;
 import com.ADP.peerConnect.model.enums.ProjectRole;
@@ -18,7 +19,7 @@ public interface iProjectService {
     public Project updateProject(String projectId, UpdateProjectRequest request, String currentUserId);
     public void deleteProject(String projectId, String currentUserId) ;
     public Project findById(String projectId) ;
-    public Page<Project> findAll(Pageable pageable) ;
+    public Page<ProjectResponse> getRecentProjects(Pageable pageable) ;
     public Page<Project> findProjectsByMember(String userId, Pageable pageable);      // Get projects where user is a member
     public Page<Project> findProjectsWithAvailableSpots(Pageable pageable);        // Get projects with available spots
     public boolean isUserMemberOrLead(String projectId, String userId);

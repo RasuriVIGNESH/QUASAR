@@ -25,7 +25,7 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
 
     private static final Logger logger = LoggerFactory.getLogger(OAuth2AuthenticationFailureHandler.class);
 
-    @Value("${app.cors.allowed-origins:http://localhost:5173}")
+    @Value("${frontendURL}")
     private String frontendOrigins;
 
     @Override
@@ -33,14 +33,14 @@ public class OAuth2AuthenticationFailureHandler extends SimpleUrlAuthenticationF
                                         AuthenticationException exception) throws IOException, ServletException {
 
         // Build frontend error redirect (first origin)
-        String redirectBase = frontendOrigins.split(",")[0].trim();
-        if (redirectBase.isEmpty()) {
-            redirectBase = "http://localhost:5173";
-        }
+//        String redirectBase = frontendOrigins.split(",")[0].trim();
+//        if (redirectBase.isEmpty()) {
+//            redirectBase = "http://localhost:5173";
+//        }
 
         String errorMessage = exception.getMessage() != null ? exception.getMessage() : "OAuth authentication failed";
         // Create a short error string (optionally you can URL-encode)
-        String targetUrl = UriComponentsBuilder.fromUriString(redirectBase)
+        String targetUrl = UriComponentsBuilder.fromUriString(frontendOrigins)
                 .path("/login")
                 .queryParam("error", errorMessage)
                 .build().toUriString();

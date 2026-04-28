@@ -16,11 +16,14 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.method.HandlerMethod;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
 
+    @Value("${frontendURL}")
+    private String origin;
     @Value("${server.port:8080}")
     private String serverPort;
 
@@ -30,7 +33,7 @@ public class SwaggerConfig {
                 .info(apiInfo())
                 .servers(List.of(
                         new Server()
-                                .url("http://localhost:" + serverPort)
+                                .url(origin)
                                 .description("Development server")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))

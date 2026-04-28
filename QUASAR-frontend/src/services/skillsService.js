@@ -159,24 +159,27 @@ class SkillsService {
             throw new Error(error.message || 'Failed to delete skill');
         }
     }
-
-    // Get skills for a specific user (via user profile)
     async getUserSkillsByUserId(userId) {
         try {
-            console.log('SkillsService: Getting user skills for specific userId:', userId);
+            console.log('SkillsService: Fetching user skills from new endpoint for userId:', userId);
             if (!userId) {
                 throw new Error('User ID is required');
             }
 
-            const response = await apiService.get(`/students/${userId}`);
-            console.log('SkillsService: User profile response:', response);
+            const response = await apiService.get(`/students/users/${userId}/skills`);
+            console.log('SkillsService: User skills response:', response);
 
-            // Extract skills from user profile response
-            const userSkills = response?.data?.skills || response?.skills || [];
-            return { data: userSkills, success: true };
+            // Handle both direct array responses and wrapped responses
+            // Usually, if the endpoint is /users/{id}/skills, it returns the list directly
+            const skillsData = response?.data || response || [];
+
+            return {
+                data: Array.isArray(skillsData) ? skillsData : (skillsData.content || []),
+                success: true
+            };
         } catch (error) {
-            console.error('SkillsService: Error getting user skills by ID:', error);
-            throw new Error(error.message || 'Failed to get user skills');
+            console.error('SkillsService: Error getting user skills:', error);
+            return { data: [], success: false, error: error.message };
         }
     }
 

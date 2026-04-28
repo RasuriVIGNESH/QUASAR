@@ -1,13 +1,9 @@
 package com.ADP.peerConnect.model.dto.response;
 
 import com.ADP.peerConnect.model.entity.User;
-import com.ADP.peerConnect.model.entity.UserSkill;
 import com.ADP.peerConnect.model.enums.AvailabilityStatus;
 import com.ADP.peerConnect.model.enums.Role;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import java.util.List;
-import java.util.stream.Collectors;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserResponse {
@@ -23,11 +19,13 @@ public class UserResponse {
     private Integer graduationYear;
     private AvailabilityStatus availabilityStatus;
     private String profilePictureUrl;
-    private List<UserSkillResponse> skills;
+
+    // ❌ Removed skills (lazy problem)
+    // private List<UserSkillResponse> skills;
+
     private String githubUrl;
     private String linkedinUrl;
     private String portfolioUrl;
-
 
     public UserResponse() {
     }
@@ -39,17 +37,18 @@ public class UserResponse {
         this.email = user.getEmail();
         this.availabilityStatus = user.getAvailabilityStatus();
         this.bio = user.getBio();
-        this.role= user.getRole();
+        this.role = user.getRole();
         this.branch = user.getBranch();
         this.githubUrl = user.getGithubUrl();
         this.graduationYear = user.getGraduationYear();
         this.linkedinUrl = user.getLinkedinUrl();
         this.portfolioUrl = user.getPortfolioUrl();
         this.profilePictureUrl = user.getProfilePictureUrl();
-        this.skills = user.getUserSkills() == null ? null : user.getUserSkills().stream()
-                .map(UserSkillResponse::new)
-                .collect(Collectors.toList());
-        this.college = user.getCollege() != null ? new CollegeResponse(user.getCollege()) : null;
+
+        // ✅ SAFE (no lazy issue)
+        this.college = user.getCollege() != null
+                ? new CollegeResponse(user.getCollege())
+                : null;
     }
 
     public UserResponse(String id, String email, String firstName, String lastName) {
@@ -67,19 +66,22 @@ public class UserResponse {
         this.availabilityStatus = availabilityStatus;
     }
 
-
     public String getId() {
         return id;
     }
+
     public void setId(String id) {
         this.id = id;
     }
+
     public String getBio() {
         return bio;
     }
+
     public Role getRole() {
         return role;
     }
+
     public void setRole(Role role) {
         this.role = role;
     }
@@ -127,6 +129,7 @@ public class UserResponse {
     public void setGraduationYear(Integer graduationYear) {
         this.graduationYear = graduationYear;
     }
+
     public String getLastName() {
         return lastName;
     }
@@ -159,16 +162,10 @@ public class UserResponse {
         this.profilePictureUrl = profilePictureUrl;
     }
 
-    public List<UserSkillResponse> getSkills() {
-        return skills;
-    }
-
-    public void setSkills(List<UserSkillResponse> skills) {
-        this.skills = skills;
-    }
     public CollegeResponse getCollege() {
         return college;
     }
+
     public void setCollege(CollegeResponse college) {
         this.college = college;
     }

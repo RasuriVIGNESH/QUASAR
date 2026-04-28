@@ -48,40 +48,33 @@ public class publicEndpoints {
     @Autowired
     private UserService userService;
 
+    @GetMapping("/health")
+    public String status() {
+        return "API is running";
+    }
+
     @Operation(summary = "Get recent projects")
     @GetMapping("/api/RecentProjects")
-    public ResponseEntity<PagedResponse<ProjectResponse>> getAllProjects()
+    public ResponseEntity<PagedResponse<ProjectResponse>> getAllProjects() {
 
+        Pageable pageable = PageRequest.of(
+                0,
+                10,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
 
-//            @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
-//            @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
-//            @Parameter(description = "Sort field") @RequestParam(defaultValue = "createdAt") String sortBy,
-//            @Parameter(description = "Sort direction") @RequestParam(defaultValue = "desc") String sortDir
-{
+        Page<ProjectResponse> projects = projectService.getRecentProjects(pageable);
 
-        Sort.Direction direction =  Sort.Direction.DESC;
-        Pageable pageable = PageRequest.of(0, 10, Sort.by(direction, "createdAt"));
+        PagedResponse<ProjectResponse> response = new PagedResponse<>(
+                projects.getContent(),
+                projects.getNumber(),
+                projects.getSize(),
+                projects.getTotalElements(),
+                projects.getTotalPages()
+        );
 
-
-    Page<Project> projects = projectService.findAll(pageable);
-
-    List<ProjectResponse> content = projects.getContent()
-            .stream()
-            .map(ProjectResponse::new)
-            .collect(Collectors.toList());
-    PagedResponse<ProjectResponse> response =
-            new PagedResponse<>(
-                    content,
-                    projects.getNumber(),
-                    projects.getSize(),
-                    projects.getTotalElements(),
-                    projects.getTotalPages()
-            );
-
-    return ResponseEntity.ok(response);
-
-
-}
+        return ResponseEntity.ok(response);
+    }
     @GetMapping("/api/colleges")
     @Transactional(readOnly = true)
     @Operation(summary = "Get all registered colleges", description = "Fetches a list of all available colleges. This is a public endpoint.")

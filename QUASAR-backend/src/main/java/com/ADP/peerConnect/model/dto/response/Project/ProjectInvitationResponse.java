@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectInvitationResponse {
     private Long invitationId;
-    private ProjectResponse project;
+    private ProjectCardResponse project;
     private UserResponse invitedUser;
     private UserResponse invitedBy;
     private ProjectRole role;
@@ -22,8 +22,6 @@ public class ProjectInvitationResponse {
 
     public ProjectInvitationResponse() {}
 
-    // V-- THIS IS THE FIX --V
-    // This constructor now correctly maps the entity to the DTO
     public ProjectInvitationResponse(ProjectInvitation inv) {
         this.invitationId = inv.getInvitationId();
         this.status = inv.getStatus();
@@ -34,7 +32,7 @@ public class ProjectInvitationResponse {
 
         // Handle nested objects by calling their own constructors
         if (inv.getProject() != null) {
-            this.project = new ProjectResponse(inv.getProject());
+            this.project = new ProjectCardResponse(inv.getProject());
         }
         if (inv.getInvitedUser() != null) {
             this.invitedUser = new UserResponse(inv.getInvitedUser());
@@ -43,7 +41,6 @@ public class ProjectInvitationResponse {
             this.invitedBy = new UserResponse(inv.getInvitedBy());
         }
     }
-    // ^-- END OF FIX --^
 
     // Getters and Setters below...
 
@@ -85,11 +82,11 @@ public class ProjectInvitationResponse {
         this.message = message;
     }
 
-    public ProjectResponse getProject() {
+    public ProjectCardResponse getProject() {
         return project;
     }
 
-    public void setProject(ProjectResponse project) {
+    public void setProject(ProjectCardResponse project) {
         this.project = project;
     }
 

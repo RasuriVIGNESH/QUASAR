@@ -17,4 +17,23 @@ public class UserCardResponse {
         this.profilePictureUrl = user.getProfilePictureUrl();
         this.branch = user.getBranch();
     }
+    public String getId() {
+        return id;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
 }

@@ -1,5 +1,6 @@
 package com.ADP.peerConnect.service.Interface;
 
+import com.ADP.peerConnect.model.dto.response.UserSkillResponse;
 import com.ADP.peerConnect.model.entity.UserSkill;
 import com.ADP.peerConnect.model.enums.SkillLevel;
 import com.ADP.peerConnect.model.dto.request.User.AddUserSkillRequest;
@@ -11,7 +12,7 @@ public interface iUserSkillService {
     public UserSkill addUserSkill(String userId, String skillName, SkillLevel level, String experience,
             String category);
 
-    public List<UserSkill> getUserSkills(String userId);
+    public List<UserSkillResponse>  getUserSkills(String userId);
 
     public void removeUserSkill(String userId, Long userSkillId);
 

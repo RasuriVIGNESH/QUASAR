@@ -3,6 +3,7 @@ package com.ADP.peerConnect.controller.project;
 import com.ADP.peerConnect.model.dto.request.Project.*;
 import com.ADP.peerConnect.model.dto.response.*;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectCategoryResponse;
+import com.ADP.peerConnect.model.dto.response.Project.ProjectMemberResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
 import com.ADP.peerConnect.model.dto.response.Project.TaskResponse;
 import com.ADP.peerConnect.model.entity.*;
@@ -46,10 +47,6 @@ public class ProjectController {
     @Autowired
     private iProjectCategoryService projectCategoryService;
 
-    @Autowired
-    private com.ADP.peerConnect.service.Impl.ProjectRecommendationService projectRecommendationService;
-
-
     public static final String DEFAULT_SIZE_STR = "20";
     public static final String DEFAULT_PAGE_NUMBER_STR = "0";
 
@@ -90,18 +87,20 @@ public class ProjectController {
             );
         }
     }
-
     @Operation(summary = "Update project")
     @PutMapping("/{projectId}")
     public ResponseEntity<ApiResponse> updateProject(
             @PathVariable String projectId,
             @Valid @RequestBody UpdateProjectRequest request,
-            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
+
         try {
             Project project = projectService.updateProject(projectId, request, currentUser.getId());
+
             return ResponseEntity.ok(
-                    new ApiResponse(true, "Project updated successfully", project)
+                    new ApiResponse(true, "Project updated successfully", new ProjectResponse(project))
             );
+
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
                     new ApiResponse(false, e.getMessage())
@@ -131,18 +130,26 @@ public class ProjectController {
     public ResponseEntity<ApiResponse> addMember(
             @PathVariable String projectId,
             @Valid @RequestBody AddMemberRequest request,
-            @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
+
         try {
-            // Service method handles 'isLead' authorization
             ProjectMember member = projectService.addMember(
                     projectId,
                     request.getUserId(),
                     request.getRole(),
                     currentUser.getId()
             );
-            return ResponseEntity.ok(
-                    new ApiResponse(true, "Member added successfully", member)
+            ProjectMemberResponse response = new ProjectMemberResponse(
+                    member.getId(),
+                    member.getCreatedAt(),
+                    member.getProjectRole(),
+                    new UserResponse(member.getUser())
             );
+
+            return ResponseEntity.ok(
+                    new ApiResponse(true, "Member added successfully", response)
+            );
+
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(
                     new ApiResponse(false, e.getMessage())
@@ -311,12 +318,12 @@ public class ProjectController {
         }
     }
 
-    @Operation(summary = "Get recommended candidates for a project")
-    @GetMapping("/{projectId}/recommendations")
-    public ResponseEntity<ApiResponse> getRecommendations(@PathVariable String projectId) {
-        List<com.ADP.peerConnect.model.entity.ProjectRecommendedCandidate> list = projectRecommendationService.getRecommendationsForProject(projectId);
-        return ResponseEntity.ok(new ApiResponse(true, "Recommendations fetched", list));
-    }
+//    @Operation(summary = "Get recommended candidates for a project")
+//    @GetMapping("/{projectId}/recommendations")
+//    public ResponseEntity<ApiResponse> getRecommendations(@PathVariable String projectId) {
+//        List<com.ADP.peerConnect.model.entity.ProjectRecommendedCandidate> list = projectRecommendationService.getRecommendationsForProject(projectId);
+//        return ResponseEntity.ok(new ApiResponse(true, "Recommendations fetched", list));
+//    }
 
     @Operation(summary = "List all project categories")
     @GetMapping("/categories")

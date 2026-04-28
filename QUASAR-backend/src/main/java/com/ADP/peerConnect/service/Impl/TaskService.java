@@ -32,9 +32,34 @@ public class TaskService implements iTaskService {
     @Autowired
     private UserService userService;
 
+    // -------------------------------------------------------------------------
+    // Private helpers
+    // -------------------------------------------------------------------------
+
     /**
-     * Helper method to validate if a user is allowed to be assigned a task.
-     * Checks if the user is either the Project Lead or a Project Member.
+     * Load a Task with ALL associations already fetched so no lazy proxy is
+     * touched outside this transaction.
+     * Requires TaskRepository.findByIdWithAssociations (see doc Section 3).
+     */
+    private Task loadTask(Long taskId) {
+        return taskRepository.findByIdWithAssociations(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+    }
+
+    /**
+     * Load a Project with its lead fetched so permission checks don't trigger
+     * a lazy load on project.getLead().
+     * Requires ProjectRepository.findByIdWithAssociations (see doc Section 2).
+     */
+    private Project loadProject(String projectId) {
+        return projectRepository.findByIdWithAssociations(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+    }
+
+    /**
+     * Validate that a user can be assigned to a task (is the lead or a member).
+     * project.getLead() is already loaded by loadProject() / loadTask(), so no
+     * extra lazy hit here.
      */
     private void validateUserCanBeAssigned(Project project, String userId) {
         boolean isLead = project.getLead() != null && project.getLead().getId().equals(userId);
@@ -45,25 +70,29 @@ public class TaskService implements iTaskService {
         }
     }
 
-    /**
-     * Create a new task
-     */
-    public Task createTask(String projectId, CreateTaskRequest request, String creatorId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+    // -------------------------------------------------------------------------
+    // Write operations
+    // -------------------------------------------------------------------------
 
-        // Permission check: Creator must be Lead or Member
-        boolean isLead = project.getLead() != null && project.getLead().getId().equals(creatorId);
+    /**
+     * Create a new task.
+     * project.getLead() is accessed for the permission check, so we load the
+     * project through the custom query that JOIN FETCHes the lead.
+     */
+    @Override
+    public Task createTask(String projectId, CreateTaskRequest request, String creatorId) {
+        Project project = loadProject(projectId);
+
+        boolean isLead   = project.getLead() != null && project.getLead().getId().equals(creatorId);
         boolean isMember = projectMemberRepository.existsByProjectIdAndUserId(projectId, creatorId);
 
         if (!isMember && !isLead) {
             throw new UnauthorizedException("Only project members or the project lead can create tasks");
         }
 
-        User creator = userService.findById(creatorId);
+        User creator  = userService.findById(creatorId);
         User assignee = null;
 
-        // Validation for assignee
         if (request.getAssignedToId() != null && !request.getAssignedToId().isEmpty()) {
             validateUserCanBeAssigned(project, request.getAssignedToId());
             assignee = userService.findById(request.getAssignedToId());
@@ -84,16 +113,17 @@ public class TaskService implements iTaskService {
     }
 
     /**
-     * Update task
+     * Update a task.
+     * loadTask() brings in project + project.lead + assignedTo + createdBy,
+     * so all the permission checks below are safe.
      */
+    @Override
     public Task updateTask(Long taskId, UpdateTaskRequest request, String userId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        Task task = loadTask(taskId);
 
         Project project = task.getProject();
 
-        // Permission check: Lead, Creator, or Assignee
-        boolean isLead = project.getLead().getId().equals(userId);
+        boolean isLead    = project.getLead().getId().equals(userId);
         boolean isCreator = task.getCreatedBy().getId().equals(userId);
         boolean isAssignee = task.getAssignedTo() != null && task.getAssignedTo().getId().equals(userId);
 
@@ -101,16 +131,14 @@ public class TaskService implements iTaskService {
             throw new UnauthorizedException("Cannot update this task");
         }
 
-        // Apply updates
-        if (request.getTitle() != null) task.setTitle(request.getTitle());
-        if (request.getDescription() != null) task.setDescription(request.getDescription());
-        if (request.getStatus() != null) task.setStatus(request.getStatus());
-        if (request.getPriority() != null) task.setPriority(request.getPriority());
-        if (request.getDueDate() != null) task.setDueDate(request.getDueDate());
+        if (request.getTitle()          != null) task.setTitle(request.getTitle());
+        if (request.getDescription()    != null) task.setDescription(request.getDescription());
+        if (request.getStatus()         != null) task.setStatus(request.getStatus());
+        if (request.getPriority()       != null) task.setPriority(request.getPriority());
+        if (request.getDueDate()        != null) task.setDueDate(request.getDueDate());
         if (request.getEstimatedHours() != null) task.setEstimatedHours(request.getEstimatedHours());
-        if (request.getActualHours() != null) task.setActualHours(request.getActualHours());
+        if (request.getActualHours()    != null) task.setActualHours(request.getActualHours());
 
-        // Assignee update with Lead-check fix
         if (request.getAssignedToId() != null) {
             if (request.getAssignedToId().isEmpty()) {
                 task.setAssignedTo(null);
@@ -124,21 +152,21 @@ public class TaskService implements iTaskService {
     }
 
     /**
-     * Assign task to user (Dedicated Endpoint Fix)
+     * Assign a task to a user.
      */
+    @Override
     public Task assignTask(Long taskId, String assigneeId, String userId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        Task task = loadTask(taskId);
 
         Project project = task.getProject();
 
-        // Check if requester has authority
-        boolean canAssign = task.getCreatedBy().getId().equals(userId) || project.getLead().getId().equals(userId);
+        boolean canAssign = task.getCreatedBy().getId().equals(userId)
+                || project.getLead().getId().equals(userId);
+
         if (!canAssign) {
             throw new UnauthorizedException("Cannot assign this task");
         }
 
-        // Fix: Use helper to allow Lead to be assigned
         validateUserCanBeAssigned(project, assigneeId);
 
         task.setAssignedTo(userService.findById(assigneeId));
@@ -146,14 +174,33 @@ public class TaskService implements iTaskService {
     }
 
     /**
-     * Delete task
+     * Unassign a task.
      */
-    public void deleteTask(Long taskId, String userId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+    @Override
+    public Task unassignTask(Long taskId, String userId) {
+        Task task = loadTask(taskId);
 
-        boolean canDelete = task.getCreatedBy().getId().equals(userId) ||
-                task.getProject().getLead().getId().equals(userId);
+        boolean canUnassign = task.getCreatedBy().getId().equals(userId)
+                || task.getProject().getLead().getId().equals(userId)
+                || (task.getAssignedTo() != null && task.getAssignedTo().getId().equals(userId));
+
+        if (!canUnassign) {
+            throw new UnauthorizedException("Cannot unassign this task");
+        }
+
+        task.setAssignedTo(null);
+        return taskRepository.save(task);
+    }
+
+    /**
+     * Delete a task.
+     */
+    @Override
+    public void deleteTask(Long taskId, String userId) {
+        Task task = loadTask(taskId);
+
+        boolean canDelete = task.getCreatedBy().getId().equals(userId)
+                || task.getProject().getLead().getId().equals(userId);
 
         if (!canDelete) {
             throw new UnauthorizedException("Cannot delete this task");
@@ -163,15 +210,15 @@ public class TaskService implements iTaskService {
     }
 
     /**
-     * Toggle task completion
+     * Toggle task completion on / off.
      */
+    @Override
     public Task toggleTaskCompletion(Long taskId, boolean completed, String userId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+        Task task = loadTask(taskId);
 
-        boolean canUpdate = task.getCreatedBy().getId().equals(userId) ||
-                (task.getAssignedTo() != null && task.getAssignedTo().getId().equals(userId)) ||
-                task.getProject().getLead().getId().equals(userId);
+        boolean canUpdate = task.getCreatedBy().getId().equals(userId)
+                || (task.getAssignedTo() != null && task.getAssignedTo().getId().equals(userId))
+                || task.getProject().getLead().getId().equals(userId);
 
         if (!canUpdate) {
             throw new UnauthorizedException("Cannot update task status");
@@ -188,69 +235,109 @@ public class TaskService implements iTaskService {
         return taskRepository.save(task);
     }
 
-    public Task unassignTask(Long taskId, String userId) {
-        Task task = taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
+    // -------------------------------------------------------------------------
+    // Read operations  — all @Transactional(readOnly = true)
+    // -------------------------------------------------------------------------
 
-        boolean canUnassign = task.getCreatedBy().getId().equals(userId) ||
-                task.getProject().getLead().getId().equals(userId) ||
-                (task.getAssignedTo() != null && task.getAssignedTo().getId().equals(userId));
-
-        if (!canUnassign) {
-            throw new UnauthorizedException("Cannot unassign this task");
-        }
-
-        task.setAssignedTo(null);
-        return taskRepository.save(task);
-    }
-
-    // --- READ OPERATIONS ---
-
+    /**
+     * Paginated list of tasks for a project.
+     * Uses findByProjectIdWithAssociations so TaskResponse can safely access
+     * task.getProject().getId(), task.getCreatedBy(), task.getAssignedTo().
+     */
+    @Override
+    @Transactional(readOnly = true)
     public Page<Task> getProjectTasks(String projectId, Pageable pageable) {
-        return taskRepository.findByProjectIdOrderByCreatedAtAsc(projectId, pageable);
-    }
-
-    public List<Task> getTasksByAssignee(String assigneeId) {
-        return taskRepository.findByAssignedToIdOrderByCreatedAtAsc(assigneeId);
-    }
-
-    public List<Task> getTasksByStatus(String projectId, TaskStatus status) {
-        return taskRepository.findByProjectIdAndStatusOrderByCreatedAtAsc(projectId, status);
-    }
-
-    public List<Task> getOverdueTasks(String projectId) {
-        return taskRepository.findOverdueTasksByProject(projectId);
-    }
-
-    public List<Task> getTasksDueToday(String projectId) {
-        return taskRepository.findTasksDueTodayByProject(projectId);
-    }
-
-    public List<Task> getTasksDueWithinDays(String projectId, int days) {
-        return taskRepository.findTasksDueWithinDays(projectId, LocalDate.now().plusDays(days));
-    }
-
-    public List<Task> searchTasks(String projectId, String query) {
-        return taskRepository.searchTasksByTitle(projectId, query);
-    }
-
-    public List<Task> getTasksByFilters(String projectId, TaskStatus status, TaskPriority priority, String assignedToId) {
-        return taskRepository.findTasksByFilters(projectId, status, priority, assignedToId);
-    }
-
-    public TaskStatistics getTaskStatistics(String projectId) {
-        long totalTasks = taskRepository.countByProjectId(projectId);
-        long completedTasks = taskRepository.countByProjectIdAndStatus(projectId, TaskStatus.COMPLETED);
-        long inProgressTasks = taskRepository.countByProjectIdAndStatus(projectId, TaskStatus.IN_PROGRESS);
-        long todoTasks = taskRepository.countByProjectIdAndStatus(projectId, TaskStatus.TODO);
-
-        return new TaskStatistics(totalTasks, completedTasks, inProgressTasks, todoTasks,
-                getOverdueTasks(projectId).size(), getTasksDueToday(projectId).size());
+        return taskRepository.findByProjectIdWithAssociations(projectId, pageable);
     }
 
     /**
-     * Statistics DTO
+     * All tasks assigned to a specific user (with associations fetched).
      */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Task> getTasksByAssignee(String assigneeId) {
+        return taskRepository.findByAssignedToIdWithAssociations(assigneeId);
+    }
+
+    /**
+     * Tasks filtered by status for a project.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Task> getTasksByStatus(String projectId, TaskStatus status) {
+        return taskRepository.findByProjectIdAndStatusWithAssociations(projectId, status);
+    }
+
+    /**
+     * Overdue tasks for a project.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Task> getOverdueTasks(String projectId) {
+        return taskRepository.findOverdueTasksByProjectWithAssociations(projectId);
+    }
+
+    /**
+     * Tasks due today for a project.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Task> getTasksDueToday(String projectId) {
+        return taskRepository.findTasksDueTodayByProjectWithAssociations(projectId);
+    }
+
+    /**
+     * Tasks due within N days for a project.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Task> getTasksDueWithinDays(String projectId, int days) {
+        return taskRepository.findTasksDueWithinDaysWithAssociations(
+                projectId, LocalDate.now().plusDays(days));
+    }
+
+    /**
+     * Full-text search on task titles.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Task> searchTasks(String projectId, String query) {
+        return taskRepository.searchTasksByTitleWithAssociations(projectId, query);
+    }
+
+    /**
+     * Multi-filter query (status, priority, assignee).
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public List<Task> getTasksByFilters(String projectId, TaskStatus status,
+                                        TaskPriority priority, String assignedToId) {
+        return taskRepository.findTasksByFiltersWithAssociations(
+                projectId, status, priority, assignedToId);
+    }
+
+    /**
+     * Aggregate statistics for a project's task board.
+     * Counts use simple count queries (no entity loading) so no lazy issues.
+     * getOverdueTasks / getTasksDueToday reuse the fetch queries above.
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public TaskStatistics getTaskStatistics(String projectId) {
+        long total       = taskRepository.countByProjectId(projectId);
+        long completed   = taskRepository.countByProjectIdAndStatus(projectId, TaskStatus.COMPLETED);
+        long inProgress  = taskRepository.countByProjectIdAndStatus(projectId, TaskStatus.IN_PROGRESS);
+        long todo        = taskRepository.countByProjectIdAndStatus(projectId, TaskStatus.TODO);
+        long overdue     = getOverdueTasks(projectId).size();
+        long dueToday    = getTasksDueToday(projectId).size();
+
+        return new TaskStatistics(total, completed, inProgress, todo, overdue, dueToday);
+    }
+
+    // -------------------------------------------------------------------------
+    // Statistics DTO (inner class, unchanged)
+    // -------------------------------------------------------------------------
+
     public static class TaskStatistics {
         private final long totalTasks;
         private final long completedTasks;
@@ -261,20 +348,20 @@ public class TaskService implements iTaskService {
 
         public TaskStatistics(long totalTasks, long completedTasks, long inProgressTasks,
                               long todoTasks, long overdueTasks, long dueTodayTasks) {
-            this.totalTasks = totalTasks;
-            this.completedTasks = completedTasks;
+            this.totalTasks      = totalTasks;
+            this.completedTasks  = completedTasks;
             this.inProgressTasks = inProgressTasks;
-            this.todoTasks = todoTasks;
-            this.overdueTasks = overdueTasks;
-            this.dueTodayTasks = dueTodayTasks;
+            this.todoTasks       = todoTasks;
+            this.overdueTasks    = overdueTasks;
+            this.dueTodayTasks   = dueTodayTasks;
         }
 
-        public long getTotalTasks() { return totalTasks; }
-        public long getCompletedTasks() { return completedTasks; }
-        public long getInProgressTasks() { return inProgressTasks; }
-        public long getTodoTasks() { return todoTasks; }
-        public long getOverdueTasks() { return overdueTasks; }
-        public long getDueTodayTasks() { return dueTodayTasks; }
+        public long   getTotalTasks()       { return totalTasks; }
+        public long   getCompletedTasks()   { return completedTasks; }
+        public long   getInProgressTasks()  { return inProgressTasks; }
+        public long   getTodoTasks()        { return todoTasks; }
+        public long   getOverdueTasks()     { return overdueTasks; }
+        public long   getDueTodayTasks()    { return dueTodayTasks; }
         public double getCompletionPercentage() {
             return totalTasks == 0 ? 0 : (double) completedTasks / totalTasks * 100;
         }

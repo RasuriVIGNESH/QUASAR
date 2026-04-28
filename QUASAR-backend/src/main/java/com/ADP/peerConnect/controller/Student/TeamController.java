@@ -11,6 +11,8 @@ import com.ADP.peerConnect.model.enums.InvitationStatus;
 import com.ADP.peerConnect.model.enums.ProjectRole;
 import com.ADP.peerConnect.repository.ProjectInvitationRepository;
 import com.ADP.peerConnect.security.UserPrincipal;
+import com.ADP.peerConnect.service.Impl.ProjectInvitationService;
+import com.ADP.peerConnect.service.Interface.iProjectInvitationService;
 import com.ADP.peerConnect.service.Interface.iTeamService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -24,6 +26,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,7 +49,8 @@ public class TeamController {
         private ModelMapper modelMapper;
 
         @Autowired
-        private ProjectInvitationRepository invitationRepository;
+        private iProjectInvitationService projectInvitationService;
+
 
         /**
          * Invite user to project
@@ -129,38 +133,20 @@ public class TeamController {
 
                 return ResponseEntity.ok(response);
         }
-
-        /**
-         * Get project invitations
-         */
         @GetMapping("/projects/{projectId}/invitations")
-        @Operation(summary = "Get project invitations", description = "Get all invitations for a project")
-        @ApiResponses(value = {
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Invitations retrieved successfully")
-        })
-        public ResponseEntity<ApiResponse<PagedResponse<ProjectInvitationResponse>>> getProjectInvitations(
-                        @Parameter(description = "Project ID") @PathVariable String projectId,
-                        @Parameter(description = "Page number (0-based)") @RequestParam(defaultValue = "0") int page,
-                        @Parameter(description = "Page size") @RequestParam(defaultValue = "10") int size) {
+        public ResponseEntity<Page<ProjectInvitationResponse>> getProjectInvitations(
+                @PathVariable String projectId,
+                Pageable pageable,
+                Authentication authentication
+        ) {
 
-                Pageable pageable = PageRequest.of(page, size, Sort.by("invitedAt").descending());
-                Page<ProjectInvitation> invitations = teamService.getProjectInvitations(projectId, pageable);
+                String userId = authentication.getName();
 
-                List<ProjectInvitationResponse> invitationResponses = invitations.getContent().stream()
-                                .map(invitation -> modelMapper.map(invitation, ProjectInvitationResponse.class))
-                                .collect(Collectors.toList());
-
-                PagedResponse<ProjectInvitationResponse> pagedResponse = new PagedResponse<>(
-                                invitationResponses, invitations.getNumber(), invitations.getSize(),
-                                invitations.getTotalElements(), invitations.getTotalPages());
-
-                ApiResponse<PagedResponse<ProjectInvitationResponse>> response = ApiResponse.success(
-                                "Invitations retrieved successfully", pagedResponse);
+                Page<ProjectInvitationResponse> response =
+                        projectInvitationService.getProjectInvitations(projectId, userId, pageable);
 
                 return ResponseEntity.ok(response);
         }
-
-
         @GetMapping("/projects/{projectId}/members")
         @Operation(summary = "Get project members", description = "Get all members of a project")
         public ResponseEntity<ApiResponse<List<ProjectMemberResponse>>> getProjectMembers(

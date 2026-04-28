@@ -143,15 +143,15 @@ public class ProjectJoinRequestService implements iProjectJoinRequestService {
         if (!project.isLead(userId)) {
             throw new UnauthorizedException("Only the project Lead can view join requests.");
         }
-        return joinRequestRepository.findByProjectIdOrderByCreatedAtDesc(projectId);
+        return joinRequestRepository.findByProjectIdWithAssociations(projectId);
     }
 
     public List<ProjectJoinRequest> getUserJoinRequests(String userId) {
-        return joinRequestRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return joinRequestRepository.findByUserIdWithAssociations(userId);
     }
 
     private ProjectJoinRequest findById(Long requestId) {
-        return joinRequestRepository.findById(requestId)
+        return joinRequestRepository.findByIdWithAssociations(requestId)
                 .orElseThrow(() -> new ResourceNotFoundException("Join request not found with ID: " + requestId));
     }
 }

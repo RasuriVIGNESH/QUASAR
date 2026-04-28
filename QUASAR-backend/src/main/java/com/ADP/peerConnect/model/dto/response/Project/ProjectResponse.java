@@ -20,7 +20,7 @@ public class ProjectResponse {
     private String id;
     private String title;
     private String description;
-    private Event event;
+//    private Event event;
     private ProjectStatus status;
     private LocalDate expectedStartDate;
     private LocalDate expectedEndDate;
@@ -37,18 +37,14 @@ public class ProjectResponse {
     private String notepadContent;
     private String objectives;
     private UserResponse Lead;
-    private List<ProjectSkillResponse> requiredSkills;
-    private List<ProjectMemberResponse> members;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    // projectFor (purpose) information
-    // category info
     private String categoryName;
 
     public ProjectResponse() {}
     public ProjectResponse(Project project) {
         this.id = project.getId();
-        this.event = project.getEvent();
+//        this.event = project.getEvent();
         this.title = project.getTitle();
         this.description = project.getDescription();
         if (project.getCategory() != null) {
@@ -77,18 +73,6 @@ public class ProjectResponse {
         if (project.getLead() != null) {
             this.Lead = new UserResponse(project.getLead());
         }
-
-        if (project.getProjectSkills() != null && !project.getProjectSkills().isEmpty()) {
-            this.requiredSkills = project.getProjectSkills().stream()
-                    .map(ProjectSkillResponse::new)
-                    .collect(Collectors.toList());
-        }
-
-        if (project.getProjectMembers() != null && !project.getProjectMembers().isEmpty()) {
-            this.members = project.getProjectMembers().stream()
-                    .map(pm -> new ProjectMemberResponse(pm.getId(), pm.getJoinedAt(), pm.getProjectRole(), new UserResponse(pm.getUser())))
-                    .collect(Collectors.toList());
-        }
     }
 
 
@@ -105,13 +89,6 @@ public class ProjectResponse {
     
     public String getTitle() {
         return title;
-    }
-    public Event getEvent() {
-        return event;
-    }
-
-    public void setEvent(Event event) {
-        this.event = event;
     }
     public void setTitle(String title) {
         this.title = title;
@@ -252,22 +229,7 @@ public class ProjectResponse {
     public void setLead(UserResponse Lead) {
         this.Lead = Lead;
     }
-    
-    public List<ProjectSkillResponse> getRequiredSkills() {
-        return requiredSkills;
-    }
-    
-    public void setRequiredSkills(List<ProjectSkillResponse> requiredSkills) {
-        this.requiredSkills = requiredSkills;
-    }
-    
-    public List<ProjectMemberResponse> getMembers() {
-        return members;
-    }
-    
-    public void setMembers(List<ProjectMemberResponse> members) {
-        this.members = members;
-    }
+
     
     public LocalDateTime getCreatedAt() {
         return createdAt;
@@ -284,7 +246,4 @@ public class ProjectResponse {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
-
-    public String getCategoryName() { return categoryName; }
-    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
 }

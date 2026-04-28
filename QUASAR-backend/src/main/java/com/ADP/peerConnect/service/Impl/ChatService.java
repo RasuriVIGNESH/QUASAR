@@ -113,8 +113,8 @@ public class ChatService implements iChatService {
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new UnauthorizedException("You must be a project member to view messages");
         }
-        
-        return chatMessageRepository.findByProjectIdOrderByCreatedAtDesc(projectId, pageable);
+
+        return chatMessageRepository.findByProjectIdWithSender(projectId, pageable);
     }
     
     /**
@@ -158,7 +158,6 @@ public class ChatService implements iChatService {
      * Get latest message in project
      */
     public ChatMessage getLatestMessage(String projectId, String userId) {
-        // Check if user is a member of the project
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new UnauthorizedException("You must be a project member to view messages");
         }
@@ -199,7 +198,7 @@ public class ChatService implements iChatService {
      * Find message by ID
      */
     public ChatMessage findById(Long messageId) {
-        return chatMessageRepository.findById(messageId)
+        return chatMessageRepository.findByIdWithAssociations(messageId)
             .orElseThrow(() -> new ResourceNotFoundException("Message not found"));
     }
     

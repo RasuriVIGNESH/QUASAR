@@ -367,9 +367,14 @@ class ProjectService {
   }
 
   // Get received invitations - matches ProjectController endpoint
-  async getReceivedInvitations() {
+  async getReceivedInvitations(page = 0, size = 10) {
     try {
-      return await apiService.get('/projects/invitations/received');
+      const params = { page, size };
+      const response = await apiService.get('/projects/invitations/received', params);
+      if (Array.isArray(response)) {
+        return response;
+      }
+      return response?.content || response?.data || [];
     } catch (error) {
       console.error('Failed to get received invitations:', error);
       throw new Error(error.message || 'Failed to get received invitations');

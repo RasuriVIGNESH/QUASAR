@@ -26,7 +26,7 @@ public class FileStorageService {
             Map uploadResult = cloudinary.uploader().upload(
                     file.getBytes(),
                     ObjectUtils.asMap(
-                            "folder", "peerconnect/uploads"
+                            "folder", "quasar/uploads"
                     )
             );
 

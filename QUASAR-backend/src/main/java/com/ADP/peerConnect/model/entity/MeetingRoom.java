@@ -2,6 +2,7 @@ package com.ADP.peerConnect.model.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -40,6 +41,7 @@ public class MeetingRoom {
     @JsonBackReference
     private Project project;
 
+    @BatchSize(size = 25)
     @OneToMany(mappedBy = "meetingRoom", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Note> notes = new ArrayList<>();

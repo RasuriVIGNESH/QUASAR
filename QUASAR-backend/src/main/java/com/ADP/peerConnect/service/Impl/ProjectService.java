@@ -7,6 +7,7 @@ import com.ADP.peerConnect.exception.UnauthorizedException;
 import com.ADP.peerConnect.model.dto.request.Project.CreateProjectRequest;
 import com.ADP.peerConnect.model.dto.request.Project.UpdateProjectRequest;
 import com.ADP.peerConnect.model.dto.request.Project.ProjectSkillRequest;
+import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
 import com.ADP.peerConnect.model.entity.*;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.User;
@@ -26,6 +27,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -159,13 +161,19 @@ public class ProjectService implements iProjectService {
     // Get project by ID
     @Transactional(readOnly = true)
     public Project findById(String projectId) {
-        return projectRepository.findById(projectId)
+        return projectRepository.findByIdWithAssociations(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
     }
 
+
     // Get all projects (paginated)
-    public Page<Project> findAll(Pageable pageable) {
-        return projectRepository.findAll(pageable);
+
+    @Transactional(readOnly = true)
+    public Page<ProjectResponse> getRecentProjects(Pageable pageable) {
+
+        Page<Project> projects = projectRepository.findAllWithCategory(pageable);
+
+        return projects.map(ProjectResponse::new);
     }
 
     @Autowired
@@ -190,6 +198,7 @@ public class ProjectService implements iProjectService {
     }
 
     // Search projects by various criteria
+    @Transactional(readOnly = true)
     public Page<Project> searchProjects(
             String query,
             String category,
@@ -198,46 +207,63 @@ public class ProjectService implements iProjectService {
             boolean availableOnly,
             Pageable pageable,
             String currentUserId) {
-        Specification<Project> spec = Specification.where(null);
 
-        if (query != null && !query.isBlank()) {
-            spec = spec.and((root, q, cb) -> cb.or(
-                    cb.like(cb.lower(root.get("title")), "%" + query.toLowerCase() + "%"),
-                    cb.like(cb.lower(root.get("description")), "%" + query.toLowerCase() + "%")));
-        }
-        if (category != null && !category.isBlank()) {
-            spec = spec.and(
-                    (root, q, cb) -> cb.equal(cb.lower(root.join("category").get("name")), category.toLowerCase()));
-        }
-        if (status != null) {
-            spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), status));
-        }
-        if (availableOnly) {
-            spec = spec.and((root, q, cb) -> cb.and(
-                    cb.equal(root.get("status"), ProjectStatus.RECRUITING),
-                    cb.lt(cb.size(root.get("projectMembers")), root.get("maxTeamSize"))));
-        }
+        Specification<Project> spec = (root, q, cb) -> {
 
-        // Exclude projects where current user is lead or already a member
-        if (currentUserId != null && !currentUserId.isBlank()) {
-            spec = spec.and((root, q, cb) -> {
-                // Exclude projects where lead.id == currentUserId
-                javax.persistence.criteria.Predicate notLead = cb
-                        .not(cb.equal(root.join("lead").get("id"), currentUserId));
+            root.fetch("lead", JoinType.INNER);
+            root.fetch("category", JoinType.LEFT);
 
-                // Subquery to check if a member with user.id == currentUserId exists for this
-                // project
-                javax.persistence.criteria.Subquery<String> sub = q.subquery(String.class);
-                javax.persistence.criteria.Root<Project> subRoot = sub.from(Project.class);
-                javax.persistence.criteria.Join subMembers = subRoot.join("projectMembers");
-                sub.select(subRoot.get("id")).where(cb.equal(subRoot.get("id"), root.get("id")),
-                        cb.equal(subMembers.get("user").get("id"), currentUserId));
+            q.distinct(true);
 
-                javax.persistence.criteria.Predicate notMember = cb.not(cb.exists(sub));
+            List<Predicate> predicates = new ArrayList<>();
 
-                return cb.and(notLead, notMember);
-            });
-        }
+            if (query != null && !query.isBlank()) {
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("title")), "%" + query.toLowerCase() + "%"),
+                        cb.like(cb.lower(root.get("description")), "%" + query.toLowerCase() + "%")
+                ));
+            }
+
+            if (category != null && !category.isBlank()) {
+                predicates.add(cb.equal(
+                        cb.lower(root.join("category").get("name")),
+                        category.toLowerCase()
+                ));
+            }
+
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+
+            if (availableOnly) {
+                predicates.add(cb.and(
+                        cb.equal(root.get("status"), ProjectStatus.RECRUITING),
+                        cb.lt(cb.size(root.get("projectMembers")), root.get("maxTeamSize"))
+                ));
+            }
+
+            if (currentUserId != null && !currentUserId.isBlank()) {
+
+                Predicate notLead = cb.not(
+                        cb.equal(root.get("lead").get("id"), currentUserId)
+                );
+
+                Subquery<String> sub = q.subquery(String.class);
+                Root<Project> subRoot = sub.from(Project.class);
+                Join<?, ?> subMembers = subRoot.join("projectMembers");
+
+                sub.select(subRoot.get("id")).where(
+                        cb.equal(subRoot.get("id"), root.get("id")),
+                        cb.equal(subMembers.get("user").get("id"), currentUserId)
+                );
+
+                Predicate notMember = cb.not(cb.exists(sub));
+
+                predicates.add(cb.and(notLead, notMember));
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
 
         return projectRepository.findAll(spec, pageable);
     }
@@ -323,9 +349,8 @@ public class ProjectService implements iProjectService {
         return projectMemberRepository.save(member);
     }
 
-    // Leave project (for a member)
     public void leaveProject(String projectId, String currentUserId) {
-        projectMemberRepository.findByProjectIdAndUserId(projectId, currentUserId)
+        projectMemberRepository.findByProjectIdAndUserIdWithUser(projectId, currentUserId)
                 .ifPresentOrElse(
                         projectMemberRepository::delete,
                         () -> {
@@ -333,9 +358,8 @@ public class ProjectService implements iProjectService {
                         });
     }
 
-    // Get project members
     public List<ProjectMember> getProjectMembers(String projectId) {
-        return projectMemberRepository.findByProject_IdOrderByCreatedAtAsc(projectId);
+        return projectMemberRepository.findByProjectIdWithUser(projectId);
     }
 
     public Page<Project> discoverProjects(String currentUserId, Pageable pageable) {
@@ -360,29 +384,28 @@ public class ProjectService implements iProjectService {
         return (int) projectRepository.count();
     }
 
-    // Helper to map ProjectSkillRequest list into Project.projectSkills (create or
-    // update)
     private void applySkillsToProject(Project project, List<ProjectSkillRequest> skillRequests) {
+
         if (skillRequests == null) return;
 
-        // Deduplicate
         Map<String, ProjectSkillRequest> dedup = skillRequests.stream()
                 .collect(Collectors.toMap(
                         r -> (r.getSkillId() != null)
                                 ? String.valueOf(r.getSkillId())
                                 : r.getSkillName().toLowerCase(),
                         r -> r,
-                        (a, b) -> a));
-
-        // ✅ Fetch existing project skills ONCE
+                        (a, b) -> a
+                ));
         List<ProjectSkill> existingList =
-                projectSkillRepository.findByProjectIdOrderByIsRequiredDescSkillNameAsc(project.getId());
+                project.getId() != null
+                        ? projectSkillRepository.findByProjectIdWithSkill(project.getId())
+                        : new ArrayList<>();
 
         Map<Long, ProjectSkill> existingMap = existingList.stream()
                 .filter(ps -> ps.getSkill() != null && ps.getSkill().getId() != null)
                 .collect(Collectors.toMap(ps -> ps.getSkill().getId(), ps -> ps));
 
-        // ✅ Collect IDs & Names
+        // Collect IDs & Names
         List<Long> skillIds = dedup.values().stream()
                 .map(ProjectSkillRequest::getSkillId)
                 .filter(id -> id != null)
@@ -393,12 +416,12 @@ public class ProjectService implements iProjectService {
                 .map(r -> r.getSkillName().trim().toLowerCase())
                 .toList();
 
-        // ✅ Batch fetch by ID
+        // Batch fetch by ID
         Map<Long, Skill> skillMap = skillRepository.findAllById(skillIds)
                 .stream()
                 .collect(Collectors.toMap(Skill::getId, s -> s));
 
-        // ✅ Batch fetch by name
+        // Batch fetch by name
         Map<String, Skill> skillNameMap = skillRepository.findByNameIn(skillNames)
                 .stream()
                 .collect(Collectors.toMap(
@@ -422,7 +445,7 @@ public class ProjectService implements iProjectService {
                 if (skill == null) {
                     skill = new Skill();
                     skill.setName(name);
-                    skill = skillRepository.save(skill); // only for new
+                    skill = skillRepository.save(skill);
                 }
             }
 

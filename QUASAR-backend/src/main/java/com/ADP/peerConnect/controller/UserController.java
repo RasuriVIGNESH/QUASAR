@@ -4,11 +4,14 @@ package com.ADP.peerConnect.controller;
 import com.ADP.peerConnect.model.dto.request.User.UpdateUserRequest;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
+import com.ADP.peerConnect.model.dto.response.UserSkillResponse;
 import com.ADP.peerConnect.model.entity.User;
+import com.ADP.peerConnect.model.entity.UserSkill;
 import com.ADP.peerConnect.model.enums.AvailabilityStatus;
 import com.ADP.peerConnect.security.UserPrincipal;
 import com.ADP.peerConnect.service.Impl.FileStorageService;
 import com.ADP.peerConnect.service.Interface.iUserService;
+import com.ADP.peerConnect.service.Interface.iUserSkillService;
 import com.ADP.peerConnect.util.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -22,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * REST controller for user management operations
@@ -37,7 +41,14 @@ public class UserController {
         @Autowired
         private FileStorageService fileStorageService;
 
-        /**
+        private final iUserSkillService Userskill;
+
+    public UserController(iUserSkillService userskill) {
+        Userskill = userskill;
+    }
+
+
+    /**
          * Get user profile by ID
          */
         @GetMapping("/{userId}")
@@ -111,6 +122,12 @@ public class UserController {
                                 "Profile updated successfully", userResponse);
 
                 return ResponseEntity.ok(response);
+        }
+        @GetMapping("/users/{userId}/skills")
+        public ResponseEntity<List<UserSkillResponse>> getUserSkills(
+                @PathVariable String userId
+        ) {
+                return ResponseEntity.ok(Userskill.getUserSkills(userId));
         }
 
         /**

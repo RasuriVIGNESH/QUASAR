@@ -147,30 +147,4 @@ public class UserDiscovey {
         }
 
 
-
-
-
-//        @GetMapping("/users/skills-search")
-//        public ResponseEntity<PagedResponse<UserCardResponse>> findBySkillNames(@RequestParam List<String> skillNames) {
-//
-//                Page<User> users = userService.findBySkillNames(skillNames, PageRequest.of(0, defaultPageSize));
-//
-//                List<UserCardResponse> content = users.getContent()
-//                        .stream()
-//                        .map(UserCardResponse::new)
-//                        .collect(Collectors.toList());
-//
-//                PagedResponse<UserCardResponse> response = new PagedResponse<>(
-//                        content,
-//                        users.getNumber(),
-//                        users.getSize(),
-//                        users.getTotalElements(),
-//                        users.getTotalPages()
-//                );
-//
-//                return ResponseEntity.ok(response);
-//        }
-
-
-
 }

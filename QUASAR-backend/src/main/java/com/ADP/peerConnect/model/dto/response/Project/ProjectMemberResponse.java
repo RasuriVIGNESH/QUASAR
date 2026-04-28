@@ -16,17 +16,13 @@ public class ProjectMemberResponse {
     private ProjectRole role;
     private LocalDateTime joinedAt;
 
-    public ProjectMemberResponse(String id, LocalDateTime joinedAt, ProjectRole role, UserResponse user) {
-        this.joinedAt = joinedAt;
-        this.role = role;
-        this.user = user;
-    }
-
     public ProjectMemberResponse() {
     }
 
     public ProjectMemberResponse(Long id, Object joinedAt, ProjectRole projectRole, UserResponse user) {
-
+        this.joinedAt = (LocalDateTime) joinedAt;
+        this.role = projectRole;
+        this.user = user;
     }
 
     // Getters and Setters

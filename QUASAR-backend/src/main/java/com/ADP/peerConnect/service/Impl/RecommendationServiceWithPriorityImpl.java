@@ -40,14 +40,14 @@ public class RecommendationServiceWithPriorityImpl implements RecommendationServ
     @Transactional(readOnly = true)
     public List<UserRecommendedProject> getRecommendedProjects(String userId) {
         validateUserExists(userId);
-        return recommendationRepository.findByUserId(userId);
+        return recommendationRepository.findByUserIdWithProject(userId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<UserRecommendedProject> getRecommendedProjectsByPriority(String userId) {
         validateUserExists(userId);
-        return recommendationRepository.findByUserIdOrderByPriorityDesc(userId);
+        return recommendationRepository.findByUserIdWithProjectOrderByPriorityDesc(userId);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class RecommendationServiceWithPriorityImpl implements RecommendationServ
     public List<UserRecommendedProject> getTopRecommendations(String userId, int limit) {
         validateUserExists(userId);
         List<UserRecommendedProject> allRecommendations =
-                recommendationRepository.findByUserIdOrderByPriorityDesc(userId);
+                recommendationRepository.findByUserIdWithProjectOrderByPriorityDesc(userId);
         return allRecommendations.stream()
                 .limit(limit)
                 .collect(Collectors.toList());
@@ -78,7 +78,7 @@ public class RecommendationServiceWithPriorityImpl implements RecommendationServ
         UserRecommendedProject recommendation = new UserRecommendedProject(user, project, priority);
         recommendationRepository.save(recommendation);
 
-        return recommendationRepository.findByUserIdOrderByPriorityDesc(userId);
+        return recommendationRepository.findByUserIdWithProjectOrderByPriorityDesc(userId);
     }
 
     @Override
@@ -100,7 +100,7 @@ public class RecommendationServiceWithPriorityImpl implements RecommendationServ
             }
         }
 
-        return recommendationRepository.findByUserIdOrderByPriorityDesc(userId);
+        return recommendationRepository.findByUserIdWithProjectOrderByPriorityDesc(userId);
     }
 
     @Override
@@ -149,7 +149,7 @@ public class RecommendationServiceWithPriorityImpl implements RecommendationServ
             recommendationRepository.save(recommendation);
         }
 
-        return recommendationRepository.findByUserIdOrderByPriorityDesc(userId);
+        return recommendationRepository.findByUserIdWithProjectOrderByPriorityDesc(userId);
     }
 
     private void validateUserExists(String userId) {

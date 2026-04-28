@@ -73,6 +73,7 @@ public class SecurityConfig {
                 "/.well-known/**",
                 "/api/colleges", "/api/colleges/**",
                 "/api/count",
+                 "/health",
                 "/api/branches", "/api/branches/**",
                 "/api/RecentProjects","/api/popularSkills",
                 "/api/graduation-years","/api/predefined-skills/**",
@@ -90,7 +91,7 @@ public class SecurityConfig {
                 .authorizeRequests(authz -> {
             authz
                     // public
-                    .antMatchers("/oauth2/**", "/login/**").permitAll()
+                    .antMatchers("/oauth2/**", "/login/**","/error" ).permitAll()
                     .antMatchers(Constants.AUTH_BASE_PATH + "/**").permitAll()
                     .antMatchers(publicStaticEndpoints).permitAll()
                     .antMatchers(

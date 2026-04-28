@@ -3,6 +3,7 @@ package com.ADP.peerConnect.service.Impl;
 import com.ADP.peerConnect.exception.BadRequestException;
 import com.ADP.peerConnect.exception.ConflictException;
 import com.ADP.peerConnect.exception.ResourceNotFoundException;
+import com.ADP.peerConnect.model.dto.response.UserSkillResponse;
 import com.ADP.peerConnect.model.entity.Skill;
 import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.model.entity.UserSkill;
@@ -136,8 +137,15 @@ public class UserSkillService implements iUserSkillService {
     /**
      * Get user skills
      */
-    public List<UserSkill> getUserSkills(String userId) {
-        return userSkillRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    @Transactional(readOnly = true)
+    public List<UserSkillResponse> getUserSkills(String userId) {
+
+        List<UserSkill> skills =
+                userSkillRepository.findByUserIdWithSkill(userId);
+
+        return skills.stream()
+                .map(UserSkillResponse::new)
+                .toList();
     }
 
     /**

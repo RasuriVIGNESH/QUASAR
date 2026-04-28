@@ -5,6 +5,7 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
@@ -102,22 +103,27 @@ public class Project {
     @Column(name = "completed_tasks_count", nullable = false)
     private Integer completedTasksCount = 0;
 
+    @BatchSize(size = 25)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<ProjectSkill> projectSkills = new ArrayList<>();
 
+    @BatchSize(size = 25)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<ProjectMember> projectMembers = new ArrayList<>();
 
+    @BatchSize(size = 25)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<ProjectInvitation> projectInvitations = new ArrayList<>();
 
+    @BatchSize(size = 25)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Task> tasks = new ArrayList<>();
 
+    @BatchSize(size = 25)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<ProjectJoinRequest> projectJoinRequests = new ArrayList<>();
@@ -125,6 +131,7 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<MeetingRoom> meetingRooms = new ArrayList<>();
+
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")

@@ -1,5 +1,6 @@
 package com.ADP.peerConnect.model.dto.response.Project;
 
+import com.ADP.peerConnect.model.dto.response.UserCardResponse;
 import com.ADP.peerConnect.model.entity.Project;
 
 public class ProjectCardResponse {
@@ -10,6 +11,7 @@ public class ProjectCardResponse {
     private Integer maxTeamSize;
     private Integer currentTeamSize;
     private String status;
+    private UserCardResponse creator;
 
     public ProjectCardResponse(Project p) {
         this.id = p.getId();
@@ -18,10 +20,17 @@ public class ProjectCardResponse {
         this.maxTeamSize = p.getMaxTeamSize();
         this.currentTeamSize = p.getCurrentTeamSize();
         this.categoryName = p.getCategory() != null ? p.getCategory().getName() : null;
+        this.creator=p.getLead()!=null?new UserCardResponse(p.getLead()):null;
     }
 
     public String getCategoryName() {
         return categoryName;
+    }
+    public UserCardResponse getCreator() {
+        return creator;
+    }
+    public void setCreator(UserCardResponse creator) {
+        this.creator = creator;
     }
 
     public Integer getCurrentTeamSize() {
