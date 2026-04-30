@@ -27,6 +27,58 @@ const benefitData = [
   { text: 'Get meaningful peer feedback and skill validation', icon: <Star style={{ width: 16, height: 16 }} />, color: '#fbbf24' },
 ];
 
+/* ─── DEFAULT PLACEHOLDER DATA (shown while backend wakes up) ─── */
+const DEFAULT_PROJECTS = [
+  {
+    title: 'AI-Powered Study Planner',
+    description: 'A smart scheduling tool that adapts to your learning pace and optimizes revision sessions using spaced repetition algorithms.',
+    problemStatement: 'Students struggle to manage study time effectively across multiple subjects.',
+    techStack: ['React', 'Python', 'FastAPI', 'OpenAI'],
+    goals: 'Adaptive scheduling, Progress tracking, Exam reminders',
+    status: 'RECRUITING',
+    currentTeamSize: 2,
+    maxTeamSize: 5,
+    expectedStartDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    lead: { firstName: 'Arjun', lastName: 'Sharma', branch: 'CSE', graduationYear: 2025 },
+  },
+  {
+    title: 'Campus Event Hub',
+    description: 'A unified platform for discovering, organizing, and RSVPing to campus events — clubs, hackathons, fests, and more.',
+    problemStatement: 'Event discovery across campus is fragmented across WhatsApp groups and notice boards.',
+    techStack: ['Next.js', 'Node.js', 'MongoDB', 'Firebase'],
+    goals: 'Event discovery, RSVP system, Club dashboards',
+    status: 'IN PROGRESS',
+    currentTeamSize: 3,
+    maxTeamSize: 4,
+    expectedStartDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+    lead: { firstName: 'Priya', lastName: 'Nair', branch: 'ECE', graduationYear: 2026 },
+  },
+  {
+    title: 'Open Source Contribution Tracker',
+    description: 'Helps students log, visualize, and share their open-source journey — pull requests, issues, and community impact.',
+    problemStatement: 'Students contribute to OSS but have no structured way to showcase the impact.',
+    techStack: ['Vue.js', 'GraphQL', 'PostgreSQL', 'GitHub API'],
+    goals: 'GitHub integration, Portfolio export, Leaderboards',
+    status: 'RECRUITING',
+    currentTeamSize: 1,
+    maxTeamSize: 4,
+    expectedStartDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    lead: { firstName: 'Rahul', lastName: 'Verma', branch: 'IT', graduationYear: 2025 },
+  },
+  {
+    title: 'Peer Mentorship Network',
+    description: 'Connects junior students with seniors for guidance on academics, internships, and career decisions through structured mentorship.',
+    problemStatement: 'New students lack access to experienced peers who can guide them early on.',
+    techStack: ['React', 'Spring Boot', 'MySQL', 'WebSockets'],
+    goals: 'Mentor matching, Session scheduling, Feedback loops',
+    status: 'RECRUITING',
+    currentTeamSize: 2,
+    maxTeamSize: 6,
+    expectedStartDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
+    lead: { firstName: 'Sneha', lastName: 'Kulkarni', branch: 'CSE', graduationYear: 2024 },
+  },
+];
+
 /* ─── STYLES ─── */
 const FunctionalStyles = () => (
   <style>{`
@@ -75,6 +127,37 @@ const FunctionalStyles = () => (
     }
     @keyframes qx-spin { to { transform: rotate(360deg); } }
     .qx-spin { animation: qx-spin 1s linear infinite; }
+
+    /* Wake-up banner animations */
+    @keyframes qx-banner-in {
+      from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+    @keyframes qx-banner-success-in {
+      from { opacity: 0; transform: translateX(-50%) scale(0.95); }
+      to   { opacity: 1; transform: translateX(-50%) scale(1); }
+    }
+    @keyframes qx-pulse-ring {
+      0%   { box-shadow: 0 0 0 0 rgba(139,92,246,0.4); }
+      70%  { box-shadow: 0 0 0 8px rgba(139,92,246,0); }
+      100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); }
+    }
+    .qx-banner-waking {
+      animation: qx-banner-in 0.4s ease forwards, qx-pulse-ring 2s ease-in-out infinite;
+    }
+    .qx-banner-ready {
+      animation: qx-banner-success-in 0.35s ease forwards;
+    }
+    @keyframes qx-dots {
+      0%, 20%  { content: '.'; }
+      40%      { content: '..'; }
+      60%, 80% { content: '...'; }
+      100%     { content: ''; }
+    }
+    .qx-loading-dot::after {
+      content: '';
+      animation: qx-dots 1.8s steps(1, end) infinite;
+    }
   `}</style>
 );
 
@@ -126,8 +209,8 @@ const ShootingStarsCanvas = () => {
   return <canvas ref={ref} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }} />;
 };
 
-/* ─── Project Card (Increased Width, Decreased Height) ─── */
-const ProjectCard = ({ project, isMarquee = false }) => {
+/* ─── Project Card ─── */
+const ProjectCard = ({ project, isMarquee = false, isPlaceholder = false }) => {
   const lead = project.lead || {};
   const leadName = `${lead.firstName || 'Unknown'} ${lead.lastName && lead.lastName !== '---' ? lead.lastName : ''}`.trim();
   const tech = project.techStack || [];
@@ -138,8 +221,10 @@ const ProjectCard = ({ project, isMarquee = false }) => {
     <div className="qx-glass qx-lift" style={{
       borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column',
       position: 'relative', width: isMarquee ? 440 : '100%', flexShrink: isMarquee ? 0 : 'unset',
-      minHeight: 420, // Optimized height
-      whiteSpace: 'normal'
+      minHeight: 420,
+      whiteSpace: 'normal',
+      opacity: isPlaceholder ? 0.75 : 1,
+      transition: 'opacity 0.5s ease',
     }}>
       <div className="qx-accent-bar" />
       <div style={{ padding: '20px 20px 8px', flex: 1 }}>
@@ -202,15 +287,107 @@ const ProjectCard = ({ project, isMarquee = false }) => {
   );
 };
 
+/* ─── Wake-Up Banner ─── */
+const WakeUpBanner = ({ status, onDismiss }) => {
+  if (status === 'idle') return null;
+
+  const isReady = status === 'ready';
+
+  return (
+    <div
+      className={isReady ? 'qx-banner-ready' : 'qx-banner-waking'}
+      style={{
+        position: 'fixed',
+        top: 90,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 1000,
+        width: '90%',
+        maxWidth: 500,
+        background: isReady
+          ? 'rgba(6, 30, 20, 0.97)'
+          : 'rgba(8, 5, 22, 0.97)',
+        border: isReady
+          ? '1px solid rgba(34, 197, 94, 0.55)'
+          : '1px solid rgba(139, 92, 246, 0.5)',
+        borderRadius: 16,
+        padding: '14px 18px',
+        backdropFilter: 'blur(16px)',
+        display: 'flex',
+        gap: 14,
+        alignItems: 'center',
+        boxShadow: isReady
+          ? '0 20px 40px rgba(0,0,0,0.5), 0 0 24px rgba(34,197,94,0.12)'
+          : '0 20px 40px rgba(0,0,0,0.5), 0 0 24px rgba(139,92,246,0.12)',
+      }}
+    >
+      {/* Icon */}
+      <div style={{
+        width: 40, height: 40, borderRadius: 12, flexShrink: 0,
+        background: isReady ? 'rgba(34,197,94,0.15)' : 'rgba(139,92,246,0.15)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {isReady
+          ? <CheckCircle size={20} color="#22c55e" />
+          : <Coffee className="qx-spin" size={20} color="#8b5cf6" />
+        }
+      </div>
+
+      {/* Text */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ color: '#f0f4ff', fontSize: 13, fontWeight: 700, marginBottom: 3 }}>
+          {isReady
+            ? '🚀 Platform is live — you\'re good to go!'
+            : <span>☕ Warming up the server<span className="qx-loading-dot" /></span>
+          }
+        </div>
+        <div style={{ color: isReady ? '#86efac' : '#6b7280', fontSize: 11.5, lineHeight: 1.5 }}>
+          {isReady
+            ? 'All systems are online. Feel free to sign in or create your account.'
+            : 'This app runs on a free-tier server that sleeps when idle. It\'ll be ready in about 1–2 minutes — the page is fully loaded in the meantime!'
+          }
+        </div>
+      </div>
+
+      {/* Right side */}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
+        {isReady ? (
+          <button
+            onClick={onDismiss}
+            style={{
+              background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
+              color: '#22c55e', borderRadius: 8, padding: '5px 12px',
+              fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+            }}
+          >
+            Got it ✓
+          </button>
+        ) : (
+          <Loader2 className="qx-spin" size={18} color="#8b5cf6" />
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ─── LANDING PAGE ─── */
 export default function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [isWakingUp, setIsWakingUp] = useState(false);
-  const [publicData, setPublicData] = useState({ projects: [], popularSkills: [], colleges: [], userCount: 0, projectCount: 0, loading: true });
+
+  // 'waking' | 'ready' | 'idle'  — starts as 'waking' immediately, no blank-page flash
+  const [bannerStatus, setBannerStatus] = useState('waking');
+
+  const [publicData, setPublicData] = useState({
+    projects: DEFAULT_PROJECTS,   // ← real content shown immediately
+    popularSkills: [],
+    colleges: [],
+    userCount: 1200,              // ← sensible defaults so stats aren't "0+"
+    projectCount: 800,
+    isPlaceholder: true,          // flag to know we're on defaults
+  });
 
   useEffect(() => {
     let isMounted = true;
-    setIsWakingUp(true);
 
     const fetchWithRetry = async (fn, retries = 5, delay = 3000) => {
       for (let i = 0; i < retries; i++) {
@@ -237,16 +414,24 @@ export default function LandingPage() {
         const rawCounts = countsRes || [1250, 850];
 
         setPublicData({
-          projects: projects,
+          projects: projects.length > 0 ? projects : DEFAULT_PROJECTS,
           popularSkills: skillsRes.data || skillsRes || [],
           colleges: collegesRes.data || collegesRes || [],
           userCount: Array.isArray(rawCounts) ? rawCounts[0] : (rawCounts.users || 1250),
           projectCount: Array.isArray(rawCounts) ? rawCounts[1] : (rawCounts.projects || 850),
-          loading: false,
+          isPlaceholder: false,
         });
-        setIsWakingUp(false);
+
+        setBannerStatus('ready');
+
+        // Auto-dismiss the "ready" banner after 5 seconds
+        setTimeout(() => {
+          if (isMounted) setBannerStatus('idle');
+        }, 5000);
+
       } catch (err) {
-        if (isMounted) setIsWakingUp(true);
+        // Retries exhausted — keep showing waking banner, page content already visible
+        if (isMounted) setBannerStatus('waking');
       }
     };
 
@@ -256,21 +441,17 @@ export default function LandingPage() {
 
   const scrollTo = (id) => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }); setMobileOpen(false); };
 
+  const displayedProjects = publicData.projects.length > 0 ? publicData.projects : DEFAULT_PROJECTS;
+
   return (
     <div className="qx-root" style={{ minHeight: '100vh' }}>
       <FunctionalStyles />
       <ShootingStarsCanvas />
 
-      {isWakingUp && (
-        <div style={{ position: 'fixed', top: 90, left: '50%', transform: 'translateX(-50%)', zIndex: 1000, width: '90%', maxWidth: 460, background: 'rgba(3, 5, 13, 0.95)', border: '1px solid rgba(139, 92, 246, 0.5)', borderRadius: 16, padding: 16, backdropFilter: 'blur(12px)', display: 'flex', gap: 15, alignItems: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-          <Coffee className="qx-spin" color="#8b5cf6" size={20} />
-          <div style={{ flex: 1 }}>
-            <div style={{ color: '#fff', fontSize: 14, fontWeight: 700 }}>Connecting galaxy...</div>
-            <div style={{ color: '#6b7280', fontSize: 12, marginTop: 4 }}>Server takes ~2 mins to spin up on first visit. Hang tight!</div>
-          </div>
-          <Loader2 className="qx-spin" size={18} color="#8b5cf6" />
-        </div>
-      )}
+      <WakeUpBanner
+        status={bannerStatus}
+        onDismiss={() => setBannerStatus('idle')}
+      />
 
       {/* Nebula glows */}
       <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
@@ -333,17 +514,29 @@ export default function LandingPage() {
 
       <section id="projects" style={{ padding: '100px 0' }}>
         <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', marginBottom: 44 }}>
-          <h2 className="qx-syne" style={{ fontSize: 'clamp(24px, 3.5vw, 42px)', fontWeight: 700, color: '#f0f4ff' }}>What Students Are Building</h2>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+            <h2 className="qx-syne" style={{ fontSize: 'clamp(24px, 3.5vw, 42px)', fontWeight: 700, color: '#f0f4ff' }}>What Students Are Building</h2>
+            {publicData.isPlaceholder && (
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
+                background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)',
+                color: '#a78bfa', letterSpacing: '0.05em', textTransform: 'uppercase',
+              }}>
+                Sample Projects
+              </span>
+            )}
+          </div>
+          {publicData.isPlaceholder && (
+            <p style={{ fontSize: 12, color: '#4b5563', marginTop: 6 }}>
+              Live projects will appear here once the server is online. These are representative examples.
+            </p>
+          )}
         </div>
         <div className="qx-mqwrap">
           <div className="qx-mqtrack">
-            {publicData.projects.length > 0 ? (
-              [...publicData.projects, ...publicData.projects].map((p, i) => (
-                <ProjectCard key={i} project={p} isMarquee={true} />
-              ))
-            ) : (
-              <div style={{ color: '#374151', paddingLeft: 24 }}>Connecting galaxy...</div>
-            )}
+            {[...displayedProjects, ...displayedProjects].map((p, i) => (
+              <ProjectCard key={i} project={p} isMarquee={true} isPlaceholder={publicData.isPlaceholder} />
+            ))}
           </div>
         </div>
       </section>
