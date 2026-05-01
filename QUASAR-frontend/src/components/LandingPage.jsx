@@ -488,7 +488,7 @@ export default function LandingPage() {
           <p style={{ fontSize: 'clamp(14px, 1.8vw, 17px)', color: '#6b7280', maxWidth: 540, margin: '0 auto 40px' }}>The professional collaboration platform for students to connect and build real portfolios together.</p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/register"><button className="qx-btn-out" style={{ padding: '13px 34px', color: '#fff', borderRadius: 40 }}>Launch your orbit.</button></Link>
-            <Link to="/login"><button className="qx-btn-out" style={{ padding: '13px 28px', borderRadius: 40 }}>Login <ChevronRight size={17} /></button></Link>
+            <Link to="/login"><button className="qx-btn-out" style={{ padding: '13px 28px', borderRadius: 40 }}>Login </button></Link>
           </div>
         </div>
       </section>

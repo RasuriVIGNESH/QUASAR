@@ -1,32 +1,48 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'; // Added useRef
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// Icons - Fixed the missing Zap import
+import {
+  Search,
+  Briefcase,
+  Filter,
+  ChevronRight,
+  Globe,
+  Users,
+  Target,
+  Loader2,
+  Sparkles,
+  Shapes,
+  LayoutGrid,
+  GraduationCap,
+  ArrowRight,
+  Code2,
+  Zap // Added Zap here
+} from 'lucide-react';
 
 // UI Components
-import { Button } from '@/components/ui/button';
-import { ModeToggle } from '@/components/mode-toggle';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 
-// Icons
-import {
-  Search, Briefcase, Filter, ChevronRight, GitBranch, Globe, Layers
-} from 'lucide-react';
-
 // Services
 import projectService from '../../services/projectService';
-import { joinRequestService } from '../../services/JoinRequestService';
 import ProjectDetailModal from './ProjectDetailModal';
 
-// --- CUSTOM DEBOUNCE HOOK (Fix 3) ---
-function useDebounce(value, delay = 400) {
+/* ─── DESIGN TOKENS ──────────────────────────────────────────────────────── */
+const THEME = {
+  bg: '#020617',
+  surface: '#0B1120',
+  border: 'rgba(255,255,255,0.05)',
+  accent: '#818CF8',
+  highlight: '#22D3EE',
+};
+
+/* ─── HOOK: DEBOUNCE ─────────────────────────────────────────────────────── */
+function useDebounce(value, delay) {
   const [debouncedValue, setDebouncedValue] = useState(value);
   useEffect(() => {
     const handler = setTimeout(() => setDebouncedValue(value), delay);
@@ -35,307 +51,253 @@ function useDebounce(value, delay = 400) {
   return debouncedValue;
 }
 
+/* ─── SUB-COMPONENT: TEAM METER ─────────────────────────────────────────── */
+const TeamMeter = ({ current, max }) => {
+  const pct = Math.min((current / max) * 100, 100);
+  return (
+    <div className="w-full space-y-1.5">
+      <div className="flex justify-between text-[9px] font-black uppercase tracking-tighter">
+        <span className="text-indigo-400">Team Progress</span>
+        <span className={current >= max ? 'text-rose-400' : 'text-cyan-400'}>
+          {current} / {max} Seats Filled
+        </span>
+      </div>
+      <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+        <motion.div
+          initial={{ width: 0 }}
+          animate={{ width: `${pct}%` }}
+          className={`h-full rounded-full ${current >= max ? 'bg-rose-500' : 'bg-gradient-to-r from-indigo-500 to-cyan-400'}`}
+        />
+      </div>
+    </div>
+  );
+};
+
+/* ─── MAIN COMPONENT ─────────────────────────────────────────────────────── */
 export default function ProjectDiscovery() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
+  // Data State
   const [projects, setProjects] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [sentRequests, setSentRequests] = useState(new Set());
   const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Raw Filter State (for the inputs)
-  const [searchTerm, setSearchTerm] = useState('');
-  const [skillFilter, setSkillFilter] = useState('');
+  // UI State
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
-  // Debounced State (for the API calls)
-  const debouncedSearch = useDebounce(searchTerm, 400);
-  const debouncedSkill = useDebounce(skillFilter, 400);
-
-  const [filterByCollege, setFilterByCollege] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [status, setStatus] = useState('ALL');
   const [availableOnly, setAvailableOnly] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
+
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  /* ─── API CALLS ────────────────────────────────────────────────────────── */
 
   const fetchProjects = useCallback(async () => {
     setLoading(true);
     try {
-      let projectsData = [];
-      // Use debounced values here instead of raw state
-      const hasFilters = debouncedSearch || debouncedSkill || selectedCategory !== 'All' || filterByCollege || availableOnly || status !== 'ALL';
+      const res = await projectService.searchProjects({
+        query: debouncedSearch || undefined,
+        category: selectedCategory !== 'All' ? selectedCategory : undefined,
+        availableOnly,
+        page,
+        size: 9
+      });
 
-      if (!hasFilters) {
-        const res = await projectService.discoverProjects(page, 10);
-        projectsData = res.content || res.data || [];
-        setTotalPages(res.totalPages || 0);
-      } else if (filterByCollege && currentUser?.collegeId) {
-        const res = await projectService.getProjectsByCollege(currentUser.collegeId);
-        let allCollegeProjects = res.data?.content || res.content || res.data || res || [];
-        if (!Array.isArray(allCollegeProjects)) allCollegeProjects = [];
-
-        const norm = str => (str || '').toLowerCase();
-        projectsData = allCollegeProjects.filter(p => {
-          const matchesSearch = !debouncedSearch || norm(p.title).includes(norm(debouncedSearch)) || norm(p.description).includes(norm(debouncedSearch));
-          const matchesCategory = selectedCategory === 'All' || p.categoryName === selectedCategory;
-          const matchesStatus = !status || status === 'ALL' || p.status === status;
-          const matchesAvailable = !availableOnly || (p.status === 'RECRUITING');
-
-          const projectSkills = (p.requiredSkills || []).map(s => norm(s.skill?.name || s.skillName || ''));
-          const searchSkills = debouncedSkill.split(',').map(s => norm(s.trim())).filter(Boolean);
-          const matchesSkills = searchSkills.length === 0 || searchSkills.some(s => projectSkills.some(ps => ps.includes(s)));
-
-          return matchesSearch && matchesCategory && matchesStatus && matchesAvailable && matchesSkills;
-        });
-      } else {
-        const params = {
-          query: debouncedSearch || undefined,
-          category: selectedCategory !== 'All' ? selectedCategory : undefined,
-          status: status === 'ALL' ? undefined : status,
-          skills: debouncedSkill ? debouncedSkill.split(',').map(s => s.trim()).filter(Boolean) : undefined,
-          availableOnly: availableOnly,
-          page: page,
-          size: 10
-        };
-        const res = await projectService.searchProjects(params);
-        projectsData = res.content || res.data || (Array.isArray(res) ? res : []);
-        setTotalPages(res.totalPages || 0);
-      }
-
-      setProjects(projectsData.map(p => ({
-        ...p,
-        requiredSkills: (p.requiredSkills || []).map(s => typeof s === 'string' ? s : (s.skill?.name || s.skillName)).filter(Boolean)
-      })));
+      const content = res?.content || res?.data?.content || [];
+      setProjects(content);
+      setTotalPages(res?.totalPages || 1);
     } catch (err) {
-      console.error("Discovery error:", err);
+      console.error("Discovery Failure", err);
     } finally {
       setLoading(false);
     }
-  }, [currentUser, debouncedSearch, debouncedSkill, selectedCategory, status, availableOnly, filterByCollege, page]);
+  }, [debouncedSearch, selectedCategory, availableOnly, page]);
 
-  // Initial load for categories and requests
   useEffect(() => {
-    const init = async () => {
-      try {
-        const [cats, reqs] = await Promise.all([
-          projectService.getProjectCategories(),
-          joinRequestService.getMyJoinRequests()
-        ]);
-        setCategories(cats || []);
-        setSentRequests(new Set((reqs || []).map(r => r.project?.id).filter(Boolean)));
-      } catch (e) { console.error("Init Error", e); }
-    };
-    init();
+    projectService.getProjectCategories().then(res => {
+      const catList = res?.data || res || [];
+      setCategories(catList);
+    });
   }, []);
 
-  // Trigger fetch when any (debounced) filter or page changes
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
 
-  const handleJoinSuccess = (projectId) => {
-    setSentRequests(p => new Set(p).add(projectId));
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] flex flex-col selection:bg-blue-100 dark:selection:bg-blue-900">
-      {/* Search Header */}
-      <header className="sticky top-0 z-50 w-full h-20 bg-white/90 dark:bg-slate-900/70 backdrop-blur-md border-b border-slate-200 dark:border-slate-800/60 px-8 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <img src="/Logo.png" alt="Logo" className="w-8 h-8 rounded-lg object-cover" />
-          <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Project Hub</h1>
-        </div>
+    <div className="min-h-screen text-slate-200" style={{ backgroundColor: THEME.bg, fontFamily: '"Outfit", sans-serif' }}>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,300;1,500;1,600&family=Outfit:wght@300;400;500;700;900&display=swap');
+        .glass-nav { backdrop-filter: blur(20px) saturate(180%); background: rgba(2, 6, 23, 0.7); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .hero-glow { background: radial-gradient(circle at 50% -20%, rgba(129, 140, 248, 0.12) 0%, transparent 70%); }
+      `}</style>
 
-        <div className="flex-1 max-w-xl mx-12 relative hidden md:block group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 group-focus-within:text-blue-600 transition-colors" />
-          <Input
-            placeholder="Search by title, keywords, or technology..."
-            className="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl h-12 pl-12 pr-4 focus:ring-2 focus:ring-blue-500/20 transition-all outline-none dark:text-white"
-            value={searchTerm}
-            onChange={(e) => { setSearchTerm(e.target.value); setPage(0); }} // Sets raw state
-          />
-          {searchTerm !== debouncedSearch && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2">
-              <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+      {/* ── HEADER ── */}
+      <header className="sticky top-0 z-50 border-b border-white/5 glass-nav">
+        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div className="flex items-center gap-10">
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
+              <img src="/Logo.png" alt="Quasar" className="w-10 h-10 rounded-xl" loading="lazy" />
+              <h1 className="font-serif italic text-2xl text-white tracking-tight">Quasar</h1>
             </div>
-          )}
-        </div>
+          </div>
 
-        <div className="flex items-center gap-4">
-          <Badge className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-none font-black px-4 py-1.5 text-xs">
-            {loading ? "SEARCHING..." : `${projects.length} MATCHES`}
-          </Badge>
-          <ModeToggle />
+          <div className="flex-1 max-w-md mx-12 relative group hidden md:block">
+            <Search className={`absolute left-4 top-1/2 -translate-y-1/2 transition-colors ${loading ? 'text-cyan-400 animate-pulse' : 'text-slate-600'}`} size={16} />
+            <input
+              placeholder="Search Quasar registry..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-full py-2.5 pl-12 pr-4 text-sm font-serif italic focus:outline-none focus:border-indigo-500/50 transition-all"
+            />
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="h-8 w-px bg-white/10 hidden sm:block" />
+            <Avatar className="w-9 h-9 border border-indigo-500/30">
+              <AvatarImage src={currentUser?.profilePictureUrl} />
+              <AvatarFallback className="bg-indigo-600 text-[10px] font-black italic">QS</AvatarFallback>
+            </Avatar>
+          </div>
         </div>
       </header>
 
-      <div className="flex flex-1">
-        {/* Sidebar Filters */}
-        <aside className="w-72 border-r border-slate-200 dark:border-slate-800/60 p-8 hidden lg:flex flex-col gap-10 bg-white dark:bg-[#0B1120] sticky top-20 h-[calc(100vh-80px)] overflow-y-auto">
-          <section>
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Discovery Filters</h4>
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="college-side" className="text-sm font-bold text-slate-700 dark:text-slate-300">My Campus Only</Label>
-                <Switch id="college-side" checked={filterByCollege} onCheckedChange={(v) => { setFilterByCollege(v); setPage(0); }} />
-              </div>
-              <div className="flex items-center justify-between">
-                <Label htmlFor="avail-side" className="text-sm font-bold text-slate-700 dark:text-slate-300">Actively Recruiting</Label>
-                <Switch id="avail-side" checked={availableOnly} onCheckedChange={(v) => { setAvailableOnly(v); setPage(0); }} />
-              </div>
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-12 relative hero-glow">
+        <div className="grid grid-cols-12 gap-8">
 
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-500 uppercase">Status</Label>
-                <Select value={status} onValueChange={(v) => { setStatus(v); setPage(0); }}>
-                  <SelectTrigger className="bg-slate-50 dark:bg-slate-800">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">All Status</SelectItem>
-                    <SelectItem value="RECRUITING">Recruiting</SelectItem>
-                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
-                    <SelectItem value="COMPLETED">Completed</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-xs font-bold text-slate-500 uppercase">Required Skills</Label>
-                <Input
-                  placeholder="e.g. React, Python"
-                  className="bg-slate-50 dark:bg-slate-800"
-                  value={skillFilter}
-                  onChange={(e) => { setSkillFilter(e.target.value); setPage(0); }}
-                />
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Domain Categories</h4>
-            <div className="flex flex-col gap-1">
-              <button
-                onClick={() => { setSelectedCategory('All'); setPage(0); }}
-                className={`text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${selectedCategory === 'All' ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-              >
-                All Domains
-              </button>
-              {categories.map((cat) => (
+          {/* ── SIDEBAR ── */}
+          <aside className="col-span-12 lg:col-span-3 space-y-8">
+            <section>
+              <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
+                <LayoutGrid size={12} /> Domains
+              </h4>
+              <div className="flex flex-col gap-1">
                 <button
-                  key={cat.id}
-                  onClick={() => { setSelectedCategory(cat.name); setPage(0); }}
-                  className={`text-left px-4 py-3 rounded-xl text-sm font-bold transition-all ${selectedCategory === cat.name ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+                  onClick={() => { setSelectedCategory('All'); setPage(0); }}
+                  className={`text-left px-5 py-3 rounded-xl text-xs font-bold transition-all ${selectedCategory === 'All' ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/5'}`}
                 >
-                  {cat.name}
+                  Global Discovery
                 </button>
-              ))}
-            </div>
-          </section>
-        </aside>
-
-        {/* Content Feed */}
-        <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
-          {loading && projects.length === 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {[...Array(6)].map((_, i) => (
-                <Card key={i} className="h-full border-slate-200 dark:border-slate-800/60 bg-white dark:bg-slate-900/60 rounded-[28px] p-8">
-                  <Skeleton className="h-6 w-24 mb-6 rounded-full" />
-                  <Skeleton className="h-8 w-3/4 mb-4" />
-                  <Skeleton className="h-4 w-full mb-2" />
-                  <Skeleton className="h-4 w-2/3 mb-6" />
-                  <div className="flex gap-2 mt-auto">
-                    <Skeleton className="w-8 h-8 rounded-full" />
-                    <Skeleton className="h-4 w-20" />
-                  </div>
-                </Card>
-              ))}
-            </div>
-          ) : projects.length === 0 ? (
-            <div className="h-96 flex flex-col items-center justify-center text-center">
-              <Briefcase size={40} className="text-slate-400 mb-4" />
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">No projects found</h3>
-              <Button variant="link" onClick={() => { setSearchTerm(''); setSkillFilter(''); setStatus('ALL'); setPage(0); }} className="text-blue-600">Clear all filters</Button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              <AnimatePresence mode="popLayout">
-                {projects.map((project, idx) => (
-                  <motion.div
-                    key={project.id}
-                    initial={{ opacity: 0, y: 15 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: idx * 0.05 }}
-                    layout
+                {categories.map((cat) => (
+                  <button
+                    key={cat.name}
+                    onClick={() => { setSelectedCategory(cat.name); setPage(0); }}
+                    className={`text-left px-5 py-3 rounded-xl text-xs font-bold transition-all ${selectedCategory === cat.name ? 'bg-indigo-600 text-white shadow-xl' : 'text-slate-500 hover:bg-white/5 hover:text-white'}`}
                   >
-                    <Card
-                      className="bg-white dark:bg-slate-900/60 border-slate-200 dark:border-slate-800/60 shadow-sm hover:shadow-xl hover:-translate-y-1.5 transition-all duration-300 rounded-[28px] overflow-hidden flex flex-col h-full group cursor-pointer"
-                      onClick={() => { setSelectedProject(project); setIsModalOpen(true); }}
+                    {cat.name}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="bg-white/[0.02] border border-white/5 p-6 rounded-2xl">
+              <div className="flex items-center justify-between">
+                <Label className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Active Recruitment</Label>
+                <Switch checked={availableOnly} onCheckedChange={(v) => { setAvailableOnly(v); setPage(0); }} />
+              </div>
+            </section>
+          </aside>
+
+          {/* ── FEED ── */}
+          <section className="col-span-12 lg:col-span-9">
+            {loading && projects.length === 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {[1, 2, 3, 4].map(i => <div key={i} className="h-72 bg-white/5 rounded-[32px] animate-pulse" />)}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <AnimatePresence mode="popLayout">
+                  {projects.map((p, idx) => (
+                    <motion.div
+                      key={p.id}
+                      layout
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      onClick={() => { setSelectedProject(p); setIsModalOpen(true); }}
+                      className="group bg-[#0b1120]/50 border border-white/5 rounded-[32px] p-8 hover:bg-[#0b1120] hover:border-indigo-500/40 transition-all duration-500 cursor-pointer overflow-hidden flex flex-col"
                     >
-                      <CardContent className="p-8 flex flex-col h-full">
-                        <div className="flex items-center justify-between mb-6">
-                          <Badge className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-none font-black text-[9px] uppercase tracking-[0.15em] px-3">
-                            {project.categoryName || "General"}
-                          </Badge>
-                          <div className={`w-2.5 h-2.5 rounded-full ${project.status === 'RECRUITING' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-slate-300'}`} />
-                        </div>
+                      <div className="flex justify-between items-start mb-6">
+                        <Badge className="bg-indigo-500/10 text-indigo-400 border-none font-black text-[9px] uppercase tracking-widest px-3 py-1">
+                          {p.categoryName}
+                        </Badge>
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+                      </div>
 
-                        <h3 className="text-xl font-black text-slate-900 dark:text-white mb-3 group-hover:text-blue-600 transition-colors">
-                          {project.title}
-                        </h3>
-                        <p className="text-slate-500 dark:text-slate-400 text-sm line-clamp-2 mb-6 font-medium">
-                          {project.description || 'Innovative campus project ready for collaboration.'}
-                        </p>
+                      <h3 className="font-serif italic text-2xl text-white group-hover:text-cyan-300 transition-colors mb-4 truncate">
+                        {p.title}
+                      </h3>
 
-                        <div className="flex flex-wrap gap-1.5 mb-8">
-                          {project.requiredSkills?.slice(0, 3).map((s, si) => (
-                            <span key={si} className="text-[10px] font-black text-blue-600 dark:text-blue-400 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-100 dark:border-blue-900/50 px-2.5 py-1 rounded-lg uppercase">
-                              {s}
-                            </span>
-                          ))}
-                        </div>
+                      <div className="flex flex-wrap gap-1.5 mb-6">
+                        {p.skillsRequired?.map((skill) => (
+                          <span key={skill} className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/5 border border-white/5 text-[9px] font-bold text-slate-400 uppercase tracking-tighter">
+                            <Code2 size={10} className="text-indigo-500" />
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
 
-                        <div className="mt-auto pt-6 border-t border-slate-50 dark:border-slate-800 flex items-center justify-between">
+                      <div className="mt-auto space-y-6">
+                        <TeamMeter current={p.currentTeamSize + 1} max={p.maxTeamSize} />
+
+                        <div className="flex items-center justify-between pt-5 border-t border-white/5">
                           <div className="flex items-center gap-3">
-                            <Avatar className="w-8 h-8 border border-slate-100 dark:border-slate-700">
-                              <AvatarImage src={project.lead?.profilePictureUrl} />
-                              <AvatarFallback className="text-[10px] bg-slate-900 text-white font-bold">{project.lead?.firstName?.[0]}</AvatarFallback>
+                            <Avatar className="w-9 h-9 border border-white/10 p-0.5">
+                              <AvatarImage src={p.creator?.profilePictureUrl} className="rounded-full" />
+                              <AvatarFallback className="bg-slate-800 text-indigo-400 font-black text-[10px]">
+                                {p.creator?.firstName?.[0]}
+                              </AvatarFallback>
                             </Avatar>
-                            <div>
-                              <p className="text-xs font-black text-slate-900 dark:text-white uppercase">{project.lead?.firstName}</p>
-                              <p className="text-[9px] font-bold text-slate-400 uppercase">Lead</p>
+                            <div className="min-w-0">
+                              <p className="text-[10px] font-black text-white uppercase leading-none tracking-tight truncate">
+                                {p.creator?.firstName} {p.creator?.lastName === '---' ? '' : p.creator?.lastName}
+                              </p>
+                              <p className="text-[8px] text-slate-500 font-bold uppercase mt-1 flex items-center gap-1 truncate">
+                                <GraduationCap size={10} className="text-indigo-400" />
+                                {p.creator?.branch}
+                              </p>
                             </div>
                           </div>
-                          <ChevronRight className="h-5 w-5 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+                          <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-indigo-600 transition-colors">
+                            <ArrowRight size={14} className="text-slate-500 group-hover:text-white" />
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
+            )}
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex justify-center items-center gap-2 mt-12">
-              <Button variant="ghost" disabled={page === 0} onClick={() => setPage(p => p - 1)}>Prev</Button>
-              <div className="flex gap-1">
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-16 flex justify-center items-center gap-3">
                 {[...Array(totalPages)].map((_, i) => (
-                  <button key={i} onClick={() => setPage(i)} className={`w-8 h-8 rounded-lg text-xs font-bold ${page === i ? 'bg-blue-600 text-white' : 'bg-white dark:bg-slate-800 text-slate-600 border border-slate-200 dark:border-slate-700'}`}>
+                  <button
+                    key={i}
+                    onClick={() => setPage(i)}
+                    className={`w-10 h-10 rounded-xl text-xs font-black transition-all ${page === i ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-500/30' : 'bg-white/5 text-slate-500 hover:text-white hover:bg-white/10'}`}
+                  >
                     {i + 1}
                   </button>
                 ))}
               </div>
-              <Button variant="ghost" disabled={page === totalPages - 1} onClick={() => setPage(p => p + 1)}>Next</Button>
-            </div>
-          )}
-        </main>
-      </div>
+            )}
+          </section>
+        </div>
+      </main>
 
-      <ProjectDetailModal project={selectedProject} open={isModalOpen} onOpenChange={setIsModalOpen} onJoinSuccess={handleJoinSuccess} />
+      <ProjectDetailModal
+        project={selectedProject}
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+      />
     </div>
   );
 }
