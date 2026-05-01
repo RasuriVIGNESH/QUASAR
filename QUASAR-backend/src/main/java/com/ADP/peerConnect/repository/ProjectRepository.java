@@ -79,10 +79,12 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
      * Finds projects for the "Discover" feature.
      */
     @Query(
-            value = "SELECT p FROM Project p " +
+            value = "SELECT DISTINCT p FROM Project p " +
                     "JOIN FETCH p.lead " +
                     "LEFT JOIN FETCH p.category " +
                     "LEFT JOIN FETCH p.event " +
+                    "LEFT JOIN FETCH p.projectSkills ps " +
+                    "LEFT JOIN FETCH ps.skill " +
                     "WHERE p.status = :status " +
                     "AND (SELECT COUNT(pm) FROM ProjectMember pm WHERE pm.project.id = p.id) < p.maxTeamSize " +
                     "AND p.lead.id != :userId " +

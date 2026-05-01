@@ -3,6 +3,8 @@ package com.ADP.peerConnect.model.dto.response.Project;
 import com.ADP.peerConnect.model.dto.response.UserCardResponse;
 import com.ADP.peerConnect.model.entity.Project;
 
+import java.util.List;
+
 public class ProjectCardResponse {
 
     private String id;
@@ -10,6 +12,7 @@ public class ProjectCardResponse {
     private String categoryName;
     private Integer maxTeamSize;
     private Integer currentTeamSize;
+    private List<String> skillsRequired;
     private String status;
     private UserCardResponse creator;
 
@@ -20,7 +23,12 @@ public class ProjectCardResponse {
         this.maxTeamSize = p.getMaxTeamSize();
         this.currentTeamSize = p.getCurrentTeamSize();
         this.categoryName = p.getCategory() != null ? p.getCategory().getName() : null;
-        this.creator=p.getLead()!=null?new UserCardResponse(p.getLead()):null;
+        this.creator = p.getLead() != null ? new UserCardResponse(p.getLead()) : null;
+        this.skillsRequired = p.getProjectSkills() != null
+                ? p.getProjectSkills().stream()
+                .map(ps -> ps.getSkill().getName())
+                .collect(java.util.stream.Collectors.toList())
+                : new java.util.ArrayList<>();
     }
 
     public String getCategoryName() {
@@ -35,6 +43,9 @@ public class ProjectCardResponse {
 
     public Integer getCurrentTeamSize() {
         return currentTeamSize;
+    }
+    public List<String> getSkillsRequired() {
+        return skillsRequired;
     }
 
     public String getId() {

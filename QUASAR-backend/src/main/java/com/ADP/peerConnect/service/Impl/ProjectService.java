@@ -212,6 +212,8 @@ public class ProjectService implements iProjectService {
 
             root.fetch("lead", JoinType.INNER);
             root.fetch("category", JoinType.LEFT);
+            Fetch<Object, Object> projectSkillsFetch = root.fetch("projectSkills", JoinType.LEFT);
+            projectSkillsFetch.fetch("skill", JoinType.LEFT);
 
             q.distinct(true);
 

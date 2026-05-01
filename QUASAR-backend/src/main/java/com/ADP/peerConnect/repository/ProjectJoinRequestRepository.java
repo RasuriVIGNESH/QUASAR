@@ -22,10 +22,12 @@ public interface ProjectJoinRequestRepository extends JpaRepository<ProjectJoinR
     default List<ProjectJoinRequest> findByProjectIdWithAssociations(@Param("projectId") String projectId) {
         return null;
     }
-    @Query("SELECT r FROM ProjectJoinRequest r " +
+    @Query("SELECT DISTINCT r FROM ProjectJoinRequest r " +
             "JOIN FETCH r.project p " +
             "JOIN FETCH p.lead " +
             "JOIN FETCH p.category " +
+            "LEFT JOIN FETCH p.projectSkills ps " +
+            "LEFT JOIN FETCH ps.skill " +
             "JOIN FETCH r.user " +
             "WHERE r.user.id = :userId " +
             "ORDER BY r.createdAt DESC")
