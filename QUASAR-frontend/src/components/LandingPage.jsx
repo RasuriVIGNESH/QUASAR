@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import {
   Trophy, ArrowRight, CheckCircle, Sparkles, Zap, Rocket,
   GitBranch, TrendingUp, Star, Code, Globe, Menu, X,
-  Building2, Calendar, Users, ArrowUp, ChevronRight, Shield, Coffee, Loader2
+  Building2, Calendar, Users, ArrowUp, ChevronRight, Shield, Loader2
 } from 'lucide-react';
 import { projectService } from '@/services/projectService';
 import { skillsService } from '@/services/skillsService';
@@ -130,24 +130,59 @@ const FunctionalStyles = () => (
 
     /* Wake-up banner animations */
     @keyframes qx-banner-in {
-      from { opacity: 0; transform: translateX(-50%) translateY(-12px); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+      from { opacity: 0; transform: translateX(-50%) translateY(-18px) scale(0.96); }
+      to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
     }
     @keyframes qx-banner-success-in {
       from { opacity: 0; transform: translateX(-50%) scale(0.95); }
       to   { opacity: 1; transform: translateX(-50%) scale(1); }
     }
-    @keyframes qx-pulse-ring {
-      0%   { box-shadow: 0 0 0 0 rgba(139,92,246,0.4); }
-      70%  { box-shadow: 0 0 0 8px rgba(139,92,246,0); }
-      100% { box-shadow: 0 0 0 0 rgba(139,92,246,0); }
-    }
     .qx-banner-waking {
-      animation: qx-banner-in 0.4s ease forwards, qx-pulse-ring 2s ease-in-out infinite;
+      animation: qx-banner-in 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
     }
     .qx-banner-ready {
       animation: qx-banner-success-in 0.35s ease forwards;
     }
+
+    /* Orbit ring animation */
+    @keyframes qx-orbit {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+    @keyframes qx-orbit-rev {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(-360deg); }
+    }
+    @keyframes qx-planet-counter {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(-360deg); }
+    }
+    .qx-orbit-ring-1 { animation: qx-orbit 3s linear infinite; }
+    .qx-orbit-ring-2 { animation: qx-orbit-rev 5s linear infinite; }
+
+    /* Progress bar shimmer */
+    @keyframes qx-progress-shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .qx-progress-bar {
+      background: linear-gradient(90deg, #8b5cf6 0%, #a78bfa 40%, #c4b5fd 50%, #a78bfa 60%, #8b5cf6 100%);
+      background-size: 200% 100%;
+      animation: qx-progress-shimmer 2s linear infinite;
+    }
+
+    /* Blinking dot */
+    @keyframes qx-blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+    .qx-blink { animation: qx-blink 1.2s ease-in-out infinite; }
+
+    /* Success checkmark pop */
+    @keyframes qx-check-pop {
+      0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
+      60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+    .qx-check-pop { animation: qx-check-pop 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
+
     @keyframes qx-dots {
       0%, 20%  { content: '.'; }
       40%      { content: '..'; }
@@ -287,11 +322,80 @@ const ProjectCard = ({ project, isMarquee = false, isPlaceholder = false }) => {
   );
 };
 
+/* ─── Orbit Loader Icon ─── */
+const OrbitLoader = () => (
+  <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
+    {/* Core planet */}
+    <div style={{
+      position: 'absolute', top: '50%', left: '50%',
+      width: 14, height: 14, borderRadius: '50%',
+      background: 'radial-gradient(circle at 35% 35%, #c4b5fd, #7c3aed)',
+      transform: 'translate(-50%, -50%)',
+      boxShadow: '0 0 10px rgba(139,92,246,0.7)',
+    }} />
+    {/* Outer orbit ring */}
+    <div className="qx-orbit-ring-1" style={{
+      position: 'absolute', inset: 0,
+      borderRadius: '50%',
+      border: '1.5px solid rgba(139,92,246,0.25)',
+      borderTopColor: 'rgba(139,92,246,0.9)',
+      borderRightColor: 'rgba(167,139,250,0.5)',
+    }}>
+      {/* Satellite on outer ring */}
+      <div style={{
+        position: 'absolute', top: -3, left: '50%',
+        width: 6, height: 6, borderRadius: '50%',
+        background: '#a78bfa',
+        transform: 'translateX(-50%)',
+        boxShadow: '0 0 6px #a78bfa',
+      }} />
+    </div>
+    {/* Inner orbit ring */}
+    <div className="qx-orbit-ring-2" style={{
+      position: 'absolute', inset: 8,
+      borderRadius: '50%',
+      border: '1px dashed rgba(6,182,212,0.35)',
+      borderBottomColor: 'rgba(6,182,212,0.8)',
+    }}>
+      {/* Satellite on inner ring */}
+      <div style={{
+        position: 'absolute', bottom: -2.5, left: '50%',
+        width: 5, height: 5, borderRadius: '50%',
+        background: '#06b6d4',
+        transform: 'translateX(-50%)',
+        boxShadow: '0 0 5px #06b6d4',
+      }} />
+    </div>
+  </div>
+);
+
 /* ─── Wake-Up Banner ─── */
 const WakeUpBanner = ({ status, onDismiss }) => {
-  if (status === 'idle') return null;
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState(0); // cycles through status messages
 
+  const wakingMessages = [
+    { title: 'Launching the server into orbit…', sub: 'Our free-tier backend hibernates when idle. It\'s booting up now — usually takes 1–2 minutes.' },
+    { title: 'Fueling the engines…', sub: 'Still warming up. Hang tight — the platform will be fully live shortly.' },
+    { title: 'Almost there — systems coming online…', sub: 'The server is nearly awake. Your dashboard and all features will be ready in moments.' },
+  ];
+
+  useEffect(() => {
+    if (status !== 'waking') return;
+    // Progress bar: fills over ~120s
+    const tick = setInterval(() => {
+      setProgress(p => Math.min(p + 100 / 120, 98)); // never hit 100 until ready
+    }, 1000);
+    // Cycle through message phases every 35s
+    const phaseTimer = setInterval(() => {
+      setPhase(p => Math.min(p + 1, wakingMessages.length - 1));
+    }, 35000);
+    return () => { clearInterval(tick); clearInterval(phaseTimer); };
+  }, [status]);
+
+  if (status === 'idle') return null;
   const isReady = status === 'ready';
+  const msg = wakingMessages[phase];
 
   return (
     <div
@@ -302,69 +406,100 @@ const WakeUpBanner = ({ status, onDismiss }) => {
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 1000,
-        width: '90%',
-        maxWidth: 500,
-        background: isReady
-          ? 'rgba(6, 30, 20, 0.97)'
-          : 'rgba(8, 5, 22, 0.97)',
+        width: '92%',
+        maxWidth: 520,
+        background: isReady ? 'rgba(4, 22, 14, 0.97)' : 'rgba(6, 4, 20, 0.97)',
         border: isReady
-          ? '1px solid rgba(34, 197, 94, 0.55)'
-          : '1px solid rgba(139, 92, 246, 0.5)',
-        borderRadius: 16,
-        padding: '14px 18px',
-        backdropFilter: 'blur(16px)',
-        display: 'flex',
-        gap: 14,
-        alignItems: 'center',
+          ? '1px solid rgba(34, 197, 94, 0.5)'
+          : '1px solid rgba(139, 92, 246, 0.4)',
+        borderRadius: 18,
+        overflow: 'hidden',
+        backdropFilter: 'blur(20px)',
         boxShadow: isReady
-          ? '0 20px 40px rgba(0,0,0,0.5), 0 0 24px rgba(34,197,94,0.12)'
-          : '0 20px 40px rgba(0,0,0,0.5), 0 0 24px rgba(139,92,246,0.12)',
+          ? '0 24px 48px rgba(0,0,0,0.6), 0 0 30px rgba(34,197,94,0.1)'
+          : '0 24px 48px rgba(0,0,0,0.6), 0 0 30px rgba(139,92,246,0.1)',
       }}
     >
-      {/* Icon */}
-      <div style={{
-        width: 40, height: 40, borderRadius: 12, flexShrink: 0,
-        background: isReady ? 'rgba(34,197,94,0.15)' : 'rgba(139,92,246,0.15)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
-        {isReady
-          ? <CheckCircle size={20} color="#22c55e" />
-          : <Coffee className="qx-spin" size={20} color="#8b5cf6" />
-        }
-      </div>
-
-      {/* Text */}
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ color: '#f0f4ff', fontSize: 13, fontWeight: 700, marginBottom: 3 }}>
-          {isReady
-            ? '🚀 Platform is live — you\'re good to go!'
-            : <span>☕ Warming up the server<span className="qx-loading-dot" /></span>
-          }
-        </div>
-        <div style={{ color: isReady ? '#86efac' : '#6b7280', fontSize: 11.5, lineHeight: 1.5 }}>
-          {isReady
-            ? 'All systems are online. Feel free to sign in or create your account.'
-            : 'This app runs on a free-tier server that sleeps when idle. It\'ll be ready in about 1–2 minutes — the page is fully loaded in the meantime!'
-          }
-        </div>
-      </div>
-
-      {/* Right side */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-        {isReady ? (
-          <button
-            onClick={onDismiss}
+      {/* Progress bar along the top */}
+      {!isReady && (
+        <div style={{ height: 2, background: 'rgba(139,92,246,0.12)', width: '100%' }}>
+          <div
+            className="qx-progress-bar"
             style={{
-              background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
-              color: '#22c55e', borderRadius: 8, padding: '5px 12px',
-              fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+              height: '100%',
+              width: `${progress}%`,
+              transition: 'width 1s linear',
+              borderRadius: '0 2px 2px 0',
             }}
-          >
-            Got it ✓
-          </button>
+          />
+        </div>
+      )}
+
+      <div style={{ padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'center' }}>
+        {/* Icon */}
+        {isReady ? (
+          <div className="qx-check-pop" style={{
+            width: 44, height: 44, borderRadius: 13, flexShrink: 0,
+            background: 'rgba(34,197,94,0.15)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <CheckCircle size={22} color="#22c55e" />
+          </div>
         ) : (
-          <Loader2 className="qx-spin" size={18} color="#8b5cf6" />
+          <OrbitLoader />
         )}
+
+        {/* Text */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ color: '#f0f4ff', fontSize: 13, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
+            {isReady ? (
+              '🚀 Quasar is live — welcome aboard!'
+            ) : (
+              <>
+                <span className="qx-blink" style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#a78bfa', flexShrink: 0 }} />
+                {msg.title}
+              </>
+            )}
+          </div>
+          <div style={{ color: isReady ? '#86efac' : '#4b5563', fontSize: 11.5, lineHeight: 1.55 }}>
+            {isReady
+              ? 'All systems are online. You can now sign in or create your account.'
+              : msg.sub
+            }
+          </div>
+          {/* Mini progress label */}
+          {!isReady && (
+            <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.05)', borderRadius: 99 }}>
+                <div
+                  className="qx-progress-bar"
+                  style={{ height: '100%', width: `${progress}%`, transition: 'width 1s linear', borderRadius: 99 }}
+                />
+              </div>
+              <span style={{ fontSize: 9.5, color: '#6b7280', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                {Math.round(progress)}%
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Dismiss / spinner */}
+        <div style={{ flexShrink: 0 }}>
+          {isReady ? (
+            <button
+              onClick={onDismiss}
+              style={{
+                background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
+                color: '#22c55e', borderRadius: 9, padding: '6px 14px',
+                fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+              }}
+            >
+              Got it ✓
+            </button>
+          ) : (
+            <Loader2 className="qx-spin" size={16} color="rgba(139,92,246,0.6)" />
+          )}
+        </div>
       </div>
     </div>
   );
