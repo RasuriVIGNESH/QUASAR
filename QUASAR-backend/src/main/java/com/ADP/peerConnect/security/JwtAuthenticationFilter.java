@@ -67,7 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             filterChain.doFilter(request, response);
 
-        } catch (io.jsonwebtoken.ExpiredJwtException ex) {
+        }catch (io.jsonwebtoken.ExpiredJwtException ex) {
 
             logger.warn("JWT token expired");
 
@@ -76,15 +76,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             response.getWriter().write("""
             {
+              "error": "JWT token expired",
               "message": "Session expired. Please login again."
             }
-        """);
+            """);
 
             response.getWriter().flush();
 
             return;
-
-        } catch (Exception ex) {
+        }catch (Exception ex) {
 
             logger.error("Could not set user authentication", ex);
 

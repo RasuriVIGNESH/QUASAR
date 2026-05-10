@@ -120,15 +120,74 @@ class ApiService {
         error.data = data;
         error.status = response.status;
 
-        // JWT expired / unauthorized
+        // =========================
+        // AUTH / JWT HANDLING
+        // =========================
+
         if (response.status === 401) {
 
-          console.warn('JWT expired or invalid');
+          console.warn(data.error || 'Unauthorized');
 
-          this.clearSession();
+          // JWT expired
+          if (
+            data.error === 'JWT token expired' ||
+            data.message?.includes('Session expired')
+          ) {
 
-          if (options.preventRedirect !== true) {
-            this.redirectToLogin();
+            this.clearSession();
+
+            if (options.preventRedirect !== true) {
+              this.redirectToLogin();
+            }
+
+            return;
+          }
+
+          // Invalid token
+          if (
+            data.message?.includes('Invalid authentication token') ||
+            data.message?.includes('Unauthorized')
+          ) {
+
+            this.clearSession();
+
+            if (options.preventRedirect !== true) {
+              this.redirectToLogin();
+            }
+
+            return;
+          }
+        }
+
+        // =========================
+        // HANDLE 500 AUTH ERRORS
+        // =========================
+
+        if (response.status === 500) {
+
+          const errorMessage =
+            data.message ||
+            error.message ||
+            '';
+
+          // Backend auth/session crash
+          if (
+            errorMessage.includes('currentUser') ||
+            errorMessage.includes('User session expired') ||
+            errorMessage.includes('JWT') ||
+            errorMessage.includes('token') ||
+            errorMessage.includes('Unauthorized')
+          ) {
+
+            console.warn('Backend session/authentication failure.');
+
+            this.clearSession();
+
+            if (options.preventRedirect !== true) {
+              this.redirectToLogin();
+            }
+
+            return;
           }
         }
 
