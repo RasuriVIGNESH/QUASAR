@@ -5,524 +5,260 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import {
-  Eye, EyeOff, Mail, Lock, User, GraduationCap, BookOpen,
-  Building, ArrowRight, ArrowLeft, Github, Sparkles, CheckCircle2
-} from 'lucide-react';
-import { ModeToggle } from '@/components/mode-toggle';
+import { CheckCircle2, ArrowRight, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
 import { dataService } from '../../services/dataService.js';
-import ValidationAlert from '@/components/common/ValidationAlert';
-import SpaceBackground from '@/components/common/SpaceBackground';
+import { toast } from "sonner";
 
 export default function Register() {
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    graduationYear: '',
-    branch: '',
-    collegeId: null
+    firstName: '', lastName: '', email: '', password: '', confirmPassword: '',
+    graduationYear: '', branch: '', collegeId: null
   });
-
   const [step, setStep] = useState(1);
-  const [showWelcome, setShowWelcome] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState(null);
-  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [staticData, setStaticData] = useState({ branches: [], graduationYears: [], colleges: [] });
-  const [isLoadingStaticData, setIsLoadingStaticData] = useState(false);
-
-  const { signup, loginWithGitHub, isCollegeEmail } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchStaticData = async () => {
-      setIsLoadingStaticData(true);
+    const fetch = async () => {
       try {
-        const branchesRes = await dataService.getBranches().catch(() => ({ data: [] }));
-        const yearsRes = await dataService.getGraduationYears().catch(() => ({ data: [] }));
-        const collegesRes = await dataService.getColleges().catch(() => ({ data: [] }));
-        setStaticData({
-          branches: branchesRes.data || [],
-          graduationYears: yearsRes.data || [],
-          colleges: collegesRes.data || []
-        });
-      } finally {
-        setIsLoadingStaticData(false);
+        const [b, y, c] = await Promise.all([
+          dataService.getBranches(),
+          dataService.getGraduationYears(),
+          dataService.getColleges()
+        ]);
+        setStaticData({ branches: b.data || [], graduationYears: y.data || [], colleges: c.data || [] });
+      } catch (err) {
+        console.error("Data fetch failed");
       }
     };
-    fetchStaticData();
+    fetch();
   }, []);
 
-  const isCollegeEmailValid = isCollegeEmail(formData.email);
+  const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleSelectChange = (name, value) => setFormData({ ...formData, [name]: value });
 
-  function handleInputChange(e) {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setFieldErrors(prev => ({ ...prev, [name]: '' }));
-    setError('');
-  }
+  const nextStep = (e) => { e.preventDefault(); setStep(step + 1); };
 
-  function handleSelectChange(name, value) {
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setFieldErrors(prev => ({ ...prev, [name]: '' }));
-  }
-
-  function validateStep(currentStep) {
-    const errs = {};
-    if (currentStep === 1) {
-      if (!formData.firstName.trim()) errs.firstName = 'First name is required';
-      if (!formData.lastName.trim()) errs.lastName = 'Last name is required';
-      if (!formData.email.trim()) errs.email = 'Email is required';
-      else if (!/^\S+@\S+\.\S+$/.test(formData.email)) errs.email = 'Invalid email';
-    } else if (currentStep === 2) {
-      if (!formData.graduationYear) errs.graduationYear = 'Select your graduation year';
-      if (!formData.branch) errs.branch = 'Select your branch/major';
-      if (!formData.collegeId) errs.collegeId = 'Select your college';
-    } else if (currentStep === 3) {
-      if (!formData.password) errs.password = 'Password is required';
-      else if (formData.password.length < 6) errs.password = 'Password must be at least 6 characters';
-      if (!formData.confirmPassword) errs.confirmPassword = 'Confirm your password';
-      else if (formData.password !== formData.confirmPassword) errs.confirmPassword = 'Passwords do not match';
-    }
-    setFieldErrors(errs);
-    return Object.keys(errs).length === 0;
-  }
-
-  function handleNext() {
-    setError('');
-    if (validateStep(step)) setStep(prev => Math.min(prev + 1, 3));
-  }
-
-  function handleBack() {
-    setError('');
-    setStep(prev => Math.max(prev - 1, 1));
-  }
-
-  async function handleSubmit(e) {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    if (!validateStep(step)) return;
-    if (!validateStep(1) || !validateStep(2) || !validateStep(3)) return;
-
+    if (formData.password !== formData.confirmPassword) {
+      return toast.error("Passwords do not match");
+    }
     try {
       setLoading(true);
-      const userData = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
+      await signup(formData.email, formData.password, {
+        ...formData,
         graduationYear: parseInt(formData.graduationYear, 10),
-        branch: formData.branch,
-        collegeId: formData.collegeId
-      };
-      await signup(formData.email, formData.password, userData);
-      setShowWelcome(true);
-      setTimeout(() => {
-        navigate('/onboarding');
-      }, 2000);
+        collegeId: parseInt(formData.collegeId, 10)
+      });
+      navigate('/onboarding');
     } catch (err) {
-      console.error('Registration error:', err);
-      setError(err);
+      toast.error(err.message || "Registration failed");
     } finally {
       setLoading(false);
     }
-  }
-
-  async function handleGitHubLogin() {
-    setError('');
-    try {
-      setLoading(true);
-      localStorage.setItem('oauth_intent', 'register');
-      await loginWithGitHub();
-    } catch (err) {
-      setError('GitHub login failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  const StepProgress = React.useCallback(({ currentStep }) => {
-    const steps = [
-      { id: 1, label: 'Account', icon: <User className="h-4 w-4" /> },
-      { id: 2, label: 'Academic', icon: <GraduationCap className="h-4 w-4" /> },
-      { id: 3, label: 'Security', icon: <Lock className="h-4 w-4" /> }
-    ];
-
-    return (
-      <div className="mb-10">
-        <div className="flex items-center justify-between relative">
-          <div className="absolute top-5 left-0 right-0 h-[2px] bg-slate-200 dark:bg-slate-700">
-            <motion.div
-              className="h-full" style={{ background: '#8b5cf6' }}
-              initial={{ width: "0%" }}
-              animate={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
-              transition={{ duration: 0.4, ease: "easeInOut" }}
-            />
-          </div>
-          {steps.map((s) => (
-            <div key={s.id} className="relative z-10 flex flex-col items-center">
-              <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border-2 ${s.id === currentStep
-                  ? 'text-white scale-110'
-                  : s.id < currentStep
-                    ? 'text-white'
-                    : ''
-                  }`}
-                style={s.id === currentStep
-                  ? { background: '#8b5cf6', borderColor: '#8b5cf6', boxShadow: '0 0 20px rgba(139,92,246,0.4)' }
-                  : s.id < currentStep
-                    ? { background: '#22c55e', borderColor: '#22c55e' }
-                    : { background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#4b5563' }
-                }
-              >
-                {s.id < currentStep ? <CheckCircle2 className="h-5 w-5" /> : s.icon}
-              </div>
-              <span className={`text-xs mt-3 font-bold uppercase tracking-wider`} style={{ color: s.id === currentStep ? '#a78bfa' : '#4b5563' }}>
-                {s.label}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }, []);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative" style={{ background: '#03050d' }}>
-      <SpaceBackground />
-      <div className="absolute top-4 right-4 z-50">
-        <ModeToggle />
-      </div>
-
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full mx-auto space-y-8 relative z-10"
-      >
-        <div className="text-center">
-          {/* <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
-            <img src="Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
-            <span className="text-2xl font-bold" style={{ color: '#f0f4ff' }}>Quasar</span>
-          </Link> */}
-          <h2 className="text-3xl font-extrabold" style={{ color: '#f0f4ff' }}>Create your account</h2>
-          <p className="mt-2 text-sm" style={{ color: '#6b7280' }}>Join the networking platform for innovators</p>
+    <div className="min-h-screen bg-slate-50 font-sans antialiased flex flex-col">
+      <nav className="fixed top-0 w-full z-50 bg-white border-b border-slate-200">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          <Link to="/" className="relative z-10 flex items-center gap-3">
+            <img
+              src="/Logo.png"
+              alt="Quasar Logo"
+              className="w-10 h-10 object-contain shadow-sm rounded-lg"
+            />
+            <span className="text-xl font-bold tracking-tight text-white">Quasar</span>
+          </Link>
+          <div className="flex items-center gap-4">
+            <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest hidden md:block">Step {step} of 3</span>
+            <div className="w-32 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-slate-900 transition-all duration-500"
+                style={{ width: `${(step / 3) * 100}%` }}
+              />
+            </div>
+          </div>
         </div>
+      </nav>
 
-        <Card className="overflow-hidden" style={{ boxShadow: '0 24px 64px rgba(0,0,0,0.45)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
-          <CardContent className="p-8">
-            <StepProgress currentStep={step} />
+      <div className="flex-1 flex items-center justify-center pt-24 pb-12 px-6">
+        <div className="w-full max-w-4xl grid lg:grid-cols-12 gap-12 items-start">
 
-            <ValidationAlert error={error} />
+          {/* Left Side: Context */}
+          <div className="lg:col-span-5 space-y-8 mt-10 hidden lg:block">
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold tracking-tight text-slate-900">
+                Join the <span className="text-slate-500">Protocol.</span>
+              </h1>
+              <p className="text-slate-500 leading-relaxed">
+                Quasar is where student engineers build their professional identity through real-world collaboration.
+              </p>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <AnimatePresence mode="wait">
-                {step === 1 && (
-                  <motion.div
-                    key="step1"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="space-y-4"
-                  >
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="firstName" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>First Name</Label>
-                        <Input
-                          id="firstName"
-                          name="firstName"
-                          placeholder="John"
-                          value={formData.firstName}
-                          onChange={handleInputChange}
-                          className="h-11 focus:ring-2 focus:ring-violet-500 transition-all"
-                          style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
-                        />
-                        {fieldErrors.firstName && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.firstName}</p>}
+            <div className="space-y-4">
+              {[
+                { t: 'Verified Portfolio', d: 'Your contributions are proof of skill.' },
+                { t: 'Team Discovery', d: 'Find partners for any tech stack.' },
+                { t: 'Global Network', d: 'Connect with engineers across campuses.' }
+              ].map((item, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center mt-1">
+                    <CheckCircle2 size={12} className="text-white" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-900">{item.t}</h4>
+                    <p className="text-xs text-slate-500">{item.d}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right Side: Form Card */}
+          <div className="lg:col-span-7">
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 md:p-10">
+              <form onSubmit={step === 3 ? handleSubmit : nextStep} className="space-y-8">
+                <AnimatePresence mode="wait">
+                  {step === 1 && (
+                    <motion.div key="s1" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6">
+                      <div className="space-y-1">
+                        <h2 className="text-2xl font-bold text-slate-900">Personal Details</h2>
+                        <p className="text-sm text-slate-500">Let's start with the basics.</p>
                       </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="lastName" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Last Name</Label>
-                        <Input
-                          id="lastName"
-                          name="lastName"
-                          placeholder="Doe"
-                          value={formData.lastName}
-                          onChange={handleInputChange}
-                          className="h-11 focus:ring-2 focus:ring-violet-500 transition-all"
-                          style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
-                        />
-                        {fieldErrors.lastName && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.lastName}</p>}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-sm font-bold text-slate-900 block mb-1.5">First Name</Label>
+                          <Input
+                            name="firstName"
+                            placeholder="Alex"
+                            onChange={handleInputChange}
+                            value={formData.firstName}
+                            className="h-11 bg-white border-slate-300 rounded-lg text-slate-900 focus:border-slate-900"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-sm font-bold text-slate-900 block mb-1.5">Last Name</Label>
+                          <Input
+                            name="lastName"
+                            placeholder="Smith"
+                            onChange={handleInputChange}
+                            value={formData.lastName}
+                            className="h-11 bg-white border-slate-300 rounded-lg text-slate-900 focus:border-slate-900"
+                            required
+                          />
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="email" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>College Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          placeholder="john.doe@university.edu"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          className="pl-10 h-11 focus:ring-2 focus:ring-violet-500 transition-all"
-                          style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
-                        />
+                      <div className="space-y-2">
+                        <Label className="text-sm font-bold text-slate-900 block mb-1">University Email</Label>
+                        <Input name="email" type="email" placeholder="alex@university.edu" onChange={handleInputChange} value={formData.email} className="h-11 border-slate-300 rounded-lg text-slate-900 bg-white" required />
                       </div>
-                      {fieldErrors.email && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.email}</p>}
-                      {formData.email && !isCollegeEmailValid && (
-                        <p className="text-[11px] text-amber-600 font-medium flex items-center gap-1.5 mt-1 bg-amber-50 p-2 rounded-md">
-                          <Sparkles className="h-3 w-3" /> Use a .edu or college domain for full access
-                        </p>
-                      )}
-                      {formData.email && isCollegeEmailValid && (
-                        <p className="text-[11px] text-emerald-600 font-medium flex items-center gap-1.5 mt-1 bg-emerald-50 p-2 rounded-md">
-                          <CheckCircle2 className="h-3 w-3" /> Verified college domain detected
-                        </p>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
+                    </motion.div>
+                  )}
 
-                {step === 2 && (
-                  <motion.div
-                    key="step2"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="space-y-4"
-                  >
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Graduation</Label>
-                        <Select onValueChange={(v) => handleSelectChange('graduationYear', v)} value={formData.graduationYear}>
-                          <SelectTrigger className="h-11 focus:ring-2 focus:ring-violet-500" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}>
-                            <SelectValue placeholder="Year" />
+                  {step === 2 && (
+                    <motion.div key="s2" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6">
+                      <div className="space-y-1">
+                        <h2 className="text-2xl font-bold text-slate-900">Academic Info</h2>
+                        <p className="text-sm text-slate-500">Where are you building your career?</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-slate-700">Institute</Label>
+                        <Select onValueChange={(v) => handleSelectChange('collegeId', v)}>
+                          {/* Added text-slate-900 to Trigger */}
+                          <SelectTrigger className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900">
+                            <SelectValue placeholder="Select University" />
                           </SelectTrigger>
-                          <SelectContent>
-                            {staticData.graduationYears.map(year => (
-                              <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {fieldErrors.graduationYear && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.graduationYear}</p>}
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Branch</Label>
-                        <Select onValueChange={(v) => handleSelectChange('branch', v)} value={formData.branch}>
-                          <SelectTrigger className="h-11 focus:ring-2 focus:ring-violet-500" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}>
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {staticData.branches.map(branch => (
-                              <SelectItem key={branch} value={branch}>
-                                {branch.replace(/_/g, ' ')}
+                          {/* Added bg-white and text-slate-900 to Content and Items */}
+                          <SelectContent className="bg-white border-slate-200">
+                            {staticData.colleges.map(c => (
+                              <SelectItem key={c.id} value={String(c.id)} className="text-slate-900 focus:bg-slate-100">
+                                {c.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
-                        {fieldErrors.branch && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.branch}</p>}
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <Label className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Institute</Label>
-                      <Select onValueChange={(v) => handleSelectChange('collegeId', v)} value={formData.collegeId || undefined}>
-                        <SelectTrigger className="h-11 focus:ring-2 focus:ring-violet-500 w-full" style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}>
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {staticData.colleges.map(college => (
-                            <SelectItem key={college.id} value={String(college.id)}>{college.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {fieldErrors.collegeId && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.collegeId}</p>}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-slate-700">Graduation Year</Label>
+                          <Select onValueChange={(v) => handleSelectChange('graduationYear', v)}>
+                            <SelectTrigger className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900">
+                              <SelectValue placeholder="Year" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white border-slate-200">
+                              {staticData.graduationYears.map(y => (
+                                <SelectItem key={y} value={String(y)} className="text-slate-900 focus:bg-slate-100">
+                                  {y}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                      {formData.collegeId && staticData.colleges.find(c => String(c.id) === String(formData.collegeId)) && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className="mt-2 text-sm text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-800/50 p-2.5 rounded-lg border border-slate-100 dark:border-slate-700 flex items-center gap-2.5"
-                        >
-                          <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                            <Building className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Selected Institute</span>
-                            <span className="font-semibold text-slate-900 dark:text-white leading-tight">
-                              {staticData.colleges.find(c => String(c.id) === String(formData.collegeId)).name}
-                            </span>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  </motion.div>
-                )}
-
-                {step === 3 && (
-                  <motion.div
-                    key="step3"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="space-y-4"
-                  >
-                    <div className="space-y-1.5">
-                      <Label htmlFor="password" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                        <Input
-                          id="password"
-                          name="password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="••••••••"
-                          value={formData.password}
-                          onChange={handleInputChange}
-                          className="pl-10 pr-10 h-11 focus:ring-2 focus:ring-violet-500 transition-all"
-                          style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none"
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-semibold text-slate-700">Major / Branch</Label>
+                          <Select onValueChange={(v) => handleSelectChange('branch', v)}>
+                            <SelectTrigger className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900">
+                              <SelectValue placeholder="Select" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-white border-slate-200">
+                              {staticData.branches.map(b => (
+                                <SelectItem key={b} value={b} className="text-slate-900 focus:bg-slate-100">
+                                  {b.replace(/_/g, ' ')}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
-                      {fieldErrors.password && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.password}</p>}
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="confirmPassword" className="font-semibold text-sm" style={{ color: '#94a3b8' }}>Confirm Password</Label>
-                      <Input
-                        id="confirmPassword"
-                        name="confirmPassword"
-                        type="password"
-                        placeholder="••••••••"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        className="h-11 focus:ring-2 focus:ring-violet-500 transition-all"
-                        style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
-                      />
-                      {fieldErrors.confirmPassword && <p className="text-[10px] text-red-500 font-bold uppercase tracking-tight">{fieldErrors.confirmPassword}</p>}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <div className="flex gap-3 pt-2">
-                {step > 1 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleBack}
-                    className="flex-1 h-11" style={{ borderColor: 'rgba(255,255,255,0.1)', color: '#e2e8f0', background: 'rgba(255,255,255,0.04)' }}
-                  >
-                    <ArrowLeft className="h-4 w-4 mr-2" /> Back
-                  </Button>
-                )}
-                <Button
-                  type="submit"
-                  disabled={loading}
-                  onClick={step < 3 ? (e) => { e.preventDefault(); handleNext(); } : undefined}
-                  className="flex-1 h-11 bg-white text-black hover:bg-white/90 font-bold transition-all shadow-lg"
-                >
-                  {loading ? (
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>Creating Account...</span>
-                    </div>
-                  ) : (
-                    step === 3 ? (
-                      <div className="flex items-center justify-center gap-2">
-                        <span>Complete Registration</span>
-                        <ArrowRight className="h-4 w-4" />
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-center gap-2">
-                        <span>Continue</span>
-                        <ArrowRight className="h-4 w-4" />
-                      </div>
-                    )
+                    </motion.div>
                   )}
-                </Button>
-              </div>
-            </form>
 
-            {step === 1 && (
-              <div className="mt-8">
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100 dark:border-slate-700" /></div>
-                  <div className="relative flex justify-center text-xs uppercase tracking-widest"><span className="bg-white dark:bg-slate-900 px-2 text-slate-400 font-bold">Or</span></div>
-                </div>
-                <div className="group relative">
-                  <motion.button
-                    type="button"
-                    onClick={handleGitHubLogin}
-                    disabled={loading}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full h-11 flex items-center justify-center gap-2 bg-[#24292e] dark:bg-[#333] hover:bg-[#2b3137] text-white rounded-md font-medium transition-all shadow-lg shadow-slate-900/20"
-                  >
-                    <Github className="h-5 w-5" />
-                    <span>Continue with GitHub</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
-                  </motion.button>
-                </div>
-              </div>
-            )}
+                  {step === 3 && (
+                    <motion.div key="s3" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} className="space-y-6">
+                      <div className="space-y-1">
+                        <h2 className="text-2xl font-bold text-slate-900">Secure Your Account</h2>
+                        <p className="text-sm text-slate-500">Choose a strong password for your identity.</p>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-slate-700">Password</Label>
+                        <Input name="password" type="password" placeholder="••••••••" onChange={handleInputChange} value={formData.password} className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900" required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs font-semibold text-slate-700">Confirm Password</Label>
+                        <Input name="confirmPassword" type="password" placeholder="••••••••" onChange={handleInputChange} value={formData.confirmPassword} className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900" required />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
-            <div className="mt-8 text-center">
-              <p className="text-sm" style={{ color: '#6b7280' }}>
-                Already have an account?{' '}
-                <Link to="/login" className="font-bold hover:text-white" style={{ color: '#94a3b8' }}>
-                  Sign in
-                </Link>
-              </p>
+                <div className="flex gap-4 pt-4">
+                  {step > 1 && (
+                    <Button type="button" variant="ghost" onClick={() => setStep(step - 1)} className="flex-1 h-11 text-slate-600 font-semibold rounded-lg border border-slate-200">
+                      <ArrowLeft size={16} className="mr-2" /> Back
+                    </Button>
+                  )}
+                  <Button type="submit" disabled={loading} className="flex-1 h-11 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-all">
+                    {loading ? <Loader2 className="animate-spin" /> : step === 3 ? "Complete Registration" : "Next Step"}
+                    {step !== 3 && <ArrowRight size={16} className="ml-2" />}
+                  </Button>
+                </div>
+              </form>
             </div>
-          </CardContent>
-        </Card>
-
-        <p className="text-center text-xs" style={{ color: '#4b5563' }}>
-          By joining, you agree to our Terms of Service and Privacy Policy.
-        </p>
-      </motion.div>
-
-      {/* Welcome Animation Overlay */}
-      <AnimatePresence>
-        {showWelcome && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: '#03050d' }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 1.1, opacity: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-center"
-            >
-              <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl mx-auto mb-6 shadow-2xl flex items-center justify-center p-2 border border-slate-100 dark:border-slate-800">
-                <img src="/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
-              </div>
-              <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight" style={{ color: '#f0f4ff' }}>
-                Welcome to Quasar
-              </h1>
-              <p className="text-lg text-slate-500 dark:text-slate-400">Your journey starts now.</p>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <p className="text-center mt-8 text-sm text-slate-500">
+              Already have an account? <Link to="/login" className="text-slate-900 font-bold hover:underline">Sign In</Link>
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,61 +1,46 @@
 import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion'; // Added Framer Motion
+import { motion, AnimatePresence } from 'framer-motion';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { RequestProvider } from './contexts/RequestContext';
 import AdminRoute from './components/admin/AdminRoute';
 import MentorRoute from './components/mentor/MentorRoute';
 import { Toaster } from '@/components/ui/sonner';
-import AnimatedBackground from './components/common/AnimatedBackground';
 import GlobalErrorManager from './components/GlobalErrorManager';
 
-// ✅ Lazy Imports
+
+// --- Lazy Imports (Ensuring all auth paths are present) ---
 const LandingPage = lazy(() => import('./components/LandingPage'));
 const Login = lazy(() => import('./components/auth/Login'));
 const Register = lazy(() => import('./components/auth/Register'));
 const ForgotPassword = lazy(() => import('./components/auth/ForgotPassword'));
 const CompleteProfile = lazy(() => import('./components/auth/CompleteProfile'));
 const Onboarding = lazy(() => import('./components/auth/Onboarding'));
+const MessagesPage = lazy(() => import('./components/requests/RequestsPage'));
 const Dashboard = lazy(() => import('./components/Dashboard'));
-const ProfilePage = lazy(() => import('./components/profile/ProfilePage'));
+const MyProjects = lazy(() => import('./components/projects/MyProjects'));
 const CreateProject = lazy(() => import('./components/projects/CreateProject'));
+const ProfilePage = lazy(() => import('./components/profile/ProfilePage'));
 const ProjectPage = lazy(() => import('./components/project/ProjectPage'));
-const InviteMembers = lazy(() => import('./components/project/InviteMembers'));
 const StudentDiscovery = lazy(() => import('./components/discovery/StudentDiscovery'));
 const ProjectDiscovery = lazy(() => import('./components/discovery/ProjectDiscovery'));
-const SkillDiscovery = lazy(() => import('./components/discovery/SkillDiscovery'));
-const RecommendedProjectsPage = lazy(() => import('./components/discovery/RecommendedProjectsPage'));
-const MyProjects = lazy(() => import('./components/projects/MyProjects'));
-const OAuth2RedirectHandler = lazy(() => import('./components/auth/OAuth2RedirectHandler'));
 const RequestsPage = lazy(() => import('./components/requests/RequestsPage'));
+const TechStack = lazy(() => import('./components/profile/SkillMastery'));
 const EventsPage = lazy(() => import('./components/events/EventsPage'));
-const EventDetailPage = lazy(() => import('./components/events/EventDetailPage'));
-const AdminDashboardLayout = lazy(() => import('./components/admin/AdminDashboardLayout'));
-const AdminOverview = lazy(() => import('./components/admin/AdminOverview'));
-const AdminEvents = lazy(() => import('./components/admin/AdminEvents'));
-const AdminEventDetails = lazy(() => import('./components/admin/AdminEventDetails'));
-const AdminUsers = lazy(() => import('./components/admin/AdminUsers'));
-const AdminProjects = lazy(() => import('./components/admin/AdminProjects'));
-const AdminMentors = lazy(() => import('./components/admin/AdminMentors'));
-const MentorDashboardLayout = lazy(() => import('./components/mentor/MentorDashboardLayout'));
-const MentorOverview = lazy(() => import('./components/mentor/MentorOverview'));
-const MentorStudents = lazy(() => import('./components/mentor/MentorStudents'));
-const MentorProjects = lazy(() => import('./components/mentor/MentorProjects'));
-const MeetingRoomsPage = lazy(() => import('./components/project/MeetingRoomsPage'));
-const SkillMastery = lazy(() => import('./components/profile/SkillMastery'));
-const ServerError = lazy(() => import('./components/common/ServerError'));
+const OAuth2RedirectHandler = lazy(() => import('./components/auth/OAuth2RedirectHandler'));
 const NotFound = lazy(() => import('./components/common/NotFound'));
 
+// Professional Skeleton Loader
 function PageLoader() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-50 dark:bg-[#0F1115]">
+      <div className="w-10 h-10 border-2 border-slate-200 border-t-blue-600 rounded-full animate-spin" />
+      <p className="mt-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">Synchronizing Identity...</p>
     </div>
   );
 }
 
-// --- NEW ANIMATED ROUTE WRAPPER (Fix 7) ---
 function AnimatedRoutes() {
   const location = useLocation();
 
@@ -63,64 +48,38 @@ function AnimatedRoutes() {
     <AnimatePresence mode="wait">
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.22, ease: "easeInOut" }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
       >
         <Suspense fallback={<PageLoader />}>
           <Routes location={location}>
-            {/* Public Routes */}
+            {/* Public Auth Routes */}
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/auth/oauth2/redirect" element={<OAuth2RedirectHandler />} />
 
-            {/* Protected Routes */}
+            {/* Post-Auth Onboarding Routes */}
             <Route path="/complete-profile" element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
-            <Route path="/projects/create" element={<ProtectedRoute><CreateProject /></ProtectedRoute>} />
-            <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
-            <Route path="/projects/:projectId/invite" element={<ProtectedRoute><InviteMembers /></ProtectedRoute>} />
-            <Route path="/projects/:projectId/rooms" element={<ProtectedRoute><MeetingRoomsPage /></ProtectedRoute>} />
-
-            {/* Discovery Routes */}
-            <Route path="/discover/students" element={<ProtectedRoute><StudentDiscovery /></ProtectedRoute>} />
-            <Route path="/discover/projects" element={<ProtectedRoute><ProjectDiscovery /></ProtectedRoute>} />
-            <Route path="/discover/skills" element={<ProtectedRoute><SkillDiscovery /></ProtectedRoute>} />
-            <Route path="/discover/recommendations" element={<ProtectedRoute><RecommendedProjectsPage /></ProtectedRoute>} />
-
-            <Route path="/requests" element={<ProtectedRoute><RequestsPage /></ProtectedRoute>} />
-            <Route path="/projects/my-projects" element={<ProtectedRoute><MyProjects /></ProtectedRoute>} />
-
-            {/* Admin Section */}
-            <Route path="/admin" element={<AdminRoute><AdminDashboardLayout /></AdminRoute>}>
-              <Route index element={<Navigate to="overview" replace />} />
-              <Route path="overview" element={<AdminOverview />} />
-              <Route path="events" element={<AdminEvents />} />
-              <Route path="events/:eventId" element={<AdminEventDetails />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="projects" element={<AdminProjects />} />
-              <Route path="mentors" element={<AdminMentors />} />
-            </Route>
-
-            {/* Mentor Section */}
-            <Route path="/mentor" element={<MentorRoute><MentorDashboardLayout /></MentorRoute>}>
-              <Route index element={<Navigate to="overview" replace />} />
-              <Route path="overview" element={<MentorOverview />} />
-              <Route path="students" element={<MentorStudents />} />
-              <Route path="projects" element={<MentorProjects />} />
-            </Route>
-
-            <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
-            <Route path="/events/:eventId" element={<ProtectedRoute><EventDetailPage /></ProtectedRoute>} />
-            <Route path="/skills" element={<ProtectedRoute><SkillMastery /></ProtectedRoute>} />
             <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
 
-            {/* Error Handling */}
-            <Route path="/server-error" element={<ServerError />} />
+            {/* Core Application Routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
+            <Route path="/discover/students" element={<ProtectedRoute><StudentDiscovery /></ProtectedRoute>} />
+            <Route path="/discover/projects" element={<ProtectedRoute><ProjectDiscovery /></ProtectedRoute>} />
+            <Route path="/requests" element={<ProtectedRoute><RequestsPage /></ProtectedRoute>} />
+            <Route path="/projects/create" element={<ProtectedRoute><CreateProject /></ProtectedRoute>} />
+            <Route path="/events" element={<ProtectedRoute><EventsPage /></ProtectedRoute>} />
+            <Route path="/messages" element={<ProtectedRoute><MessagesPage /></ProtectedRoute>} />
+            <Route path="/skills" element={<ProtectedRoute><TechStack /></ProtectedRoute>} />
+            <Route path="/projects/my-projects" element={<ProtectedRoute><MyProjects /></ProtectedRoute>} />
+
+            {/* 404 Handling */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
@@ -134,16 +93,13 @@ function App() {
     <Router>
       <AuthProvider>
         <RequestProvider>
-          <div className="App" style={{ position: 'relative', minHeight: '100vh', overflowX: 'hidden' }}>
-            {/* Background is outside navigation to avoid flickering */}
-            <AnimatedBackground />
+          <div className="relative min-h-screen bg-slate-50 dark:bg-[#0F1115]">
+            <main className="w-full">
+              <AnimatedRoutes />
+            </main>
 
-            {/* Navigation and Content with Transitions */}
-            <AnimatedRoutes />
-
-            {/* Global UI Overlays */}
             <GlobalErrorManager />
-            <Toaster richColors position="top-center" closeButton />
+            <Toaster richColors position="bottom-right" closeButton />
           </div>
         </RequestProvider>
       </AuthProvider>

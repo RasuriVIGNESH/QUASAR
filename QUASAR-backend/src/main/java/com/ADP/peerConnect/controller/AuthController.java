@@ -1,5 +1,6 @@
 package com.ADP.peerConnect.controller;
 
+import com.ADP.peerConnect.exception.UnauthorizedException;
 import com.ADP.peerConnect.model.dto.request.Auth.LoginRequest;
 import com.ADP.peerConnect.model.dto.request.Auth.RegisterRequest;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
@@ -42,6 +43,9 @@ public class AuthController {
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<UserResponse>> getCurrentUser(
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
+        if (currentUser == null) {
+            throw new UnauthorizedException("User not authenticated");
+        }
         UserResponse userResponse = authService.getCurrentUser(currentUser);
         ApiResponse<UserResponse> response = ApiResponse.success("User information retrieved", userResponse);
         return ResponseEntity.ok(response);

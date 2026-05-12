@@ -1,714 +1,491 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import {
-  Trophy, ArrowRight, CheckCircle, Sparkles, Zap, Rocket,
-  GitBranch, TrendingUp, Star, Code, Globe, Menu, X,
-  Building2, Calendar, Users, ArrowUp, ChevronRight, Shield, Loader2
+  ArrowRight, ChevronRight, Terminal,
+  Code, GitMerge, Layers, Search,
+  Cpu, Layout, ShieldCheck, Activity, Users,
+  MessageSquare, Calendar, Briefcase, Award,
+  Zap, Globe, BookOpen, CheckCircle2,
+  Target, Lightbulb, TrendingUp, FolderOpen,
+  Sparkles, Send, UserPlus, Network
 } from 'lucide-react';
 import { projectService } from '@/services/projectService';
-import { skillsService } from '@/services/skillsService';
-import { dataService } from '@/services/dataService';
 
-import { ShinyButton } from "@/components/ui/shiny-button";
-
-/* ─── CONSTANTS ─── */
-const featureData = [
-  { icon: <GitBranch style={{ width: 22, height: 22 }} />, title: 'Project Collaboration', desc: 'Built-in tools for seamless team coordination — skill matching, task boards, and real-time project tracking.', accent: '#8b5cf6', bg: 'rgba(139,92,246,0.14)' },
-  { icon: <TrendingUp style={{ width: 22, height: 22 }} />, title: 'Skills Intelligence', desc: 'Track trending skills in your domain and visualize your learning trajectory with smart analytics.', accent: '#06b6d4', bg: 'rgba(6,182,212,0.12)' },
-  { icon: <Trophy style={{ width: 22, height: 22 }} />, title: 'Achievement System', desc: 'Earn orbit badges and build a visible portfolio with every contribution, collaboration, and completion.', accent: '#f97316', bg: 'rgba(249,115,22,0.12)' },
-  { icon: <Globe style={{ width: 22, height: 22 }} />, title: 'Galactic Network', desc: 'Connect with students across universities, domains, and disciplines in one collaborative universe.', accent: '#22c55e', bg: 'rgba(34,197,94,0.12)' },
-];
-
-const benefitData = [
-  { text: 'Showcase real projects in your public portfolio', icon: <Trophy style={{ width: 16, height: 16 }} />, color: '#f97316' },
-  { text: 'Discover which skills are trending in your field', icon: <TrendingUp style={{ width: 16, height: 16 }} />, color: '#06b6d4' },
-  { text: 'Build your professional network before you graduate', icon: <Globe style={{ width: 16, height: 16 }} />, color: '#22c55e' },
-  { text: 'Collaborate on projects that matter beyond class', icon: <Code style={{ width: 16, height: 16 }} />, color: '#8b5cf6' },
-  { text: 'Get meaningful peer feedback and skill validation', icon: <Star style={{ width: 16, height: 16 }} />, color: '#fbbf24' },
-];
-
-/* ─── DEFAULT PLACEHOLDER DATA (shown while backend wakes up) ─── */
-const DEFAULT_PROJECTS = [
-  {
-    title: 'AI-Powered Study Planner',
-    description: 'A smart scheduling tool that adapts to your learning pace and optimizes revision sessions using spaced repetition algorithms.',
-    problemStatement: 'Students struggle to manage study time effectively across multiple subjects.',
-    techStack: ['React', 'Python', 'FastAPI', 'OpenAI'],
-    goals: 'Adaptive scheduling, Progress tracking, Exam reminders',
-    status: 'RECRUITING',
-    currentTeamSize: 2,
-    maxTeamSize: 5,
-    expectedStartDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-    lead: { firstName: 'Arjun', lastName: 'Sharma', branch: 'CSE', graduationYear: 2025 },
-  },
-  {
-    title: 'Campus Event Hub',
-    description: 'A unified platform for discovering, organizing, and RSVPing to campus events — clubs, hackathons, fests, and more.',
-    problemStatement: 'Event discovery across campus is fragmented across WhatsApp groups and notice boards.',
-    techStack: ['Next.js', 'Node.js', 'MongoDB', 'Firebase'],
-    goals: 'Event discovery, RSVP system, Club dashboards',
-    status: 'IN PROGRESS',
-    currentTeamSize: 3,
-    maxTeamSize: 4,
-    expectedStartDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
-    lead: { firstName: 'Priya', lastName: 'Nair', branch: 'ECE', graduationYear: 2026 },
-  },
-  {
-    title: 'Open Source Contribution Tracker',
-    description: 'Helps students log, visualize, and share their open-source journey — pull requests, issues, and community impact.',
-    problemStatement: 'Students contribute to OSS but have no structured way to showcase the impact.',
-    techStack: ['Vue.js', 'GraphQL', 'PostgreSQL', 'GitHub API'],
-    goals: 'GitHub integration, Portfolio export, Leaderboards',
-    status: 'RECRUITING',
-    currentTeamSize: 1,
-    maxTeamSize: 4,
-    expectedStartDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    lead: { firstName: 'Rahul', lastName: 'Verma', branch: 'IT', graduationYear: 2025 },
-  },
-  {
-    title: 'Peer Mentorship Network',
-    description: 'Connects junior students with seniors for guidance on academics, internships, and career decisions through structured mentorship.',
-    problemStatement: 'New students lack access to experienced peers who can guide them early on.',
-    techStack: ['React', 'Spring Boot', 'MySQL', 'WebSockets'],
-    goals: 'Mentor matching, Session scheduling, Feedback loops',
-    status: 'RECRUITING',
-    currentTeamSize: 2,
-    maxTeamSize: 6,
-    expectedStartDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-    lead: { firstName: 'Sneha', lastName: 'Kulkarni', branch: 'CSE', graduationYear: 2024 },
-  },
-];
-
-/* ─── STYLES ─── */
-const FunctionalStyles = () => (
-  <style>{`
-    .qx-r2 {
-      display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
-      gap: 20px !important;
-    }
-    .qx-r1 {
-      display: grid !important;
-      grid-template-columns: 1fr 1fr !important;
-      gap: 48px !important;
-    }
-    .qx-mqwrap { 
-      overflow: hidden; 
-      width: 100%; 
-      position: relative; 
-      white-space: nowrap;
-      padding: 10px 0;
-    }
-    .qx-mqtrack {
-      display: inline-flex;
-      gap: 24px;
-      animation: qx-marquee 50s linear infinite;
-    }
-    .qx-mqwrap:hover .qx-mqtrack {
-      animation-play-state: paused;
-    }
-    @keyframes qx-marquee {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    @media (max-width: 1024px) {
-      .qx-r1 { grid-template-columns: 1fr !important; }
-      .qx-hide-m { display: none !important; }
-      .qx-show-m { display: flex !important; }
-    }
-    @media (max-width: 768px) {
-      .qx-mqtrack { 
-        display: flex !important; 
-        flex-direction: column !important; 
-        animation: none !important; 
-        padding: 0 24px !important;
-      }
-      .qx-mqwrap { overflow: visible !important; }
-    }
-    @keyframes qx-spin { to { transform: rotate(360deg); } }
-    .qx-spin { animation: qx-spin 1s linear infinite; }
-
-    /* Wake-up banner animations */
-    @keyframes qx-banner-in {
-      from { opacity: 0; transform: translateX(-50%) translateY(-18px) scale(0.96); }
-      to   { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-    }
-    @keyframes qx-banner-success-in {
-      from { opacity: 0; transform: translateX(-50%) scale(0.95); }
-      to   { opacity: 1; transform: translateX(-50%) scale(1); }
-    }
-    .qx-banner-waking {
-      animation: qx-banner-in 0.5s cubic-bezier(0.22,1,0.36,1) forwards;
-    }
-    .qx-banner-ready {
-      animation: qx-banner-success-in 0.35s ease forwards;
-    }
-
-    /* Orbit ring animation */
-    @keyframes qx-orbit {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
-    @keyframes qx-orbit-rev {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(-360deg); }
-    }
-    @keyframes qx-planet-counter {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(-360deg); }
-    }
-    .qx-orbit-ring-1 { animation: qx-orbit 3s linear infinite; }
-    .qx-orbit-ring-2 { animation: qx-orbit-rev 5s linear infinite; }
-
-    /* Progress bar shimmer */
-    @keyframes qx-progress-shimmer {
-      0%   { background-position: -200% center; }
-      100% { background-position: 200% center; }
-    }
-    .qx-progress-bar {
-      background: linear-gradient(90deg, #8b5cf6 0%, #a78bfa 40%, #c4b5fd 50%, #a78bfa 60%, #8b5cf6 100%);
-      background-size: 200% 100%;
-      animation: qx-progress-shimmer 2s linear infinite;
-    }
-
-    /* Blinking dot */
-    @keyframes qx-blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
-    .qx-blink { animation: qx-blink 1.2s ease-in-out infinite; }
-
-    /* Success checkmark pop */
-    @keyframes qx-check-pop {
-      0%   { transform: scale(0) rotate(-20deg); opacity: 0; }
-      60%  { transform: scale(1.2) rotate(5deg); opacity: 1; }
-      100% { transform: scale(1) rotate(0deg); opacity: 1; }
-    }
-    .qx-check-pop { animation: qx-check-pop 0.5s cubic-bezier(0.22,1,0.36,1) forwards; }
-
-    @keyframes qx-dots {
-      0%, 20%  { content: '.'; }
-      40%      { content: '..'; }
-      60%, 80% { content: '...'; }
-      100%     { content: ''; }
-    }
-    .qx-loading-dot::after {
-      content: '';
-      animation: qx-dots 1.8s steps(1, end) infinite;
-    }
-  `}</style>
-);
-
-/* ─── Shooting Stars Canvas ─── */
-const ShootingStarsCanvas = () => {
-  const ref = useRef(null);
-  useEffect(() => {
-    const canvas = ref.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let rafId, nextShoot = 0;
-    const tw = []; const sw = [];
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    resize(); window.addEventListener('resize', resize);
-    for (let i = 0; i < 220; i++) {
-      tw.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, r: Math.random() * 1.4 + 0.1, ph: Math.random() * Math.PI * 2, sp: Math.random() * 0.002 + 0.0007 });
-    }
-    const spawnShooter = () => {
-      const COLORS = [['#9E00FF', '#2EB9DF'], ['#FF0099', '#FFB800'], ['#00FF9E', '#00B8FF'], ['#f97316', '#8b5cf6']];
-      const [sc, tc] = COLORS[Math.floor(Math.random() * COLORS.length)];
-      const spd = Math.random() * 7 + 5;
-      const ang = (Math.random() * 28 + 14) * (Math.PI / 180);
-      return { x: Math.random() * canvas.width, y: Math.random() * canvas.height * 0.45, vx: Math.cos(ang) * spd, vy: Math.sin(ang) * spd, len: Math.random() * 110 + 55, sc, tc, life: 0, max: Math.random() * 65 + 45 };
-    };
-    const draw = (t) => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      for (const s of tw) {
-        ctx.globalAlpha = 0.2 + 0.6 * (0.5 + 0.5 * Math.sin(t * s.sp + s.ph));
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fillStyle = '#fff'; ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-      if (t > nextShoot) { sw.push(spawnShooter()); nextShoot = t + Math.random() * 2400 + 650; }
-      for (let i = sw.length - 1; i >= 0; i--) {
-        const s = sw[i]; const p = s.life / s.max; const a = Math.max(0, p < 0.3 ? p / 0.3 : 1 - (p - 0.3) / 0.7);
-        const mag = Math.hypot(s.vx, s.vy); const tx = s.x - (s.vx / mag) * s.len; const ty = s.y - (s.vy / mag) * s.len;
-        const grad = ctx.createLinearGradient(tx, ty, s.x, s.y);
-        grad.addColorStop(0, 'transparent'); grad.addColorStop(0.65, s.tc + '55'); grad.addColorStop(1, s.sc);
-        ctx.save(); ctx.globalAlpha = a; ctx.beginPath(); ctx.moveTo(tx, ty); ctx.lineTo(s.x, s.y); ctx.strokeStyle = grad; ctx.lineWidth = 2; ctx.lineCap = 'round'; ctx.stroke();
-        const hg = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 8); hg.addColorStop(0, s.sc); hg.addColorStop(1, 'transparent');
-        ctx.beginPath(); ctx.arc(s.x, s.y, 8, 0, Math.PI * 2); ctx.fillStyle = hg; ctx.fill(); ctx.restore();
-        s.x += s.vx; s.y += s.vy; s.life++;
-        if (s.life >= s.max || s.x > canvas.width + 120 || s.y > canvas.height + 120) sw.splice(i, 1);
-      }
-      rafId = requestAnimationFrame(draw);
-    };
-    rafId = requestAnimationFrame(draw);
-    return () => { cancelAnimationFrame(rafId); window.removeEventListener('resize', resize); };
-  }, []);
-  return <canvas ref={ref} style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0, pointerEvents: 'none' }} />;
-};
-
-/* ─── Project Card ─── */
-const ProjectCard = ({ project, isMarquee = false, isPlaceholder = false }) => {
-  const lead = project.lead || {};
-  const leadName = `${lead.firstName || 'Unknown'} ${lead.lastName && lead.lastName !== '---' ? lead.lastName : ''}`.trim();
-  const tech = project.techStack || [];
-  const goalsArray = project.goals ? project.goals.split(',').map(g => g.trim()) : [];
-  const startDate = project.expectedStartDate ? new Date(project.expectedStartDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD';
-
-  return (
-    <div className="qx-glass qx-lift" style={{
-      borderRadius: 20, overflow: 'hidden', display: 'flex', flexDirection: 'column',
-      position: 'relative', width: isMarquee ? 440 : '100%', flexShrink: isMarquee ? 0 : 'unset',
-      minHeight: 420,
-      whiteSpace: 'normal',
-      opacity: isPlaceholder ? 0.75 : 1,
-      transition: 'opacity 0.5s ease',
-    }}>
-      <div className="qx-accent-bar" />
-      <div style={{ padding: '20px 20px 8px', flex: 1 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-          <div style={{ flex: 1 }}>
-            <span className="qx-pill" style={{ fontSize: 9, fontWeight: 700, padding: '2px 8px', borderRadius: 20, display: 'inline-block', marginBottom: 6 }}>{project.status || 'RECRUITING'}</span>
-            <div style={{ fontSize: 17, fontWeight: 800, lineHeight: 1.2, color: '#f0f4ff' }}>{project.title}</div>
-          </div>
-        </div>
-
-        <p style={{ fontSize: 12.5, lineHeight: 1.5, color: '#6b7280', marginBottom: 12, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-          {project.description}
-        </p>
-
-        {project.problemStatement && (
-          <div style={{ marginBottom: 12, padding: '8px 12px', background: 'rgba(255,255,255,0.02)', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)' }}>
-            <div style={{ fontSize: 8, fontWeight: 800, textTransform: 'uppercase', color: '#8b5cf6', marginBottom: 2 }}>Problem</div>
-            <p style={{ fontSize: 11, color: '#cbd5e1', fontStyle: 'italic', lineHeight: 1.3 }}>"{project.problemStatement}"</p>
-          </div>
-        )}
-
-        {goalsArray.length > 0 && (
-          <div style={{ marginBottom: 12 }}>
-            <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', color: '#374151', marginBottom: 5 }}>Goals</div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-              {goalsArray.slice(0, 5).map((goal, idx) => (
-                <span key={idx} style={{ fontSize: 9, color: '#94a3b8', background: 'rgba(255,255,255,0.03)', padding: '2px 7px', borderRadius: '4px' }}>{goal}</span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
-          {tech.map((s, i) => (<span key={i} className="qx-skill" style={{ fontSize: 9, fontWeight: 600, padding: '3px 8px', borderRadius: 5 }}>{s}</span>))}
-        </div>
-      </div>
-
-      <div style={{ padding: '0 20px 18px', marginTop: 'auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, padding: '8px 0', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', overflow: 'hidden', background: '#1e1a3d', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {lead.profilePictureUrl ? <img src={lead.profilePictureUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ color: '#8b5cf6', fontSize: 10, fontWeight: 700 }}>{leadName[0]}</div>}
-          </div>
-          <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#e2e8f0' }}>{leadName}</div>
-            <div style={{ fontSize: 8.5, color: '#4b5563' }}>{lead.branch || 'Student'} {lead.graduationYear ? `'${lead.graduationYear.toString().slice(-2)}` : ''}</div>
-          </div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderRadius: 8, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ padding: '8px', display: 'flex', alignItems: 'center', gap: 6, background: 'rgba(255,255,255,0.01)' }}>
-            <Calendar style={{ width: 11, height: 11, color: '#8b5cf6' }} />
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#e2e8f0' }}>{startDate}</div>
-          </div>
-          <div style={{ padding: '8px', display: 'flex', alignItems: 'center', gap: 6, borderLeft: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
-            <Users style={{ width: 11, height: 11, color: '#06b6d4' }} />
-            <div style={{ fontSize: 10, fontWeight: 600, color: '#e2e8f0' }}>{project.currentTeamSize}/{project.maxTeamSize} Members</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ─── Orbit Loader Icon ─── */
-const OrbitLoader = () => (
-  <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
-    {/* Core planet */}
-    <div style={{
-      position: 'absolute', top: '50%', left: '50%',
-      width: 14, height: 14, borderRadius: '50%',
-      background: 'radial-gradient(circle at 35% 35%, #c4b5fd, #7c3aed)',
-      transform: 'translate(-50%, -50%)',
-      boxShadow: '0 0 10px rgba(139,92,246,0.7)',
-    }} />
-    {/* Outer orbit ring */}
-    <div className="qx-orbit-ring-1" style={{
-      position: 'absolute', inset: 0,
-      borderRadius: '50%',
-      border: '1.5px solid rgba(139,92,246,0.25)',
-      borderTopColor: 'rgba(139,92,246,0.9)',
-      borderRightColor: 'rgba(167,139,250,0.5)',
-    }}>
-      {/* Satellite on outer ring */}
-      <div style={{
-        position: 'absolute', top: -3, left: '50%',
-        width: 6, height: 6, borderRadius: '50%',
-        background: '#a78bfa',
-        transform: 'translateX(-50%)',
-        boxShadow: '0 0 6px #a78bfa',
-      }} />
-    </div>
-    {/* Inner orbit ring */}
-    <div className="qx-orbit-ring-2" style={{
-      position: 'absolute', inset: 8,
-      borderRadius: '50%',
-      border: '1px dashed rgba(6,182,212,0.35)',
-      borderBottomColor: 'rgba(6,182,212,0.8)',
-    }}>
-      {/* Satellite on inner ring */}
-      <div style={{
-        position: 'absolute', bottom: -2.5, left: '50%',
-        width: 5, height: 5, borderRadius: '50%',
-        background: '#06b6d4',
-        transform: 'translateX(-50%)',
-        boxShadow: '0 0 5px #06b6d4',
-      }} />
-    </div>
+const SectionDivider = () => (
+  <div className="w-full flex items-center justify-center py-20">
+    <div className="w-12 h-px bg-slate-300" />
   </div>
 );
 
-/* ─── Wake-Up Banner ─── */
-const WakeUpBanner = ({ status, onDismiss }) => {
-  const [progress, setProgress] = useState(0);
-  const [phase, setPhase] = useState(0); // cycles through status messages
-
-  const wakingMessages = [
-    { title: 'Launching the server into orbit…', sub: 'Our free-tier backend hibernates when idle. It\'s booting up now — usually takes 1–2 minutes.' },
-    { title: 'Fueling the engines…', sub: 'Still warming up. Hang tight — the platform will be fully live shortly.' },
-    { title: 'Almost there — systems coming online…', sub: 'The server is nearly awake. Your dashboard and all features will be ready in moments.' },
-  ];
-
-  useEffect(() => {
-    if (status !== 'waking') return;
-    // Progress bar: fills over ~120s
-    const tick = setInterval(() => {
-      setProgress(p => Math.min(p + 100 / 120, 98)); // never hit 100 until ready
-    }, 1000);
-    // Cycle through message phases every 35s
-    const phaseTimer = setInterval(() => {
-      setPhase(p => Math.min(p + 1, wakingMessages.length - 1));
-    }, 35000);
-    return () => { clearInterval(tick); clearInterval(phaseTimer); };
-  }, [status]);
-
-  if (status === 'idle') return null;
-  const isReady = status === 'ready';
-  const msg = wakingMessages[phase];
-
-  return (
-    <div
-      className={isReady ? 'qx-banner-ready' : 'qx-banner-waking'}
-      style={{
-        position: 'fixed',
-        top: 90,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 1000,
-        width: '92%',
-        maxWidth: 520,
-        background: isReady ? 'rgba(4, 22, 14, 0.97)' : 'rgba(6, 4, 20, 0.97)',
-        border: isReady
-          ? '1px solid rgba(34, 197, 94, 0.5)'
-          : '1px solid rgba(139, 92, 246, 0.4)',
-        borderRadius: 18,
-        overflow: 'hidden',
-        backdropFilter: 'blur(20px)',
-        boxShadow: isReady
-          ? '0 24px 48px rgba(0,0,0,0.6), 0 0 30px rgba(34,197,94,0.1)'
-          : '0 24px 48px rgba(0,0,0,0.6), 0 0 30px rgba(139,92,246,0.1)',
-      }}
-    >
-      {/* Progress bar along the top */}
-      {!isReady && (
-        <div style={{ height: 2, background: 'rgba(139,92,246,0.12)', width: '100%' }}>
-          <div
-            className="qx-progress-bar"
-            style={{
-              height: '100%',
-              width: `${progress}%`,
-              transition: 'width 1s linear',
-              borderRadius: '0 2px 2px 0',
-            }}
-          />
-        </div>
-      )}
-
-      <div style={{ padding: '14px 16px', display: 'flex', gap: 14, alignItems: 'center' }}>
-        {/* Icon */}
-        {isReady ? (
-          <div className="qx-check-pop" style={{
-            width: 44, height: 44, borderRadius: 13, flexShrink: 0,
-            background: 'rgba(34,197,94,0.15)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <CheckCircle size={22} color="#22c55e" />
+const ProblemCard = ({ number, title, problem, solution, icon: Icon, image, reverse }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 30 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-50px" }}
+    transition={{ duration: 0.6, ease: "easeOut" }}
+    className="group"
+  >
+    <div className={`grid lg:grid-cols-12 gap-8 lg:gap-16 items-center`}>
+      <div className={`lg:col-span-5 ${reverse ? 'lg:order-2' : ''}`}>
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-4xl font-black text-slate-100 absolute -mt-12 -ml-4 z-0 select-none">{number}</span>
+          <div className="relative z-10 p-2.5 bg-slate-900 rounded-lg text-white">
+            <Icon size={20} />
           </div>
-        ) : (
-          <OrbitLoader />
-        )}
-
-        {/* Text */}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ color: '#f0f4ff', fontSize: 13, fontWeight: 700, marginBottom: 4, display: 'flex', alignItems: 'center', gap: 7 }}>
-            {isReady ? (
-              '🚀 Quasar is live — welcome aboard!'
-            ) : (
-              <>
-                <span className="qx-blink" style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#a78bfa', flexShrink: 0 }} />
-                {msg.title}
-              </>
-            )}
-          </div>
-          <div style={{ color: isReady ? '#86efac' : '#4b5563', fontSize: 11.5, lineHeight: 1.55 }}>
-            {isReady
-              ? 'All systems are online. You can now sign in or create your account.'
-              : msg.sub
-            }
-          </div>
-          {/* Mini progress label */}
-          {!isReady && (
-            <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 6 }}>
-              <div style={{ flex: 1, height: 3, background: 'rgba(255,255,255,0.05)', borderRadius: 99 }}>
-                <div
-                  className="qx-progress-bar"
-                  style={{ height: '100%', width: `${progress}%`, transition: 'width 1s linear', borderRadius: 99 }}
-                />
-              </div>
-              <span style={{ fontSize: 9.5, color: '#6b7280', fontWeight: 600, whiteSpace: 'nowrap' }}>
-                {Math.round(progress)}%
-              </span>
-            </div>
-          )}
+          <h3 className="relative z-10 text-2xl font-bold tracking-tight text-slate-900">{title}</h3>
         </div>
 
-        {/* Dismiss / spinner */}
-        <div style={{ flexShrink: 0 }}>
-          {isReady ? (
-            <button
-              onClick={onDismiss}
-              style={{
-                background: 'rgba(34,197,94,0.15)', border: '1px solid rgba(34,197,94,0.3)',
-                color: '#22c55e', borderRadius: 9, padding: '6px 14px',
-                fontSize: 11, fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
-              }}
-            >
-              Got it ✓
-            </button>
-          ) : (
-            <Loader2 className="qx-spin" size={16} color="rgba(139,92,246,0.6)" />
-          )}
+        <div className="space-y-6">
+          <div>
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-red-500 mb-2">The Problem</h4>
+            <p className="text-base text-slate-600 leading-relaxed font-medium">
+              {problem}
+            </p>
+          </div>
+
+          <div className="p-5 bg-slate-50 border-l-4 border-slate-900 rounded-r-xl">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-900 mb-2">The Quasar Solution</h4>
+            <p className="text-sm text-slate-700 leading-relaxed">
+              {solution}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className={`lg:col-span-7 ${reverse ? 'lg:order-1' : ''}`}>
+        <div className="relative aspect-video rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
+          <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/40 to-transparent" />
         </div>
       </div>
     </div>
-  );
-};
+  </motion.div>
+);
 
-/* ─── LANDING PAGE ─── */
+const FeatureCard = ({ icon: Icon, title, description }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.5 }}
+    className="group p-8 border border-slate-200 rounded-lg hover:border-slate-400 transition-colors duration-300 bg-white"
+  >
+    <div className="mb-5">
+      <div className="w-10 h-10 flex items-center justify-center rounded-md bg-slate-900 text-white">
+        <Icon size={18} strokeWidth={2} />
+      </div>
+    </div>
+    <h3 className="text-lg font-bold text-slate-900 mb-3 tracking-tight">{title}</h3>
+    <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
+  </motion.div>
+);
+
+const StatItem = ({ value, label }) => (
+  <div className="text-center">
+    <p className="text-3xl md:text-4xl font-bold text-slate-900 mb-2">{value}</p>
+    <p className="text-sm text-slate-500 uppercase tracking-widest font-medium">{label}</p>
+  </div>
+);
+
+const StepCard = ({ step, title, description }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true }}
+    transition={{ duration: 0.5, delay: parseInt(step) * 0.1 }}
+    className="text-center"
+  >
+    <div className="w-12 h-12 mx-auto mb-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm font-bold">{step}</div>
+    <h3 className="text-xl font-bold text-slate-900 mb-4">{title}</h3>
+    <p className="text-sm text-slate-500 leading-relaxed max-w-sm mx-auto">{description}</p>
+  </motion.div>
+);
+
 export default function LandingPage() {
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  // 'waking' | 'ready' | 'idle'  — starts as 'waking' immediately, no blank-page flash
-  const [bannerStatus, setBannerStatus] = useState('waking');
-
-  const [publicData, setPublicData] = useState({
-    projects: DEFAULT_PROJECTS,   // ← real content shown immediately
-    popularSkills: [],
-    colleges: [],
-    userCount: 1200,              // ← sensible defaults so stats aren't "0+"
-    projectCount: 800,
-    isPlaceholder: true,          // flag to know we're on defaults
-  });
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const projectsSectionRef = useRef(null);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchWithRetry = async (fn, retries = 5, delay = 3000) => {
-      for (let i = 0; i < retries; i++) {
-        try { return await fn(); }
-        catch (err) {
-          if (i === retries - 1) throw err;
-          await new Promise(res => setTimeout(res, delay));
-        }
-      }
-    };
-
-    const fetchData = async () => {
+    const fetchProjects = async () => {
       try {
-        const [projectsRes, skillsRes, collegesRes, countsRes] = await Promise.all([
-          fetchWithRetry(() => projectService.getRecentProjects()),
-          fetchWithRetry(() => skillsService.getPopularSkills(0, 10, { preventRedirect: true })),
-          fetchWithRetry(() => dataService.getColleges({ preventRedirect: true })),
-          fetchWithRetry(() => dataService.getSystemCounts()),
-        ]);
-
-        if (!isMounted) return;
-
-        const projects = projectsRes.data?.content || projectsRes.content || [];
-        const rawCounts = countsRes || [1250, 850];
-
-        setPublicData({
-          projects: projects.length > 0 ? projects : DEFAULT_PROJECTS,
-          popularSkills: skillsRes.data || skillsRes || [],
-          colleges: collegesRes.data || collegesRes || [],
-          userCount: Array.isArray(rawCounts) ? rawCounts[0] : (rawCounts.users || 1250),
-          projectCount: Array.isArray(rawCounts) ? rawCounts[1] : (rawCounts.projects || 850),
-          isPlaceholder: false,
-        });
-
-        setBannerStatus('ready');
-
-        // Auto-dismiss the "ready" banner after 5 seconds
-        setTimeout(() => {
-          if (isMounted) setBannerStatus('idle');
-        }, 5000);
-
+        const res = await projectService.getRecentProjects();
+        const projectData = res.data?.content || res.content || [];
+        setProjects(projectData);
       } catch (err) {
-        // Retries exhausted — keep showing waking banner, page content already visible
-        if (isMounted) setBannerStatus('waking');
+        console.error("Initializing backend...");
+      } finally {
+        setLoading(false);
       }
     };
-
-    fetchData();
-    return () => { isMounted = false; };
+    fetchProjects();
   }, []);
 
-  const scrollTo = (id) => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }); setMobileOpen(false); };
-
-  const displayedProjects = publicData.projects.length > 0 ? publicData.projects : DEFAULT_PROJECTS;
+  const scrollToProjects = () => {
+    projectsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
-    <div className="qx-root" style={{ minHeight: '100vh' }}>
-      <FunctionalStyles />
-      <ShootingStarsCanvas />
-
-      <WakeUpBanner
-        status={bannerStatus}
-        onDismiss={() => setBannerStatus('idle')}
-      />
-
-      {/* Nebula glows */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '-18%', left: '-12%', width: '60%', height: '55%', background: 'rgba(139,92,246,0.11)', borderRadius: '50%', filter: 'blur(100px)' }} />
-        <div style={{ position: 'absolute', bottom: '-12%', right: '-10%', width: '50%', height: '45%', background: 'rgba(6,182,212,0.07)', borderRadius: '50%', filter: 'blur(90px)' }} />
-      </div>
-
-      <nav className="qx-layer" style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, background: 'rgba(3,5,13,0.82)', backdropFilter: 'blur(22px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', height: 68, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
-            <img src="/Logo.png" alt="Logo" style={{ width: 36, height: 36, borderRadius: 10 }} />
-            <span className="qx-syne qx-grad" style={{ fontSize: 18, fontWeight: 700 }}>Quasar</span>
-          </Link>
-          <div className="qx-hide-m" style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)', display: 'flex', gap: 2, padding: '6px 8px', borderRadius: 40, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
-            {[['projects', 'Live Projects'], ['features', 'Features'], ['colleges', 'Universities']].map(([id, label]) => (
-              <button key={id} onClick={() => scrollTo(id)} className="qx-nav-link">{label}</button>
-            ))}
+    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
+      <nav className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link to="/" className="relative z-10 flex items-center gap-3">
+              <img
+                src="/Logo.png"
+                alt="Quasar Logo"
+                className="w-10 h-10 object-contain shadow-sm rounded-lg"
+              />
+              <span className="text-xl font-bold tracking-tight text-slate-900">Quasar</span>
+            </Link>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Link to="/login" className="qx-hide-m"><button className="qx-btn-out" style={{ fontSize: 13, fontWeight: 600, padding: '7px 16px', borderRadius: 9 }}>Sign In</button></Link>
-            <Link to="/register"><button className="qx-shimmer" style={{ color: '#fff', fontSize: 13, fontWeight: 700, padding: '7px 16px', borderRadius: 9 }}>Join Free</button></Link>
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="qx-show-m" style={{ display: 'none', padding: 7, borderRadius: 9, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#8892a8' }}>
-              {mobileOpen ? <X size={20} /> : <Menu size={20} />}
-            </button>
+          <div className="flex items-center gap-8">
+            <Link to="/login" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors">Sign In</Link>
+            <Link to="/register" className="bg-slate-900 text-white px-5 py-2.5 text-sm font-medium rounded-md hover:bg-slate-800 transition-colors">Get Started</Link>
           </div>
         </div>
       </nav>
 
-      <section style={{ paddingTop: 164, paddingBottom: 112, minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
-        <div style={{ maxWidth: 880, margin: '0 auto', padding: '0 24px', zIndex: 1 }}>
-          <h1 className="qx-fade-up qx-d1 qx-syne" style={{ fontSize: 'clamp(38px, 7vw, 78px)', fontWeight: 700, color: '#f0f4ff', marginBottom: 22 }}>
-            Find teammates, <br /><span className="qx-grad">ship projects, get noticed.</span>
-          </h1>
-          <p style={{ fontSize: 'clamp(14px, 1.8vw, 17px)', color: '#6b7280', maxWidth: 540, margin: '0 auto 40px' }}>The professional collaboration platform for students to connect and build real portfolios together.</p>
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link to="/register"><button className="qx-btn-out" style={{ padding: '13px 34px', color: '#fff', borderRadius: 40 }}>Launch your orbit.</button></Link>
-            <Link to="/login"><button className="qx-btn-out" style={{ padding: '13px 28px', borderRadius: 40 }}>Login </button></Link>
-          </div>
+      <section className="pt-32 pb-20 md:pt-40 md:pb-28 px-6 max-w-6xl mx-auto">
+        <div className="max-w-3xl">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, ease: "easeOut" }}>
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400 mb-6">Student Collaboration Platform</p>
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight leading-[1.1] text-slate-900 mb-8">
+              Find Your Team. <span className="text-slate-500">Build Real Projects.</span>
+            </h1>
+            <p className="text-lg md:text-xl text-slate-500 max-w-xl leading-relaxed mb-10">
+              Stop coding alone. Quasar connects you with skilled teammates for academic projects, hackathons, and portfolio-building — matched by what you can do, not who you know.
+            </p>
+            <div className="flex flex-wrap gap-4">
+              <button onClick={() => navigate('/register')} className="px-8 py-4 bg-slate-900 text-white rounded-md font-semibold text-base hover:bg-slate-800 transition-colors flex items-center gap-2">
+                Find Teammates <ArrowRight size={18} />
+              </button>
+              <button onClick={scrollToProjects} className="px-8 py-4 border border-slate-300 rounded-md font-semibold text-base text-slate-700 hover:border-slate-400 hover:bg-slate-50 transition-colors">
+                Browse Projects
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+      {/* --- PROBLEMS WE SOLVE --- */}
+      <section className="px-6 max-w-6xl mx-auto py-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mb-20"
+        >
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400 mb-4">The Student Struggle</p>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 mb-6">Why We Built Quasar</h2>
+          <p className="text-lg text-slate-500 max-w-2xl leading-relaxed">
+            The gap between learning to code and building a career is filled with these two hurdles.
+            We built a platform to bridge them.
+          </p>
+        </motion.div>
+
+        <div className="space-y-32">
+          {/* Problem 01 */}
+          <ProblemCard
+            number="01"
+            title="The 'Friend Circle' Limitation"
+            icon={Users}
+            problem="Your friends are great, but they might not have the React, Python, or AWS skills your project needs. You're often forced to choose between working alone or with a team that can't contribute."
+            solution="Quasar breaks the bubble. Find teammates across your entire college based strictly on their verified tech stack and interests. Build with people who actually complement your skills."
+            image="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200"
+            reverse={false}
+          />
+
+          {/* Problem 02 */}
+          <ProblemCard
+            number="02"
+            title="The 'Empty GitHub' Paradox"
+            icon={Code}
+            problem="You've finished the tutorials, but your resume is still empty. Recruiters can't see your potential because you lack real-world collaborative projects to prove your skills."
+            solution="Join active builds and start contributing. Every task you finish and every PR you merge is tracked and displayed on your Quasar profile—giving you a verified portfolio that speaks louder than a resume."
+            image="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&q=80&w=1200"
+            reverse={true}
+          />
         </div>
       </section>
 
-      <section className="qx-layer qx-section-alt" style={{ padding: '52px 24px' }}>
-        <div className="qx-r2" style={{ maxWidth: 1280, margin: '0 auto' }}>
+      {/* --- HOW QUASAR FIXES THIS --- */}
+      <section className="px-6 max-w-6xl mx-auto py-24">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="mb-16"
+        >
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400 mb-4">
+            Our Approach
+          </p>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 mb-6">
+            How Quasar Fixes This
+          </h2>
+          <p className="text-lg text-slate-500 max-w-2xl leading-relaxed">
+            Flip each card to see how we solve the core problems of student engineering.
+          </p>
+        </motion.div>
+
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[
-            { label: 'Active Students', value: publicData.userCount.toLocaleString() + '+', color: '#8b5cf6', icon: <Users size={20} /> },
-            { label: 'Projects Launched', value: publicData.projectCount.toLocaleString() + '+', color: '#06b6d4', icon: <Rocket size={20} /> },
-            { label: 'Universities', value: (publicData.colleges.length || 50) + '+', color: '#f97316', icon: <Building2 size={20} /> },
-            { label: 'Success Rate', value: '98%', color: '#22c55e', icon: <Trophy size={20} /> }
-          ].map((s, i) => (
-            <div key={i} className="qx-glass qx-stat" style={{ borderRadius: 18, padding: '22px', display: 'flex', gap: 16 }}>
-              <div style={{ width: 48, height: 48, background: `${s.color}18`, color: s.color, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 14 }}>{s.icon}</div>
-              <div>
-                <div className="qx-syne" style={{ fontSize: 24, fontWeight: 700, color: s.color }}>{s.value}</div>
-                <div style={{ fontSize: 11, color: '#374151', textTransform: 'uppercase' }}>{s.label}</div>
+            {
+              icon: FolderOpen,
+              title: "Post Projects",
+              short: "List skills you need",
+              image: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?auto=format&fit=crop&q=80&w=600",
+              detail: "Create a project and define exactly what skills your team is missing — React, Python, UI Design, DevOps. Students with those skills see your project and apply."
+            },
+            {
+              icon: Sparkles,
+              title: "AI Matching",
+              short: "Find perfect teammates",
+              image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=600",
+              detail: "Our engine analyzes profiles, skills, and project needs to recommend the best teammates. No more guessing or settling for whoever is free."
+            },
+            {
+              icon: Users,
+              title: "Build Network",
+              short: "Beyond your friend circle",
+              image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=600",
+              detail: "Every project connects you with skilled peers across your college. Your professional network grows with every collaboration."
+            },
+            // {
+            //   icon: Briefcase,
+            //   title: "Real Portfolio",
+            //   short: "Verified contributions",
+            //   image: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&q=80&w=600",
+            //   detail: "Every commit, review, and task is tracked on your profile. Recruiters see proof of what you can build — not just a list of technologies."
+            // },
+            {
+              icon: Layout,
+              title: "Manage Tasks",
+              short: "Built-in project tools",
+              image: "https://images.unsplash.com/photo-1540350394557-8d14678e7f91?auto=format&fit=crop&q=80&w=600", // New clearer image
+              detail: "Task boards, sprint planning, and progress tracking — all in one place. No more juggling Trello, Jira, and spreadsheets."
+            },
+            {
+              icon: MessageSquare,
+              title: "Team Chat",
+              short: "Real-time communication",
+              image: "https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=600",
+              detail: "Built-in chat for every project. Discuss code, share files, and resolve blockers without leaving the platform."
+            },
+            {
+              icon: Calendar,
+              title: "Hackathons",
+              short: "Events & competitions",
+              image: "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=600",
+              detail: "Discover college hackathons and coding events. Form dedicated teams, compete, and expand your network while you build."
+            }
+            // {
+            //   icon: Award,
+            //   title: "Get Verified",
+            //   short: "Proof of your skills",
+            //   image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600",
+            //   detail: "Merge requests, code reviews, and completed tasks are verified and linked to your profile. Show, don't tell."
+            // }
+          ].map((item, idx) => (
+            <div
+              key={idx}
+              className="group h-80 w-full"
+              style={{ perspective: '1000px' }}
+            >
+              <div
+                className="relative w-full h-full transition-transform duration-500 shadow-sm"
+                style={{
+                  transformStyle: 'preserve-3d',
+                  // This is the logic that handles the flip on hover
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'rotateY(180deg)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'rotateY(0deg)'}
+              >
+                {/* --- FRONT SIDE --- */}
+                <div
+                  className="absolute inset-0 w-full h-full rounded-xl overflow-hidden border border-slate-200"
+                  style={{ backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden' }}
+                >
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="w-full h-full object-cover brightness-[0.4]"
+                  />
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
+                    <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-white/20 backdrop-blur-md text-white mb-4 border border-white/30">
+                      <item.icon size={22} strokeWidth={1.5} />
+                    </div>
+                    <h3 className="text-lg font-bold text-white mb-1">{item.title}</h3>
+                    <p className="text-sm text-white/80">{item.short}</p>
+                    <div className="absolute bottom-6 text-[10px] font-bold uppercase tracking-[0.2em] text-white/40">
+                      Hover to flip
+                    </div>
+                  </div>
+                </div>
+
+                {/* --- BACK SIDE --- */}
+                <div
+                  className="absolute inset-0 w-full h-full bg-slate-900 text-white rounded-xl p-8 flex flex-col justify-center border border-slate-800"
+                  style={{
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    transform: 'rotateY(180deg)'
+                  }}
+                >
+                  <div className="w-10 h-10 flex items-center justify-center rounded-lg bg-white/10 mb-4">
+                    <item.icon size={20} className="text-white" />
+                  </div>
+                  <h4 className="text-lg font-bold mb-3">{item.title}</h4>
+                  <p className="text-sm text-slate-300 leading-relaxed">
+                    {item.detail}
+                  </p>
+                  <div className="mt-6 pt-4 border-t border-white/10 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Quasar Infrastructure
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      <section id="projects" style={{ padding: '100px 0' }}>
-        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 24px', marginBottom: 44 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-            <h2 className="qx-syne" style={{ fontSize: 'clamp(24px, 3.5vw, 42px)', fontWeight: 700, color: '#f0f4ff' }}>What Students Are Building</h2>
-            {publicData.isPlaceholder && (
-              <span style={{
-                fontSize: 10, fontWeight: 700, padding: '3px 10px', borderRadius: 20,
-                background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)',
-                color: '#a78bfa', letterSpacing: '0.05em', textTransform: 'uppercase',
-              }}>
-                Sample Projects
-              </span>
-            )}
-          </div>
-          {publicData.isPlaceholder && (
-            <p style={{ fontSize: 12, color: '#4b5563', marginTop: 6 }}>
-              Live projects will appear here once the server is online. These are representative examples.
-            </p>
-          )}
-        </div>
-        <div className="qx-mqwrap">
-          <div className="qx-mqtrack">
-            {[...displayedProjects, ...displayedProjects].map((p, i) => (
-              <ProjectCard key={i} project={p} isMarquee={true} isPlaceholder={publicData.isPlaceholder} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section id="features" className="qx-layer qx-section-alt" style={{ padding: '100px 24px' }}>
-        <div className="qx-r2" style={{ maxWidth: 1280, margin: '0 auto' }}>
-          {featureData.map((f, i) => (
-            <div key={i} className="qx-glass qx-lift" style={{ padding: 30, borderRadius: 22 }}>
-              <div style={{ color: f.accent, marginBottom: 22 }}>{f.icon}</div>
-              <h3 className="qx-syne" style={{ fontSize: 15, fontWeight: 700, color: '#f0f4ff' }}>{f.title}</h3>
-              <p style={{ fontSize: 12, lineHeight: 1.7, color: '#4b5563', marginTop: 10 }}>{f.desc}</p>
+      {/* --- PROJECTS SECTION --- */}
+      <section ref={projectsSectionRef} className="bg-slate-50 border-y border-slate-200 py-24 overflow-hidden">
+        <div className="max-w-6xl mx-auto px-6 mb-12">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400 mb-4">Live Network</p>
+              <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">See What Students Are Building</h2>
             </div>
-          ))}
+            <button onClick={() => navigate('/login')} className="text-sm font-semibold text-slate-500 hover:text-slate-900 flex items-center gap-2 transition-colors">
+              View All Projects <ChevronRight size={16} />
+            </button>
+          </div>
         </div>
-      </section>
 
-      <section className="qx-layer" style={{ padding: '100px 24px' }}>
-        <div className="qx-r1" style={{ maxWidth: 1280, margin: '0 auto', alignItems: 'center' }}>
-          <div>
-            <h2 className="qx-syne" style={{ fontSize: 'clamp(22px, 3vw, 38px)', fontWeight: 700, color: '#f0f4ff', marginBottom: 28 }}>Your launchpad to a <br /><span className="qx-grad-warm">remarkable career.</span></h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-              {benefitData.map((b, i) => (
-                <div key={i} className="qx-benefit" style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 18px', borderRadius: 14 }}>
-                  <div style={{ width: 36, height: 36, borderRadius: 10, background: `${b.color}18`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: b.color }}>{b.icon}</div>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{b.text}</span>
+        {/* CSS for the infinite scroll and hover pause */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+          @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+          .animate-scroll {
+            animation: scroll 35s linear infinite;
+          }
+          .pause-on-hover:hover .animate-scroll {
+            animation-play-state: paused;
+          }
+        `}} />
+
+        <div className="relative pause-on-hover">
+          {loading ? (
+            <div className="max-w-6xl mx-auto px-6 grid grid-cols-3 gap-6">
+              {[1, 2, 3].map(i => <div key={i} className="h-72 bg-white rounded-lg border border-slate-200 animate-pulse" />)}
+            </div>
+          ) : (
+            <div className="flex w-fit animate-scroll">
+              {/* Duplicate the project list to create a seamless loop */}
+              {[...projects, ...projects].map((project, idx) => (
+                <div
+                  key={`${project.id}-${idx}`}
+                  className="w-[90vw] md:w-[400px] mx-3 flex-shrink-0 bg-white border border-slate-200 rounded-xl p-7 hover:shadow-xl hover:border-slate-400 transition-all duration-300 flex flex-col justify-between group"
+                >
+                  <div>
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="p-2.5 bg-slate-900 rounded-lg text-white group-hover:scale-110 transition-transform duration-300">
+                        <Cpu size={18} />
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                        {project.status || 'Active'}
+                      </span>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-slate-900 mb-3 tracking-tight line-clamp-1">
+                      {project.title}
+                    </h3>
+                    <p className="text-sm text-slate-500 line-clamp-3 mb-6 leading-relaxed">
+                      {project.description}
+                    </p>
+
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {project.techStack?.slice(0, 3).map((tech, i) => (
+                        <span key={i} className="text-[11px] font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-md">
+                          {tech}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-6 border-t border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 border-2 border-white shadow-sm overflow-hidden">
+                        {project.lead?.profilePictureUrl ? (
+                          <img src={project.lead.profilePictureUrl} alt="" className="w-full h-full object-cover" />
+                        ) : (project.lead?.firstName?.[0] || 'P')}
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-slate-900 leading-none mb-1">
+                          {project.lead?.firstName} {project.lead?.lastName !== '---' ? project.lead?.lastName : ''}
+                        </p>
+                        <p className="text-[11px] text-slate-400 font-medium">
+                          {project.lead?.branch || 'Engineer'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="flex items-center gap-1.5 justify-end">
+                        <Users size={12} className="text-slate-400" />
+                        <span className="text-sm font-bold text-slate-900">{project.currentTeamSize + 1}/{project.maxTeamSize}</span>
+                      </div>
+                      <p className="text-[10px] uppercase font-bold text-slate-400 tracking-tighter">Availability</p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <img src="/Logo.png" alt="Logo" style={{ width: 210, filter: 'drop-shadow(0 0 44px rgba(139,92,246,0.45))' }} />
-          </div>
+          )}
+        </div>
+      </section>
+      <SectionDivider />
+
+      <section className="px-6 max-w-6xl mx-auto">
+        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }} className="mb-16 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-400 mb-4">Simple Process</p>
+          <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900 mb-6">How It Works</h2>
+        </motion.div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          <StepCard step="01" title="Create Your Profile" description="Sign up and list your skills, interests, and GitHub. Our AI analyzes your background to understand what you bring to the table." />
+          <StepCard step="02" title="Post or Join a Project" description="Have an idea? Post it with required skills. Looking to contribute? Browse active projects and apply with one click." />
+          <StepCard step="03" title="Build & Get Verified" description="Ship code, review PRs, manage tasks. Every contribution is tracked and added to your professional portfolio automatically." />
         </div>
       </section>
 
-      <footer style={{ padding: '60px 24px', borderTop: '1px solid rgba(255,255,255,0.06)', textAlign: 'center' }}>
-        <p style={{ fontSize: 12, color: '#374151' }}>© 2025 Quasar. Built for students.</p>
+      <SectionDivider />
+
+      <footer className="border-t border-slate-200 py-12 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 bg-slate-300 rounded flex items-center justify-center">
+                <span className="text-white text-[10px] font-bold">Q</span>
+              </div>
+              <span className="text-xs font-semibold text-slate-400 uppercase tracking-widest">Quasar Infrastructure</span>
+            </div>
+            <div className="flex gap-8 text-xs font-semibold uppercase tracking-widest text-slate-400">
+              <button className="hover:text-slate-900 transition-colors">Documentation</button>
+              <button className="hover:text-slate-900 transition-colors">Privacy</button>
+              <button className="hover:text-slate-900 transition-colors">Terms</button>
+            </div>
+          </div>
+          <div className="text-center md:text-left">
+            <p className="text-xs text-slate-400">Built for Engineers. Designed for Students.</p>
+          </div>
+        </div>
       </footer>
     </div>
   );

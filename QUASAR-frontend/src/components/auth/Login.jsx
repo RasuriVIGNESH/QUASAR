@@ -1,4 +1,3 @@
-// src/pages/auth/Login.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -6,18 +5,13 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Eye, EyeOff, Mail, Lock, Sparkles, ArrowRight, Github } from 'lucide-react';
-import { ModeToggle } from '@/components/mode-toggle';
+import { Mail, Lock, Activity, Loader2, Github, ChevronLeft, ShieldCheck } from 'lucide-react';
 import { toast } from "sonner";
 import ValidationAlert from '@/components/common/ValidationAlert';
-import MagneticButton from '@/components/common/MagneticButton';
-import SpaceBackground from '@/components/common/SpaceBackground';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -32,248 +26,128 @@ export default function Login() {
       const user = await login(email, password);
       setShowWelcome(true);
       setTimeout(() => {
-        if (user?.role === 'ADMIN') {
-          navigate('/admin/overview');
-        } else if (user?.role === 'MENTOR') {
-          navigate('/mentor/overview');
-        } else {
-          navigate('/dashboard');
-        }
-      }, 2000);
+        if (user?.role === 'ADMIN') navigate('/admin/overview');
+        else if (user?.role === 'MENTOR') navigate('/mentor/overview');
+        else navigate('/dashboard');
+      }, 1500);
     } catch (err) {
-      console.error('Login error:', err);
       setError(err);
-      if (!err.data?.validationErrors) {
-        toast.error(err.message || 'Invalid credentials', { duration: 2000 });
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleGitHubLogin() {
-    try {
-      setLoading(true);
-      localStorage.setItem('oauth_intent', 'login');
-      await loginWithGitHub();
-    } catch (err) {
-      console.error('GitHub login error:', err);
-      toast.error('GitHub login failed. Please try again.', { duration: 2000 });
-    } finally {
-      setLoading(false);
-    }
+      if (!err.data?.validationErrors) toast.error(err.message || 'Invalid credentials');
+    } finally { setLoading(false); }
   }
 
   return (
-    <div className="min-h-screen overflow-hidden relative" style={{ background: '#03050d' }}>
-      <SpaceBackground />
-      <div className="absolute top-4 right-4 z-50">
-        <ModeToggle />
-      </div>
+    <div className="min-h-screen grid lg:grid-cols-2 bg-white font-sans antialiased">
+      {/* --- LEFT: BRANDING PANE (Matches Landing Hero) --- */}
+      <div className="hidden lg:flex flex-col justify-between p-12 relative overflow-hidden bg-slate-900">
+        <div className="absolute inset-0 opacity-20" style={{
+          backgroundImage: 'linear-gradient(to right, #334155 1px, transparent 1px), linear-gradient(to bottom, #334155 1px, transparent 1px)',
+          backgroundSize: '40px 40px'
+        }} />
 
-      <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="max-w-md w-full space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            {/* <Link to="/" className="inline-flex items-center gap-2 mb-6 group">
-              <img src="/Logo.png" alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-lg" />
-              <span className="text-2xl font-bold" style={{ color: '#f0f4ff' }}>Quasar</span>
-            </Link> */}
-            {/* <h2 className="mt-6 text-4xl font-black" style={{ color: '#f0f4ff' }}>
-              Welcome back
-            </h2> */}
-            <p className="mt-2 text-lg" style={{ color: '#6b7280' }}>
-              Sign in to continue your journey
+        <Link to="/" className="relative z-10 flex items-center gap-3">
+          <img
+            src="/Logo.png"
+            alt="Quasar Logo"
+            className="w-10 h-10 object-contain shadow-sm rounded-lg"
+          />
+          <span className="text-xl font-bold tracking-tight text-white">Quasar</span>
+        </Link>
+
+        <div className="relative z-10">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+            <h1 className="text-6xl font-bold tracking-tighter leading-[1.1] text-white mb-6">
+              Welcome back to <br /><span className="text-slate-400">the workspace.</span>
+            </h1>
+            <p className="text-lg text-slate-400 max-w-md leading-relaxed">
+              Sign in to manage your projects, find teammates, and track your verified contributions.
             </p>
+          </motion.div>
+        </div>
+
+        <div className="relative z-10 flex items-center gap-4 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Network Secure</span>
           </div>
-
-          {/* Form Card */}
-          <div>
-            <Card className="border-0" style={{ boxShadow: '0 24px 64px rgba(0,0,0,0.45)', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)' }}>
-              <CardContent className="p-8">
-                <ValidationAlert error={error} />
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Email Field */}
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="font-semibold" style={{ color: '#94a3b8' }}>
-                      Email Address
-                    </Label>
-                    <div className="relative group">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-12 h-12 rounded-xl input-focus-glow"
-                        style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Password Field */}
-                  <div className="space-y-2">
-                    <Label htmlFor="password" className="font-semibold" style={{ color: '#94a3b8' }}>
-                      Password
-                    </Label>
-                    <div className="relative group">
-                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter your password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-12 pr-12 h-12 rounded-xl input-focus-glow"
-                        style={{ background: 'rgba(255,255,255,0.05)', borderColor: 'rgba(255,255,255,0.1)', color: '#f0f4ff' }}
-                        required
-                      />
-                      <motion.button
-                        type="button"
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                      </motion.button>
-                    </div>
-                  </div>
-
-                  {/* Forgot Password Link */}
-                  <div className="flex justify-end">
-                    <Link
-                      to="/forgot-password"
-                      className="text-sm font-semibold transition-colors hover:text-white" style={{ color: '#94a3b8' }}
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-
-                  {/* Submit Button */}
-                  <div>
-                    <motion.div
-                      whileHover={{ scale: 1.02, y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Button
-                        type="submit"
-                        className="w-full h-12 bg-white text-black hover:bg-white/90 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg"
-                        disabled={loading}
-                      >
-                        {loading ? (
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-                          />
-                        ) : (
-                          <>
-                            Sign In
-                            <ArrowRight className="h-5 w-5" />
-                          </>
-                        )}
-                      </Button>
-                    </motion.div>
-                  </div>
-                </form>
-
-                {/* Divider */}
-                <div className="relative my-8">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200 dark:border-slate-700" />
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 text-sm font-medium" style={{ background: 'transparent', color: '#4b5563' }}>Or continue with</span>
-                  </div>
-                </div>
-
-                {/* GitHub Button */}
-                <div>
-                  <div className="group relative">
-                    <motion.button
-                      type="button"
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full relative overflow-hidden rounded-xl bg-[#24292e] text-white p-4 flex items-center justify-center gap-3 shadow-lg hover:shadow-xl hover:bg-[#2f363d] transition-all duration-300"
-                      onClick={handleGitHubLogin}
-                      disabled={loading}
-                    >
-                      <motion.div
-                        animate={{ rotate: [0, -10, 10, -10, 0] }}
-                        transition={{
-                          duration: 2,
-                          ease: "easeInOut",
-                          times: [0, 0.2, 0.5, 0.8, 1],
-                          repeat: Infinity,
-                          repeatDelay: 3
-                        }}
-                        className="flex items-center justify-center"
-                      >
-                        <Github className="h-6 w-6" />
-                      </motion.div>
-                      <span className="font-bold text-base tracking-wide">
-                        {loading ? 'Connecting...' : 'Continue with GitHub'}
-                      </span>
-
-                      {/* Shine effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* Sign Up Link */}
-                <div className="mt-6 text-center">
-                  <p className="text-sm" style={{ color: '#6b7280' }}>
-                    Don't have an account?{' '}
-                    <Link
-                      to="/register"
-                      className="font-bold transition-colors hover:text-white" style={{ color: '#94a3b8' }}
-                    >
-                      Sign up
-                    </Link>
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Footer */}
-          <div className="text-center">
-            <Link to="/" className="inline-flex items-center gap-2 transition-colors font-medium" style={{ color: '#6b7280' }}>
-              ← Back to home
-            </Link>
-          </div>
+          <span>•</span>
+          <span>v2.0.4 rdy</span>
         </div>
       </div>
 
-      {/* Welcome Animation Overlay */}
+      {/* --- RIGHT: FORM PANE --- */}
+      <div className="flex flex-col items-center justify-center p-8 lg:p-24 relative bg-white">
+        <div className="w-full max-w-sm space-y-8 relative z-10">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900">Sign In</h2>
+            <p className="text-slate-500 text-sm">Enter your university credentials to continue.</p>
+          </div>
+
+          <ValidationAlert error={error} />
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold text-slate-700">University Email</Label>
+              <Input
+                type="email"
+                placeholder="name@university.edu"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900"
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label className="text-xs font-semibold text-slate-700">Password</Label>
+                <Link to="/forgot-password" px-4 py-2 className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">Forgot password?</Link>
+              </div>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900"
+                required
+              />
+            </div>
+
+            <Button type="submit" disabled={loading} className="w-full h-12 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In"}
+            </Button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-100" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-slate-400 font-medium">Or continue with</span></div>
+          </div>
+
+          <Button
+            onClick={() => loginWithGitHub()}
+            variant="outline"
+            className="w-full h-12 border border-slate-300 bg-white rounded-lg font-bold flex items-center justify-center gap-3 hover:bg-slate-50 transition-colors text-slate-900"
+          >
+            <Github size={18} className="text-slate-900" />
+            <span className="text-slate-900">Sign in with GitHub</span>
+          </Button>
+
+          <p className="text-center text-sm text-slate-500">
+            Don't have an account? <Link to="/register" className="text-slate-900 font-bold hover:underline ml-1">Create one</Link>
+          </p>
+        </div>
+      </div>
+
       <AnimatePresence>
         {showWelcome && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center" style={{ background: '#03050d' }}
-          >
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 1.1, opacity: 0 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="text-center"
-            >
-              <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl mx-auto mb-6 shadow-2xl flex items-center justify-center p-2 border border-slate-100 dark:border-slate-800">
-                <img src="/Logo.png" alt="Quasar Logo" className="w-full h-full object-cover rounded-2xl" />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-white/90 backdrop-blur-md">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+                <ShieldCheck size={32} className="text-white" />
               </div>
-              <h1 className="text-4xl md:text-6xl font-black mb-4 tracking-tight" style={{ color: '#f0f4ff' }}>
-                Welcome back
-              </h1>
-              <p className="text-lg text-slate-500 dark:text-slate-400">Taking you to your dashboard...</p>
-            </motion.div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-900">Identity Verified</h1>
+              <p className="text-slate-500 mt-2">Redirecting to your dashboard...</p>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

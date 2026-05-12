@@ -129,10 +129,15 @@ public class AuthService implements iAuthService {
     /**
      * Get current authenticated user
      */
+    /**
+     * Get current authenticated user
+     */
     public UserResponse getCurrentUser(UserPrincipal currentUser) {
+        if (currentUser == null) {
+            throw new UnauthorizedException("User not authenticated");
+        }
         User user = userRepository.findById(currentUser.getId())
                 .orElseThrow(() -> new UnauthorizedException(Constants.USER_NOT_FOUND));
-
         return new UserResponse(user);
     }
 
