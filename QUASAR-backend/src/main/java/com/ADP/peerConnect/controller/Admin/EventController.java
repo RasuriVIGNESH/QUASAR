@@ -36,11 +36,15 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
+//    @GetMapping("/upcoming")
+//    public ResponseEntity<List<EventsResponse>> getUpcomingEvents() {
+//        List<Event> events = eventService.getUpcomingEvents();
+//        List<EventsResponse> responses = events.stream().map(EventsResponse::new).collect(Collectors.toList());
+//        return ResponseEntity.ok(responses);
+//    }
     @GetMapping("/upcoming")
-    public ResponseEntity<List<EventsResponse>> getUpcomingEvents() {
-        List<Event> events = eventService.getUpcomingEvents();
-        List<EventsResponse> responses = events.stream().map(EventsResponse::new).collect(Collectors.toList());
-        return ResponseEntity.ok(responses);
+    public ResponseEntity<List<Event>> getUpcomingEvents() {
+        return ResponseEntity.ok(eventService.getUpcomingEvents());
     }
 
     /**

@@ -48,7 +48,7 @@ public class publicEndpoints {
     @Autowired
     private UserService userService;
 
-    @GetMapping("/health")
+    @GetMapping("/api/health")
     public String status() {
         return "API is running";
     }

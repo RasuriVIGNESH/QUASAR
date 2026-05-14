@@ -73,7 +73,7 @@ public class SecurityConfig {
                 "/.well-known/**",
                 "/api/colleges", "/api/colleges/**",
                 "/api/count",
-                 "/health",
+                 "/api/health",
                 "/api/branches", "/api/branches/**",
                 "/api/RecentProjects","/api/popularSkills",
                 "/api/graduation-years","/api/predefined-skills/**",

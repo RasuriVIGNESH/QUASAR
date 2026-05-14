@@ -1,424 +1,272 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-// Icons
-import {
-    Search,
-    Plus,
-    ArrowLeft,
-    Trash2,
-    CheckCircle,
-    Globe,
-    Zap,
-    BarChart3,
-    Target,
-    Edit3,
-    Loader2,
-    RefreshCw,
-    Layers,
-    LayoutGrid,
-    Cpu
-} from 'lucide-react';
-
-// UI Components
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { useAuth } from '../../contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+    Plus, Trash2, TrendingUp, Zap, Search,
+    Code, Loader2, AlertCircle
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-// Services
-import skillsService from '../../services/skillsService';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
-/* ─── CONSTANTS & THEME ──────────────────────────────────────────────────── */
-const THEME = {
-    bg: '#020617',
-    surface: '#0B1120',
-    indigo: '#818CF8',
-    cyan: '#22D3EE'
-};
-
-const LEVELS = [
-    { value: 'BEGINNER', label: 'Beginner', short: 'Beg', pct: 25, hue: '#10b981' },
-    { value: 'INTERMEDIATE', label: 'Intermediate', short: 'Int', pct: 55, hue: '#3b82f6' },
-    { value: 'ADVANCED', label: 'Advanced', short: 'Adv', pct: 85, hue: '#a855f7' },
-    { value: 'VIBE_CODING', label: 'Vibe Coding', short: 'Vibe', pct: 100, hue: '#f43f5e' },
-];
-
-const getLevel = (v) => LEVELS.find(l => l.value === v) || LEVELS[0];
-const getSkillName = (s) => s?.skill?.name || s?.skillName || s?.name || '—';
-const getSkillCategory = (s) => s?.skill?.category || s?.category || 'Other';
-
-/* ─── HOOK: DEBOUNCE ─────────────────────────────────────────────────────── */
-function useDebounce(value, delay) {
-    const [debouncedValue, setDebouncedValue] = useState(value);
-    useEffect(() => {
-        const handler = setTimeout(() => setDebouncedValue(value), delay);
-        return () => clearTimeout(handler);
-    }, [value, delay]);
-    return debouncedValue;
-}
-
-/* ─── COMPONENT: SKILL CARD ─────────────────────────────────────────────── */
-const SkillCard = ({ skill, onRemove, onEdit, index }) => {
-    const name = getSkillName(skill);
-    const cat = getSkillCategory(skill);
-    const lvl = getLevel(skill.level);
-    const isDraft = String(skill.id).startsWith('temp-');
-
-    return (
-        <motion.div
-            layout
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ delay: index * 0.02 }}
-            className="group relative bg-[#0a0a0a] border border-white/5 rounded-2xl p-5 md:p-6 hover:border-indigo-500/30 transition-all duration-300"
-        >
-            <div className="absolute top-0 left-8 right-8 h-[1px] bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-
-            <div className="flex justify-between items-start mb-5">
-                <div className="min-w-0">
-                    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20 block mb-1">{cat}</span>
-                    <h3 className="font-serif italic text-xl md:text-2xl text-slate-100 leading-tight truncate">{name}</h3>
-                </div>
-                <div className="flex gap-1 md:opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onClick={() => onEdit(skill)} className="p-2 text-white/30 hover:text-cyan-400 transition-colors"><Edit3 size={14} /></button>
-                    <button onClick={() => onRemove(skill.id)} className="p-2 text-white/30 hover:text-rose-400 transition-colors"><Trash2 size={14} /></button>
-                </div>
-            </div>
-
-            <div className="space-y-3">
-                <div className="flex justify-between items-end">
-                    <span className="text-[9px] font-bold text-white/10 uppercase tracking-widest">Efficiency</span>
-                    <span className="font-serif italic text-xs" style={{ color: lvl.hue }}>{lvl.label}</span>
-                </div>
-                <div className="h-[2px] w-full bg-white/5 rounded-full overflow-hidden">
-                    <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${lvl.pct}%` }}
-                        className="h-full"
-                        style={{ backgroundColor: lvl.hue, boxShadow: `0 0 10px ${lvl.hue}40` }}
-                    />
-                </div>
-            </div>
-            {isDraft && <div className="mt-3 text-[8px] font-black text-amber-500 tracking-widest text-right">UNSAVED TO REGISTRY</div>}
-        </motion.div>
-    );
-};
-
-/* ─── MAIN COMPONENT ─────────────────────────────────────────────────────── */
 export default function SkillMastery() {
-    const { currentUser } = useAuth();
-    const navigate = useNavigate();
-
-    // State
-    const [userSkills, setUserSkills] = useState([]);
-    const [rawRegistry, setRawRegistry] = useState([]);
-    const [categories, setCategories] = useState(['All']);
+    const { userProfile } = useAuth();
+    const [skills, setSkills] = useState([]);
+    const [predefinedSkills, setPredefinedSkills] = useState([]);
+    const [newSkill, setNewSkill] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
-    const [regLoading, setRegLoading] = useState(false);
-    const [search, setSearch] = useState('');
-    const debouncedSearch = useDebounce(search, 500);
-    const [activeCategory, setActiveCategory] = useState('All');
-
-    const [dialogOpen, setDialogOpen] = useState(false);
-    const [editingSkill, setEditingSkill] = useState(null);
-    const [formData, setFormData] = useState({ name: '', level: 'BEGINNER', category: 'Other' });
-    const [toast, setToast] = useState(null);
-
-    // Initial Data Fetch
-    useEffect(() => { if (currentUser) { loadArsenal(); loadMeta(); } }, [currentUser]);
-
-    const loadArsenal = async () => {
-        setLoading(true);
-        try {
-            const res = await skillsService.getUserSkillsByUserId(currentUser?.id);
-            setUserSkills(res?.data || []);
-        } catch (e) { showToast("Arsenal sync failed", "error"); }
-        setLoading(false);
-    };
-
-    const loadMeta = async () => {
-        try {
-            const [catRes, preRes] = await Promise.all([
-                skillsService.getSkillCategories(),
-                skillsService.getPredefinedSkills()
-            ]);
-            // Parsing based on your backend response shape
-            const catData = catRes?.data || catRes || [];
-            setCategories(['All', ...catData.map(c => typeof c === 'string' ? c : c.name)]);
-            setRawRegistry(preRes?.data || []);
-        } catch (e) { console.error("Metadata load failed"); }
-    };
-
-    // Filter Logic: Show only skills user does NOT have
-    const filteredRegistry = useMemo(() => {
-        const ownedSet = new Set(userSkills.map(s => getSkillName(s).toLowerCase()));
-        return rawRegistry.filter(rs => !ownedSet.has(getSkillName(rs).toLowerCase()));
-    }, [userSkills, rawRegistry]);
-
-    // Search Logic (Debounced Global Search)
-    const handleGlobalSearch = useCallback(async (query) => {
-        if (!query) { loadMeta(); return; }
-        setRegLoading(true);
-        try {
-            const res = await skillsService.searchSkills(query, 0, 20);
-            setRawRegistry(res?.data?.content || []);
-        } catch (e) { console.error("Search failed"); }
-        setRegLoading(false);
-    }, []);
+    const [adding, setAdding] = useState(false);
+    const [deleting, setDeleting] = useState(null);
 
     useEffect(() => {
-        handleGlobalSearch(debouncedSearch);
-    }, [debouncedSearch, handleGlobalSearch]);
+        const fetchSkills = async () => {
+            try {
+                setLoading(true);
+                const token = localStorage.getItem('token');
+                const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-    // CRUD
-    const handleSave = async () => {
-        if (!formData.name) return;
-        try {
-            if (editingSkill && !String(editingSkill.id).startsWith('temp-')) {
-                await skillsService.updateUserSkill(editingSkill.id, { level: formData.level, experience: "0" });
-                showToast("Entry refined");
-            } else {
-                const draft = { id: `temp-${Date.now()}`, skill: { name: formData.name, category: formData.category }, level: formData.level };
-                setUserSkills(prev => [draft, ...prev]);
-                showToast("Added to draft list");
+                const skillsRes = await fetch(`${API_BASE_URL}/students/users/${userProfile?.id}/skills`, { headers });
+                const userSkills = await skillsRes.json();
+                setSkills(Array.isArray(userSkills) ? userSkills : []);
+
+                const predRes = await fetch(`${API_BASE_URL}/skills/predefined`, { headers });
+                const predData = await predRes.json();
+
+                if (predData.success && predData.data) {
+                    const transformed = Object.entries(predData.data).map(([name, category]) => ({
+                        name,
+                        category
+                    }));
+                    setPredefinedSkills(transformed);
+                }
+            } catch (err) {
+                console.error('Fetch Error:', err);
+                toast.error('Failed to sync skill registry');
+            } finally {
+                setLoading(false);
             }
-            setDialogOpen(false);
-            setEditingSkill(null);
-            loadArsenal();
-        } catch (e) { showToast("Write error", "error"); }
+        };
+
+        if (userProfile?.id) fetchSkills();
+    }, [userProfile?.id]);
+
+    const mapLevelToPct = (level) => {
+        switch (level?.toUpperCase()) {
+            case 'EXPERT': return 100;
+            case 'ADVANCED': return 80;
+            case 'INTERMEDIATE': return 60;
+            case 'BEGINNER': return 30;
+            default: return 10;
+        }
     };
 
-    const handleSyncBatch = async () => {
-        const drafts = userSkills.filter(s => String(s.id).startsWith('temp-'));
-        setLoading(true);
-        try {
-            await skillsService.addBatchSkills(drafts, currentUser);
-            showToast("Quasar registry synced");
-            loadArsenal();
-        } catch (e) { showToast("Batch sync failed", "error"); }
-        finally { setLoading(false); }
+    const getProgressColor = (level) => {
+        const pct = mapLevelToPct(level);
+        if (pct >= 80) return "bg-emerald-500";
+        if (pct >= 50) return "bg-indigo-500";
+        return "bg-amber-500";
     };
 
-    const handleRemove = async (id) => {
-        try {
-            if (!String(id).startsWith('temp-')) await skillsService.deleteUserSkill(id);
-            setUserSkills(prev => prev.filter(s => s.id !== id));
-            showToast("Capability removed");
-        } catch (e) { showToast("Action failed", "error"); }
-    };
-
-    const showToast = (msg, type = 'success') => {
-        setToast({ msg, type });
-        setTimeout(() => setToast(null), 3000);
-    };
-
-    const arsenalDisplay = userSkills.filter(s => {
-        const n = getSkillName(s).toLowerCase().includes(search.toLowerCase());
-        const c = activeCategory === 'All' || getSkillCategory(s) === activeCategory;
-        return n && c;
+    const filteredUserSkills = skills.filter(item => {
+        const name = item.skill?.name?.toLowerCase() || "";
+        return name.includes(searchTerm.toLowerCase());
     });
 
+    const suggestedSkills = useMemo(() => {
+        const userSkillNames = new Set(skills.map(s => s.skill?.name?.toLowerCase()));
+        return predefinedSkills.filter(ps => !userSkillNames.has(ps.name.toLowerCase()));
+    }, [skills, predefinedSkills]);
+
+    const handleAddSkill = async (skillName) => {
+        const name = skillName || newSkill;
+        if (!name.trim()) return;
+
+        try {
+            setAdding(true);
+            const res = await fetch(`${API_BASE_URL}/skills`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ name: name, category: 'General', level: 'BEGINNER' })
+            });
+
+            if (res.ok) {
+                const added = await res.json();
+                setSkills(prev => [added, ...prev]);
+                setNewSkill('');
+                toast.success(`${name} added!`);
+            }
+        } catch (err) {
+            toast.error('Failed to add skill');
+        } finally {
+            setAdding(false);
+        }
+    };
+
+    const handleDeleteSkill = async (id) => {
+        try {
+            setDeleting(id);
+            const res = await fetch(`${API_BASE_URL}/skills/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+            });
+            if (res.ok) {
+                setSkills(prev => prev.filter(s => s.id !== id));
+                toast.success('Skill removed');
+            }
+        } catch (err) {
+            toast.error('Action failed');
+        } finally {
+            setDeleting(null);
+        }
+    };
+
     return (
-        <div className="min-h-screen text-slate-200 selection:bg-indigo-500/30" style={{ backgroundColor: THEME.bg, fontFamily: '"Outfit", sans-serif' }}>
-            <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&family=Outfit:wght@300;400;500;700;900&display=swap');
-                .glass-nav { backdrop-filter: blur(20px) saturate(180%); background: rgba(2, 6, 23, 0.7); }
-                .hide-scroll::-webkit-scrollbar { display: none; }
-                .quasar-glow { background: radial-gradient(circle at 50% -20%, rgba(129, 140, 248, 0.1) 0%, transparent 70%); }
-            `}</style>
-
-            {/* ── HEADER ── */}
-            <header className="sticky top-0 z-50 border-b border-white/5 glass-nav">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-                    <div className="flex items-center gap-8">
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/')}>
-                            <img src="/Logo.png" alt="Quasar" className="w-10 h-10 rounded-xl" loading="lazy" />
-                            <h1 className="font-serif italic text-2xl text-white tracking-tight">Quasar</h1>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4">
-                        {userSkills.some(s => String(s.id).startsWith('temp-')) && (
-                            <button onClick={handleSyncBatch} className="hidden sm:flex items-center gap-2 px-4 py-2 bg-emerald-500 text-black text-[10px] font-black uppercase tracking-widest hover:bg-emerald-400 transition-all rounded-lg shadow-lg shadow-emerald-500/20">
-                                <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> Sync Registry
-                            </button>
-                        )}
-                        <button
-                            onClick={() => { setEditingSkill(null); setFormData({ name: '', level: 'BEGINNER', category: 'Other' }); setDialogOpen(true); }}
-                            className="bg-white text-black px-6 py-2 text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all rounded-lg shadow-xl"
-                        >
-                            + Acquire Skill
-                        </button>
-                    </div>
+        <div className="min-h-screen bg-[#F8FAFC] pb-20">
+            <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-4 lg:px-8 py-6">
+                <div className="max-w-7xl mx-auto">
+                    <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Skills & Mastery</h2>
+                    <p className="text-sm text-slate-500 font-medium">Quantify your technical expertise and intelligence.</p>
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-4 md:px-6 py-10 grid grid-cols-12 gap-8 lg:gap-12 relative quasar-glow">
+            <main className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                {/* ── SIDEBAR: METRICS ── */}
-                <aside className="hidden lg:block lg:col-span-3 space-y-10">
-                    <section>
-                        <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                            <BarChart3 size={12} /> Analysis
-                        </h4>
-                        <div className="bg-white/[0.02] border border-white/5 p-8 rounded-[32px] space-y-8">
-                            <div>
-                                <div className="font-serif italic text-5xl text-indigo-400 leading-none">{userSkills.length}</div>
-                                <div className="text-[9px] font-black text-slate-500 uppercase tracking-[0.2em] mt-3">Active Capabilities</div>
-                            </div>
-                            <div className="space-y-3 pt-6 border-t border-white/5">
-                                {LEVELS.map(l => (
-                                    <div key={l.value} className="flex justify-between items-center group">
-                                        <span className="text-[10px] font-bold text-slate-600 uppercase group-hover:text-slate-400 transition-colors">{l.short}</span>
-                                        <span className="font-serif italic text-base" style={{ color: l.hue }}>
-                                            {userSkills.filter(s => s.level === l.value).length}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </section>
-                </aside>
+                    {/* LEFT COLUMN: SEARCH & SKILLS LIST (COL 8) */}
+                    <div className="lg:col-span-8 space-y-6">
 
-                {/* ── CENTER: ARSENAL ── */}
-                <section className="col-span-12 lg:col-span-6">
-                    <div className="relative mb-10 group">
-                        <Search className={`absolute left-0 top-1/2 -translate-y-1/2 transition-colors ${regLoading ? 'text-cyan-400 animate-pulse' : 'text-slate-600'}`} size={20} />
-                        <input
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder="Filter arsenal or search Quasar database..."
-                            className="w-full bg-transparent border-b border-white/10 py-4 pl-10 text-xl font-serif italic focus:outline-none focus:border-indigo-500/50 transition-colors placeholder:text-slate-700"
-                        />
-                    </div>
-
-                    <div className="flex gap-2 mb-8 overflow-x-auto hide-scroll pb-2 touch-pan-x">
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => setActiveCategory(cat)}
-                                className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap border ${activeCategory === cat ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white/5 text-slate-500 border-white/5 hover:border-white/20'}`}
-                            >
-                                {cat}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <AnimatePresence mode="popLayout">
-                            {arsenalDisplay.map((s, i) => (
-                                <SkillCard key={s.id} skill={s} index={i} onRemove={handleRemove} onEdit={(skill) => { setEditingSkill(skill); setFormData({ name: getSkillName(skill), level: skill.level, category: getSkillCategory(skill) }); setDialogOpen(true); }} />
-                            ))}
-                        </AnimatePresence>
-                    </div>
-
-                    {arsenalDisplay.length === 0 && (
-                        <div className="py-32 text-center border border-dashed border-white/5 rounded-[40px]">
-                            <Target size={40} className="mx-auto mb-4 text-white/5" />
-                            <p className="font-serif italic text-2xl text-slate-700">The arsenal is empty.</p>
-                        </div>
-                    )}
-                </section>
-
-                {/* ── RIGHT: REGISTRY ── */}
-                <aside className="col-span-12 lg:col-span-3">
-                    <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-                        <Globe size={12} /> Discovery
-                    </h4>
-                    <div className="space-y-2 max-h-[70vh] overflow-y-auto hide-scroll pr-1">
-                        <AnimatePresence mode="popLayout">
-                            {filteredRegistry.map((ps) => (
-                                <motion.div
-                                    layout
-                                    initial={{ opacity: 0, x: 10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    key={getSkillName(ps)}
-                                    className="group flex items-center justify-between p-4 bg-[#0b1120]/50 border border-white/5 rounded-2xl hover:border-indigo-500/40 transition-all"
-                                >
-                                    <div className="min-w-0">
-                                        <div className="text-xs font-bold text-white/80 truncate">{getSkillName(ps)}</div>
-                                        <div className="text-[9px] text-slate-500 uppercase tracking-tight mt-0.5">{getSkillCategory(ps)}</div>
-                                    </div>
-                                    <button
-                                        onClick={() => { setFormData({ name: getSkillName(ps), category: getSkillCategory(ps), level: 'BEGINNER' }); setDialogOpen(true); }}
-                                        className="p-2 text-white/20 hover:text-cyan-400 transition-colors"
-                                    >
-                                        <Plus size={16} />
-                                    </button>
-                                </motion.div>
-                            ))}
-                        </AnimatePresence>
-                        {filteredRegistry.length === 0 && (
-                            <div className="p-10 text-center bg-white/[0.02] border border-white/5 rounded-3xl">
-                                <Layers size={24} className="mx-auto mb-3 text-white/5" />
-                                <p className="text-[10px] font-black uppercase text-slate-600 tracking-widest leading-relaxed">System Exhausted</p>
-                            </div>
-                        )}
-                    </div>
-                </aside>
-            </main>
-
-            {/* ── MODAL ── */}
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-                <DialogContent className="bg-[#0a0a0a] border border-white/10 p-10 rounded-[40px] max-w-md mx-auto">
-                    <DialogHeader>
-                        <DialogTitle className="font-serif italic text-3xl text-white">
-                            {editingSkill ? 'Refine Logic' : 'Acquire Logic'}
-                        </DialogTitle>
-                    </DialogHeader>
-
-                    <div className="space-y-8 my-10">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600">Cognitive Identity</label>
-                            <input
-                                disabled={editingSkill && !String(editingSkill.id).startsWith('temp-')}
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-white font-serif italic text-xl focus:outline-none focus:border-indigo-500 transition-colors disabled:opacity-30"
+                        {/* SEARCH */}
+                        <div className="relative group">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={20} />
+                            <Input
+                                className="pl-12 bg-white border-slate-200 h-12 rounded-2xl shadow-sm focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                placeholder="Search your registered skills..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
 
-                        <div className="space-y-3">
-                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-600">Efficiency Grade</label>
-                            <div className="grid grid-cols-2 gap-2">
-                                {LEVELS.map(l => (
-                                    <button
-                                        key={l.value}
-                                        onClick={() => setFormData({ ...formData, level: l.value })}
-                                        className={`p-4 text-[10px] font-black uppercase tracking-widest rounded-2xl border transition-all ${formData.level === l.value ? 'bg-indigo-600 text-white border-indigo-600 shadow-2xl' : 'bg-white/5 border-white/5 text-slate-500 hover:border-white/20'}`}
-                                    >
-                                        {l.label}
-                                    </button>
-                                ))}
-                            </div>
+                        {/* SKILLS GRID */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {loading ? (
+                                [1, 2, 3, 4].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)
+                            ) : filteredUserSkills.length === 0 ? (
+                                <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-slate-100">
+                                    <Zap size={40} className="mx-auto text-slate-200 mb-4" />
+                                    <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Registry Empty</p>
+                                </div>
+                            ) : (
+                                filteredUserSkills.map(item => (
+                                    <motion.div key={item.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                        <Card className="hover:shadow-md transition-all border-slate-200 rounded-2xl group">
+                                            <CardContent className="p-5">
+                                                <div className="flex justify-between items-start mb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                                                            <Code size={18} />
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-bold text-slate-900">{item.skill?.name}</p>
+                                                            <Badge variant="secondary" className="bg-slate-100 text-slate-500 text-[9px] border-none font-bold uppercase mt-1">
+                                                                {item.skill?.category}
+                                                            </Badge>
+                                                        </div>
+                                                    </div>
+                                                    <button onClick={() => handleDeleteSkill(item.id)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all">
+                                                        {deleting === item.id ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                                                    </button>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <div className="flex justify-between text-[10px] font-black text-slate-400 uppercase tracking-tighter">
+                                                        <span>Logic Level</span>
+                                                        <span className="text-indigo-600 font-bold">{item.level}</span>
+                                                    </div>
+                                                    <Progress
+                                                        value={mapLevelToPct(item.level)}
+                                                        className="h-1.5 bg-slate-100"
+                                                        indicatorClassName={getProgressColor(item.level)}
+                                                    />
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                    </motion.div>
+                                ))
+                            )}
                         </div>
                     </div>
 
-                    <DialogFooter>
-                        <button
-                            onClick={handleSave}
-                            className="w-full bg-indigo-600 text-white py-5 rounded-2xl text-[11px] font-black uppercase tracking-[0.3em] hover:bg-cyan-500 transition-all shadow-2xl shadow-indigo-500/20"
-                        >
-                            {editingSkill ? 'Confirm Updates' : 'Add to Quasar Arsenal'}
-                        </button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    {/* RIGHT COLUMN: MANUAL ENTRY & RECOMMENDATIONS (COL 4) */}
+                    <div className="lg:col-span-4 space-y-6">
 
-            {/* ── NOTIFICATIONS ── */}
-            <AnimatePresence>
-                {toast && (
-                    <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="fixed bottom-10 right-10 z-[100]">
-                        <div className={`px-6 py-4 rounded-2xl border font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl flex items-center gap-3 ${toast.type === 'error' ? 'bg-rose-600 text-white border-rose-500' : 'bg-white text-black border-white'}`}>
-                            {toast.type === 'success' ? <CheckCircle size={16} /> : <RefreshCw size={16} />}
-                            {toast.msg}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        {/* MANUAL ENTRY CARD (Shifted Here) */}
+                        <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden bg-white">
+                            <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
+                                <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Add New Protocol</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="flex flex-col gap-3">
+                                    <Input
+                                        placeholder="e.g. React, AWS, Docker"
+                                        value={newSkill}
+                                        onChange={(e) => setNewSkill(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleAddSkill()}
+                                        className="rounded-xl border-slate-200 h-11"
+                                    />
+                                    <Button
+                                        onClick={() => handleAddSkill()}
+                                        disabled={adding}
+                                        className="bg-indigo-600 hover:bg-indigo-700 w-full h-11 rounded-xl shadow-lg shadow-indigo-100 font-bold"
+                                    >
+                                        {adding ? <Loader2 className="animate-spin" /> : <><Plus size={18} className="mr-2" /> Add Skill</>}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* RECOMMENDATIONS CARD */}
+                        <Card className="border-indigo-100 bg-indigo-50/30 rounded-3xl overflow-hidden">
+                            <CardHeader className="border-b border-indigo-100 bg-white/50 py-4 px-6">
+                                <CardTitle className="text-xs font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
+                                    <TrendingUp size={16} /> Logic suggestions
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-4 space-y-3">
+                                {suggestedSkills.slice(0, 6).map(ps => (
+                                    <div key={ps.name} className="flex items-center justify-between bg-white p-3 rounded-2xl border border-indigo-50 shadow-sm group hover:border-indigo-300 transition-all">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-slate-800 truncate">{ps.name}</p>
+                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-tight truncate">{ps.category}</p>
+                                        </div>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            disabled={adding}
+                                            onClick={() => handleAddSkill(ps.name)}
+                                            className="h-8 w-8 p-0 rounded-lg text-indigo-600 hover:bg-indigo-600 hover:text-white shrink-0"
+                                        >
+                                            <Plus size={18} />
+                                        </Button>
+                                    </div>
+                                ))}
+                                {suggestedSkills.length === 0 && !loading && (
+                                    <p className="text-xs text-slate-400 text-center py-6">All suggestions integrated.</p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                </div>
+            </main>
         </div>
     );
 }

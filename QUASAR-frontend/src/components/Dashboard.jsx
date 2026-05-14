@@ -1,290 +1,235 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { dashboardService } from '../services/dashboardService';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
-  Users, LogOut, Plus, Search, Briefcase, ArrowUpRight,
-  MessageSquare, User, Zap, Bell, ChevronRight,
-  LayoutDashboard, Settings, TrendingUp
+  Users, Plus, Briefcase, Bell, Calendar, MapPin,
+  ArrowRight, AlertCircle, Clock, Zap
 } from 'lucide-react';
+import { toast } from 'sonner';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
 
 export default function Dashboard() {
-  const { userProfile, logout } = useAuth();
+  const { userProfile } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
-  const [projectCount, setProjectCount] = useState(0);
+  const [myProjects, setMyProjects] = useState([]);
+  const [invitations, setInvitations] = useState([]);
+  const [myRequests, setMyRequests] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const activePage = location.pathname;
+  const formatDate = (dateString) => {
+    if (!dateString) return "TBA";
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short', day: 'numeric', year: 'numeric'
+    });
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      if (!userProfile) return;
       try {
-        const [countRes] = await Promise.allSettled([
-          dashboardService.getDashboardCounts()
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+
+        const [projectsRes, invitesRes, requestsRes, eventsRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/projects/my-projects?page=0&size=6`, { headers }),
+          fetch(`${API_BASE_URL}/projects/invitations/received`, { headers }),
+          fetch(`${API_BASE_URL}/join-requests/my-requests`, { headers }),
+          fetch(`${API_BASE_URL}/events/upcoming`, { headers })
         ]);
-        if (countRes.status === 'fulfilled' && countRes.value.success) {
-          setProjectCount(countRes.value.data.projectsCount || 0);
-        }
-      } catch (error) {
-        console.error(error);
+
+        const projectsData = await projectsRes.json();
+        setMyProjects(projectsData?.content || []);
+
+        const invitesData = await invitesRes.json();
+        setInvitations(invitesData?.content || []);
+
+        const requestsData = await requestsRes.json();
+        setMyRequests(Array.isArray(requestsData) ? requestsData : []);
+
+        const eventsData = await eventsRes.json();
+        setUpcomingEvents(Array.isArray(eventsData) ? eventsData : []);
+
+      } catch (err) {
+        console.error('Fetch Error:', err);
+        setError("Connection refused. Verify your logic core is running.");
       } finally {
         setLoading(false);
       }
     };
-    fetchDashboardData();
+
+    if (userProfile) fetchDashboardData();
   }, [userProfile]);
 
-  const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, route: '/dashboard' },
-    { id: 'discover', label: 'Discover', icon: Search, route: '/discover/projects' },
-    { id: 'create-project', label: 'Create Project', icon: Plus, route: '/projects/create' },
-    { id: 'my-projects', label: 'My Projects', icon: Briefcase, route: '/projects/my-projects' },
-    { id: 'skills', label: 'Tech Stack', icon: Zap, route: '/skills' },
-    { id: 'profile', label: 'Profile', icon: User, route: '/profile' }
-  ];
-
-  const quickStats = [
-    {
-      label: 'Active Projects',
-      value: projectCount,
-      icon: Briefcase,
-      route: '/projects/my-projects',
-      color: 'from-teal-50 to-cyan-50',
-      iconColor: 'text-teal-600'
-    },
-    {
-      label: 'Pending Invites',
-      value: 3,
-      icon: Bell,
-      route: '/messages',
-      color: 'from-amber-50 to-orange-50',
-      iconColor: 'text-amber-600'
-    },
-    {
-      label: 'Network',
-      value: userProfile?.connectionCount || 0,
-      icon: Users,
-      route: '/discover/students',
-      color: 'from-blue-50 to-indigo-50',
-      iconColor: 'text-blue-600'
-    }
-  ];
+  const notificationCount = invitations.length + myRequests.filter(r => r.status === 'PENDING').length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 text-slate-900 font-sans antialiased flex">
-
-      {/* --- SIDEBAR NAVIGATION --- */}
-      <aside className="fixed left-0 top-0 h-screen w-72 bg-white border-r border-slate-200 z-40 hidden lg:flex flex-col">
-        <div className="p-6 border-b border-slate-100">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-teal-500 to-cyan-600 flex items-center justify-center shadow-md">
-              <span className="text-white font-bold text-lg">Q</span>
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-slate-900">Quasar</h1>
-              <p className="text-xs text-slate-500">Project Hub</p>
-            </div>
-          </div>
-        </div>
-
-        <nav className="flex-1 p-4 space-y-2 mt-4">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activePage === item.route;
-            return (
-              <button
-                key={item.id}
-                onClick={() => navigate(item.route)}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative
-                  ${isActive
-                    ? 'bg-teal-50 text-teal-700 border-l-2 border-teal-600 shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'}`}
-              >
-                <Icon size={20} className={isActive ? 'text-teal-600' : 'group-hover:text-teal-600'} />
-                <span className="font-medium text-sm flex-1 text-left">{item.label}</span>
-                {item.badge && !isActive && (
-                  <span className="px-2 py-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full">
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="p-4 border-t border-slate-200">
-          <button
-            onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-600 hover:bg-red-50 hover:text-red-600 transition-all font-medium text-sm"
-          >
-            <LogOut size={18} />
-            <span>Sign Out</span>
-          </button>
-        </div>
-      </aside>
-
-      {/* --- MAIN CONTENT --- */}
-      <main className="flex-1 lg:ml-72 min-h-screen">
-
-        {/* HEADER: User Profile (Tight Corners) */}
-        <header className="sticky top-0 z-30 bg-white border-b border-slate-200 px-8 py-4 flex items-center justify-between shadow-sm">
+    <div className="min-h-screen bg-[#F8FAFC] pb-20">
+      {/* HEADER */}
+      <header className="bg-white border-b border-slate-200 px-4 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 tracking-tight">Overview</h2>
+            <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+              Welcome, {userProfile?.firstName}
+            </h2>
+            <p className="text-slate-500 font-medium mt-1">Logic core status: Operational</p>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* USER PROFILE CARD */}
-            <div className="flex items-center gap-3 bg-gradient-to-r from-teal-50 to-cyan-50 border border-teal-100 p-1.5 pr-4 rounded-lg">
-              <div className="w-8 h-8 bg-teal-600 rounded text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                {userProfile?.firstName?.charAt(0)}
-              </div>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-slate-900 leading-none">
-                    {userProfile?.firstName} {userProfile?.lastName}
-                  </span>
-                  <span className="text-[9px] font-bold text-teal-600 uppercase tracking-tighter bg-white px-1 border border-teal-100 rounded">@student</span>
-                </div>
-                <button
-                  onClick={() => navigate('/profile')}
-                  className="text-[10px] font-semibold text-teal-700 hover:text-teal-900 uppercase tracking-wider mt-0.5 text-left transition-colors"
-                >
-                  View Profile
-                </button>
-              </div>
+          <div className="flex items-center gap-3">
+            <Button onClick={() => navigate('/projects/create')} className="bg-indigo-600 hover:bg-indigo-700 h-11 px-6 rounded-xl font-bold">
+              <Plus size={18} className="mr-2" /> Create Project
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+          {/* LEFT: PROJECTS & REQUESTS */}
+          <div className="lg:col-span-8 space-y-8">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <Briefcase className="text-indigo-600" size={20} /> My Workspace
+              </h3>
+              <Button variant="ghost" size="sm" onClick={() => navigate('/projects/my-projects')} className="text-indigo-600 font-bold hover:bg-indigo-50">
+                View All <ArrowRight size={16} className="ml-2" />
+              </Button>
             </div>
-            <div className="h-6 w-px bg-slate-200 mx-1" />
-            <button className="p-2 text-slate-400 hover:text-teal-600 transition-colors">
-              <Settings size={20} />
-            </button>
-          </div>
-        </header>
 
-        <div className="p-8">
-          <section className="mb-10">
-            <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-2">
-              Welcome back, {userProfile?.firstName}!
-            </h1>
-            <p className="text-slate-500 text-sm font-medium">Here's what's happening with your workspace.</p>
-          </section>
-
-          {/* QUICK STATS (INTERACTIVE) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {quickStats.map((stat, idx) => (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                whileHover={{ y: -4 }}
-                onClick={() => navigate(stat.route)}
-                className={`bg-gradient-to-br ${stat.color} border border-slate-200 rounded-xl p-6 hover:shadow-lg transition-all cursor-pointer group`}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-lg bg-white flex items-center justify-center ${stat.iconColor} shadow-sm group-hover:shadow-md transition-shadow`}>
-                    <stat.icon size={24} />
-                  </div>
-                  <TrendingUp size={16} className="text-slate-400" />
-                </div>
-                <p className="text-3xl font-bold text-slate-900 mb-1">{stat.value}</p>
-                <p className="text-sm font-medium text-slate-600">{stat.label}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-8">
-            {/* Recent Projects */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-slate-900">Recent Builds</h3>
-                <button
-                  onClick={() => navigate('/projects/my-projects')}
-                  className="text-teal-600 hover:text-teal-700 font-semibold text-sm flex items-center gap-2 group"
-                >
-                  View All <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {[1, 2].map((project, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg hover:border-teal-200 transition-all duration-300 cursor-pointer group"
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <h4 className="text-base font-bold text-slate-900 group-hover:text-teal-600 transition-colors">
-                          AI Study Assistant Node
-                        </h4>
-                        <p className="text-sm text-slate-600 mt-1">ML-based platform to help students with coursework</p>
-                      </div>
-                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-teal-50 text-teal-700">
-                        In Progress
-                      </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {loading ? (
+                [1, 2].map(i => <Skeleton key={i} className="h-44 rounded-2xl" />)
+              ) : myProjects.map((p) => (
+                <Card key={p.id} className="hover:shadow-xl transition-all border-slate-200 rounded-2xl group cursor-pointer" onClick={() => navigate(`/projects/${p.id}`)}>
+                  <CardContent className="p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <h4 className="font-bold text-slate-900 group-hover:text-indigo-600 transition-colors line-clamp-1">{p.title}</h4>
+                      <Badge className="bg-slate-100 text-slate-600 border-none font-bold text-[9px] uppercase">{p.status}</Badge>
                     </div>
+                    <p className="text-sm text-slate-500 line-clamp-2 mb-6 leading-relaxed">{p.description}</p>
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase">Lead: {p.lead?.firstName}</span>
+                      <div className="flex items-center gap-1 text-slate-400 text-[10px] font-bold">
+                        <Users size={12} /> {p.currentTeamSize}/{p.maxTeamSize}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-                    <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                      <div className="flex items-center gap-2">
-                        <div className="flex -space-x-2">
-                          {[1, 2, 3].map((_, i) => (
-                            <div key={i} className="w-7 h-7 rounded-full bg-gradient-to-br from-teal-400 to-cyan-500 border-2 border-white flex items-center justify-center text-white text-[10px] font-bold">
-                              {i + 1}
-                            </div>
-                          ))}
+            {/* QUICK REQUESTS VIEW */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+              <section className="bg-white p-6 rounded-2xl border border-slate-200">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Invitations</h3>
+                <div className="space-y-3">
+                  {invitations.slice(0, 2).map(inv => (
+                    <div key={inv.invitationId} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                      <p className="text-xs font-bold truncate pr-2">{inv.project?.title}</p>
+                      <Button size="sm" className="h-7 bg-amber-500 text-[10px]" onClick={() => navigate('/requests')}>Join</Button>
+                    </div>
+                  ))}
+                  {invitations.length === 0 && <p className="text-xs text-slate-400 italic">No pending invites.</p>}
+                </div>
+              </section>
+              <section className="bg-white p-6 rounded-2xl border border-slate-200">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Sent Requests</h3>
+                <div className="space-y-3">
+                  {myRequests.slice(0, 2).map(req => (
+                    <div key={req.project.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                      <p className="text-xs font-bold truncate pr-2">{req.project.title}</p>
+                      <Badge className="bg-white text-indigo-500 text-[8px] border-slate-200">{req.status}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </div>
+
+          {/* RIGHT: CAMPUS EVENTS */}
+          {/* --- CAMPUS EVENTS SECTION --- */}
+          <div className="lg:col-span-4 space-y-6">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+                <Calendar className="text-indigo-600" size={20} /> Campus Events
+              </h3>
+              {/* VIEW ALL -> Redirects to EventsPage.jsx */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/events')}
+                className="text-indigo-600 font-bold hover:bg-indigo-50"
+              >
+                View All <ArrowRight size={16} className="ml-1" />
+              </Button>
+            </div>
+
+            <div className="space-y-4">
+              {loading ? (
+                <Skeleton className="h-48 rounded-2xl" />
+              ) : upcomingEvents.length > 0 ? (
+                upcomingEvents.map((event) => (
+                  <Card key={event.id} className="relative overflow-hidden group border-slate-200 rounded-2xl hover:shadow-lg transition-all">
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-indigo-600" />
+                    <CardContent className="p-6">
+                      <Badge className="bg-indigo-50 text-indigo-700 border-none font-bold text-[10px] uppercase mb-3">
+                        {event.status}
+                      </Badge>
+
+                      {/* Clickable Title */}
+                      <h4
+                        className="font-bold text-slate-900 mb-4 group-hover:text-indigo-600 transition-colors cursor-pointer"
+                        onClick={() => navigate(`/events/${event.id}`)}
+                      >
+                        {event.name}
+                      </h4>
+
+                      <div className="space-y-2 mb-6">
+                        <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
+                          <Clock size={14} className="text-indigo-500" />
+                          {new Date(event.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </div>
-                        <span className="text-xs text-slate-500 font-medium ml-2">4 members</span>
+                        <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+                          <MapPin size={14} /> Campus Main Hub
+                        </div>
                       </div>
-                      <ArrowUpRight size={18} className="text-slate-400 group-hover:text-teal-600 transition-colors" />
-                    </div>
-                  </div>
-                ))}
 
-                <button
-                  onClick={() => navigate('/projects/create')}
-                  className="w-full py-4 border-2 border-dashed border-teal-200 rounded-xl hover:border-teal-400 hover:bg-teal-50 transition-all duration-300 flex items-center justify-center gap-2 text-teal-600 font-semibold group"
-                >
-                  <Plus size={20} className="group-hover:rotate-90 transition-transform" /> Start New Project
-                </button>
-              </div>
-            </div>
+                      {/* VIEW DETAILS -> Redirects to EventDetailPage.jsx */}
+                      <Button
+                        onClick={() => navigate(`/events/${event.id}`)}
+                        className="w-full bg-slate-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border-none font-bold rounded-xl h-10 transition-all shadow-none"
+                      >
+                        View Details
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="text-center py-12 bg-white rounded-2xl border-2 border-dashed border-slate-100">
+                  <p className="text-slate-400 text-sm font-medium">No events scheduled.</p>
+                </div>
+              )}
 
-            {/* Side Widgets */}
-            <div className="space-y-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-slate-900">Recent Messages</h3>
-                <button onClick={() => navigate('/messages')} className="text-teal-600 hover:text-teal-700"><MessageSquare size={18} /></button>
-              </div>
-
-              <div className="space-y-3">
-                {[1, 2].map((msg, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => navigate('/messages')}
-                    className="bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md hover:border-teal-200 transition-all cursor-pointer group"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 rounded-full bg-teal-50 flex items-center justify-center text-xl">👩‍💻</div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm text-slate-900 group-hover:text-teal-600 transition-colors">Team Invitation</p>
-                        <p className="text-xs text-slate-600 mt-1 truncate">Sarah invited you to join Mobile App Dev</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => navigate('/discover/projects')}
-                className="w-full py-4 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-xl font-bold hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group mt-6"
-              >
-                <Search size={18} className="group-hover:scale-110 transition-transform" /> Discover Projects
-              </button>
+              {/* SUBMIT PROPOSAL CARD */}
+              {/* <Card className="bg-indigo-600 text-white p-6 rounded-2xl relative overflow-hidden shadow-xl shadow-indigo-100">
+                <Zap className="absolute right-[-10px] bottom-[-10px] text-white/10 w-24 h-24 rotate-12" />
+                <h4 className="text-lg font-bold leading-tight mb-4">Host your own event?</h4>
+                <Button size="sm" className="bg-white text-indigo-600 hover:bg-indigo-50 font-bold rounded-lg px-4 h-9">
+                  Submit Proposal
+                </Button>
+              </Card> */}
             </div>
           </div>
+
         </div>
       </main>
     </div>
