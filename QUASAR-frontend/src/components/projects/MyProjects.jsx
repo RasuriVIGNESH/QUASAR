@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'; // FIXED: Added useEffect here
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,12 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Plus, Search, Users, Calendar, Settings, Trash2, Eye,
-  ArrowRight, Filter, CheckCircle, Clock, AlertTriangle, Loader2
+  ArrowRight, Filter, CheckCircle, Clock, AlertTriangle, Loader2, Briefcase
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Ensure this matches your backend port
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+// Import the project service
+import { projectService } from '@/services/projectService';
 
 export default function MyProjects() {
   const { userProfile } = useAuth();
@@ -29,20 +29,14 @@ export default function MyProjects() {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        // Updated URL to include pagination params as seen in your backend test
-        const res = await fetch(`${API_BASE_URL}/projects/my-projects?page=0&size=10`, {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
 
-        if (!res.ok) throw new Error('Failed to fetch projects');
+        // Use service method instead of manual fetch
+        // Passing 0 for page and 10 for size as per original logic
+        const response = await projectService.getMyProjects(0, 10);
 
-        const data = await res.json();
-
-        // FIX: Extract "content" from the paginated response
-        const projectList = data.content || (Array.isArray(data) ? data : []);
+        // Extract content from the paginated response
+        // Backend usually returns { data: { content: [] } } or { content: [] }
+        const projectList = response?.data?.content || response?.content || (Array.isArray(response) ? response : []);
         setProjects(projectList);
       } catch (error) {
         console.error('Error fetching projects:', error);
@@ -158,7 +152,6 @@ export default function MyProjects() {
                         {project.description || 'No data recorded in description.'}
                       </p>
 
-                      {/* TECH STACK (from techStack field) */}
                       <div className="flex flex-wrap gap-1.5 mb-6">
                         {project.techStack?.slice(0, 3).map((tech) => (
                           <span key={tech} className="px-2 py-0.5 bg-slate-50 border border-slate-100 rounded text-[9px] font-bold text-slate-400 uppercase tracking-tight">

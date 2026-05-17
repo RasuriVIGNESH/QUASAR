@@ -20,7 +20,6 @@ export default function EventsPage() {
         const fetchEvents = async () => {
             try {
                 setLoading(true);
-                // Endpoints: /api/events/all and /api/events/recent
                 const [allRes, recentRes] = await Promise.all([
                     dataService.getAllEvents(),
                     dataService.getRecentEvents()

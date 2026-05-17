@@ -168,7 +168,6 @@ export default function LandingPage() {
 
     const checkHealth = async () => {
       try {
-        // This calls: http://localhost:8080/api/health (or your Render URL)
         const response = await fetch(`${API_BASE_URL}/health`);
 
         if (response.ok) {

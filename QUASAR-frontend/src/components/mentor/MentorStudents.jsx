@@ -23,7 +23,6 @@ export default function MentorStudents() {
         const fetchUsers = async () => {
             try {
                 setLoading(true);
-                // Uses /api/all — paginated, available to any authenticated user
                 const response = await userService.getAllUsers(page, 20, 'firstName', 'asc');
                 const data = response?.data || response;
                 const userList = Array.isArray(data?.content) ? data.content

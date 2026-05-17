@@ -23,7 +23,6 @@ export default function MentorProjects() {
         const fetchProjects = async () => {
             try {
                 setLoading(true);
-                // Using /api/searchProjects — available to any authenticated user
                 const res = await projectService.searchProjects({
                     query: searchTerm || undefined,
                     status: statusFilter !== 'ALL' ? statusFilter : undefined,

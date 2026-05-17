@@ -12,7 +12,10 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+// Import refactored services
+import { projectService } from '@/services/projectService';
+import { joinRequestService } from '@/services/JoinRequestService';
+import { dataService } from '@/services/dataService';
 
 export default function Dashboard() {
   const { userProfile } = useAuth();
@@ -36,31 +39,31 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
-        const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
+        // Use service methods instead of manual fetch
         const [projectsRes, invitesRes, requestsRes, eventsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/projects/my-projects?page=0&size=6`, { headers }),
-          fetch(`${API_BASE_URL}/projects/invitations/received`, { headers }),
-          fetch(`${API_BASE_URL}/join-requests/my-requests`, { headers }),
-          fetch(`${API_BASE_URL}/events/upcoming`, { headers })
+          projectService.getMyProjects(0, 6),
+          projectService.getReceivedInvitations(),
+          joinRequestService.getMyJoinRequests(),
+          dataService.getUpcomingEvents()
         ]);
 
-        const projectsData = await projectsRes.json();
-        setMyProjects(projectsData?.content || []);
+        // Set projects (backend returns paginated object)
+        setMyProjects(projectsRes?.data?.content || projectsRes?.content || []);
 
-        const invitesData = await invitesRes.json();
-        setInvitations(invitesData?.content || []);
+        // Set invitations (service handles normalization)
+        setInvitations(Array.isArray(invitesRes) ? invitesRes : (invitesRes?.data || []));
 
-        const requestsData = await requestsRes.json();
-        setMyRequests(Array.isArray(requestsData) ? requestsData : []);
+        // Set requests
+        setMyRequests(Array.isArray(requestsRes) ? requestsRes : (requestsRes?.data || []));
 
-        const eventsData = await eventsRes.json();
-        setUpcomingEvents(Array.isArray(eventsData) ? eventsData : []);
+        // Set events
+        setUpcomingEvents(Array.isArray(eventsRes) ? eventsRes : (eventsRes?.data || []));
 
       } catch (err) {
-        console.error('Fetch Error:', err);
+        console.error('Dashboard Data Fetch Error:', err);
         setError("Connection refused. Verify your logic core is running.");
+        toast.error("Failed to sync dashboard data");
       } finally {
         setLoading(false);
       }
@@ -133,8 +136,8 @@ export default function Dashboard() {
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Invitations</h3>
                 <div className="space-y-3">
                   {invitations.slice(0, 2).map(inv => (
-                    <div key={inv.invitationId} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                      <p className="text-xs font-bold truncate pr-2">{inv.project?.title}</p>
+                    <div key={inv.invitationId || inv.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                      <p className="text-xs font-bold truncate pr-2">{inv.project?.title || 'Project Invitation'}</p>
                       <Button size="sm" className="h-7 bg-amber-500 text-[10px]" onClick={() => navigate('/requests')}>Join</Button>
                     </div>
                   ))}
@@ -145,24 +148,23 @@ export default function Dashboard() {
                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Sent Requests</h3>
                 <div className="space-y-3">
                   {myRequests.slice(0, 2).map(req => (
-                    <div key={req.project.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
-                      <p className="text-xs font-bold truncate pr-2">{req.project.title}</p>
+                    <div key={req.id} className="flex items-center justify-between p-2 bg-slate-50 rounded-lg">
+                      <p className="text-xs font-bold truncate pr-2">{req.project?.title}</p>
                       <Badge className="bg-white text-indigo-500 text-[8px] border-slate-200">{req.status}</Badge>
                     </div>
                   ))}
+                  {myRequests.length === 0 && <p className="text-xs text-slate-400 italic">No sent requests.</p>}
                 </div>
               </section>
             </div>
           </div>
 
           {/* RIGHT: CAMPUS EVENTS */}
-          {/* --- CAMPUS EVENTS SECTION --- */}
           <div className="lg:col-span-4 space-y-6">
             <div className="flex items-center justify-between">
               <h3 className="text-xl font-bold text-slate-900 flex items-center gap-2">
                 <Calendar className="text-indigo-600" size={20} /> Campus Events
               </h3>
-              {/* VIEW ALL -> Redirects to EventsPage.jsx */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -185,7 +187,6 @@ export default function Dashboard() {
                         {event.status}
                       </Badge>
 
-                      {/* Clickable Title */}
                       <h4
                         className="font-bold text-slate-900 mb-4 group-hover:text-indigo-600 transition-colors cursor-pointer"
                         onClick={() => navigate(`/events/${event.id}`)}
@@ -196,14 +197,13 @@ export default function Dashboard() {
                       <div className="space-y-2 mb-6">
                         <div className="flex items-center gap-2 text-xs text-slate-500 font-bold">
                           <Clock size={14} className="text-indigo-500" />
-                          {new Date(event.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                          {event.startDate ? new Date(event.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBA'}
                         </div>
                         <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-                          <MapPin size={14} /> Campus Main Hub
+                          <MapPin size={14} /> {event.location || 'Campus Main Hub'}
                         </div>
                       </div>
 
-                      {/* VIEW DETAILS -> Redirects to EventDetailPage.jsx */}
                       <Button
                         onClick={() => navigate(`/events/${event.id}`)}
                         className="w-full bg-slate-50 text-indigo-600 hover:bg-indigo-600 hover:text-white border-none font-bold rounded-xl h-10 transition-all shadow-none"
@@ -218,18 +218,8 @@ export default function Dashboard() {
                   <p className="text-slate-400 text-sm font-medium">No events scheduled.</p>
                 </div>
               )}
-
-              {/* SUBMIT PROPOSAL CARD */}
-              {/* <Card className="bg-indigo-600 text-white p-6 rounded-2xl relative overflow-hidden shadow-xl shadow-indigo-100">
-                <Zap className="absolute right-[-10px] bottom-[-10px] text-white/10 w-24 h-24 rotate-12" />
-                <h4 className="text-lg font-bold leading-tight mb-4">Host your own event?</h4>
-                <Button size="sm" className="bg-white text-indigo-600 hover:bg-indigo-50 font-bold rounded-lg px-4 h-9">
-                  Submit Proposal
-                </Button>
-              </Card> */}
             </div>
           </div>
-
         </div>
       </main>
     </div>

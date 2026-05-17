@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api';
+// Import the skills service
+import { skillsService } from '@/services/skillsService';
 
 export default function SkillMastery() {
     const { userProfile } = useAuth();
@@ -26,26 +27,23 @@ export default function SkillMastery() {
     const [deleting, setDeleting] = useState(null);
 
     useEffect(() => {
-        const fetchSkills = async () => {
+        const fetchSkillsData = async () => {
             try {
                 setLoading(true);
-                const token = localStorage.getItem('token');
-                const headers = { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
 
-                const skillsRes = await fetch(`${API_BASE_URL}/students/users/${userProfile?.id}/skills`, { headers });
-                const userSkills = await skillsRes.json();
-                setSkills(Array.isArray(userSkills) ? userSkills : []);
+                // Use service to get user skills and predefined list
+                const [userSkillsRes, predData] = await Promise.all([
+                    skillsService.getUserSkillsByUserId(userProfile?.id),
+                    skillsService.getPredefinedSkills()
+                ]);
 
-                const predRes = await fetch(`${API_BASE_URL}/skills/predefined`, { headers });
-                const predData = await predRes.json();
+                // Set user skills (service returns { data: [] })
+                setSkills(userSkillsRes?.data || []);
 
-                if (predData.success && predData.data) {
-                    const transformed = Object.entries(predData.data).map(([name, category]) => ({
-                        name,
-                        category
-                    }));
-                    setPredefinedSkills(transformed);
-                }
+                // Set predefined skills
+                // Service already handles the Object.entries transformation 
+                setPredefinedSkills(predData?.data || []);
+
             } catch (err) {
                 console.error('Fetch Error:', err);
                 toast.error('Failed to sync skill registry');
@@ -54,7 +52,7 @@ export default function SkillMastery() {
             }
         };
 
-        if (userProfile?.id) fetchSkills();
+        if (userProfile?.id) fetchSkillsData();
     }, [userProfile?.id]);
 
     const mapLevelToPct = (level) => {
@@ -90,23 +88,27 @@ export default function SkillMastery() {
 
         try {
             setAdding(true);
-            const res = await fetch(`${API_BASE_URL}/skills`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name: name, category: 'General', level: 'BEGINNER' })
-            });
 
-            if (res.ok) {
-                const added = await res.json();
-                setSkills(prev => [added, ...prev]);
+            // Map UI data to service requirements
+            const skillData = {
+                skillName: name,
+                category: 'General',
+                level: 'BEGINNER',
+                experience: '0'
+            };
+
+            const response = await skillsService.addUserSkill(skillData, userProfile);
+
+            if (response) {
+                // If the response is the skill object directly or inside .data
+                const addedSkill = response.data || response;
+                setSkills(prev => [addedSkill, ...prev]);
                 setNewSkill('');
                 toast.success(`${name} added!`);
             }
         } catch (err) {
-            toast.error('Failed to add skill');
+            console.error('Add Skill Error:', err);
+            toast.error(err.message || 'Failed to add skill');
         } finally {
             setAdding(false);
         }
@@ -115,15 +117,12 @@ export default function SkillMastery() {
     const handleDeleteSkill = async (id) => {
         try {
             setDeleting(id);
-            const res = await fetch(`${API_BASE_URL}/skills/${id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-            });
-            if (res.ok) {
-                setSkills(prev => prev.filter(s => s.id !== id));
-                toast.success('Skill removed');
-            }
+            await skillsService.deleteUserSkill(id);
+
+            setSkills(prev => prev.filter(s => s.id !== id));
+            toast.success('Skill removed');
         } catch (err) {
+            console.error('Delete Skill Error:', err);
             toast.error('Action failed');
         } finally {
             setDeleting(null);
@@ -207,8 +206,6 @@ export default function SkillMastery() {
 
                     {/* RIGHT COLUMN: MANUAL ENTRY & RECOMMENDATIONS (COL 4) */}
                     <div className="lg:col-span-4 space-y-6">
-
-                        {/* MANUAL ENTRY CARD (Shifted Here) */}
                         <Card className="border-slate-200 shadow-sm rounded-2xl overflow-hidden bg-white">
                             <CardHeader className="bg-slate-50/50 border-b border-slate-100 py-4 px-6">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Add New Protocol</CardTitle>
@@ -233,7 +230,6 @@ export default function SkillMastery() {
                             </CardContent>
                         </Card>
 
-                        {/* RECOMMENDATIONS CARD */}
                         <Card className="border-indigo-100 bg-indigo-50/30 rounded-3xl overflow-hidden">
                             <CardHeader className="border-b border-indigo-100 bg-white/50 py-4 px-6">
                                 <CardTitle className="text-xs font-black uppercase tracking-widest text-indigo-600 flex items-center gap-2">
@@ -264,7 +260,6 @@ export default function SkillMastery() {
                             </CardContent>
                         </Card>
                     </div>
-
                 </div>
             </main>
         </div>

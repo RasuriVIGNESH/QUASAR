@@ -23,22 +23,15 @@ import {
   LayoutDashboard, ClipboardList, Users, MessageSquare, Settings,
   Github, Globe, ArrowLeft, Plus, Send, Sparkles,
   CheckCircle2, Zap, Link as LinkIcon, Trash2, Video,
-  Search, Flag, Layers, MoreHorizontal, Calendar, Tag, Edit, LogOut, Loader2, Target, Cpu
+  Search, Flag, Layers, MoreHorizontal, Calendar, Tag, Edit, LogOut, Loader2, Target, Cpu, MoreVertical
 } from 'lucide-react';
 
-// Services
+// Services - All backend logic now flows through these
 import { projectService } from '../../services/projectService.js';
 import { chatService } from '../../services/Chatservice.js';
+import { teamService } from '../../services/TeamService.js';
 import MeetingRooms from './MeetingRooms';
-
-/* ─── DESIGN TOKENS ──────────────────────────────────────────────────────── */
-const THEME = {
-  bg: '#020617',
-  surface: '#0B1120',
-  indigo: '#818CF8',
-  cyan: '#22D3EE',
-  border: 'rgba(255,255,255,0.05)'
-};
+import { toast } from 'sonner';
 
 export default function ProjectPage() {
   const { projectId } = useParams();
@@ -54,23 +47,38 @@ export default function ProjectPage() {
   const [isCompletionDialogOpen, setIsCompletionDialogOpen] = useState(false);
   const [completionLinks, setCompletionLinks] = useState({ githubRepo: '', demoUrl: '' });
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [projectData, membersData] = await Promise.all([
-          projectService.getProject(projectId),
-          projectService.getProjectMembers(projectId)
-        ]);
-        setProject(projectData);
-        setMembers(membersData.data?.content || membersData.data || []);
-        if (projectData) {
-          setCompletionLinks({ githubRepo: projectData.githubRepo || '', demoUrl: projectData.demoUrl || '' });
-        }
-      } catch (err) { console.error(err); }
-      finally { setLoading(false); }
-    };
-    loadData();
+  const loadData = useCallback(async () => {
+    try {
+      // Use projectService to fetch core data
+      const [projectData, membersRes] = await Promise.all([
+        projectService.getProject(projectId),
+        projectService.getProjectMembers(projectId)
+      ]);
+
+      // projectService.getProject returns response.data directly
+      setProject(projectData);
+
+      // projectService.getProjectMembers returns raw response
+      const memberList = membersRes?.data || membersRes || [];
+      setMembers(Array.isArray(memberList) ? memberList : (memberList.content || []));
+
+      if (projectData) {
+        setCompletionLinks({
+          githubRepo: projectData.githubRepo || '',
+          demoUrl: projectData.demoUrl || ''
+        });
+      }
+    } catch (err) {
+      console.error('Project Load Error:', err);
+      toast.error("Failed to synchronize with project core");
+    } finally {
+      setLoading(false);
+    }
   }, [projectId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleStatusChange = async (newStatus) => {
     if (newStatus === 'COMPLETED' && !project.githubRepo && !project.demoUrl) {
@@ -79,8 +87,23 @@ export default function ProjectPage() {
     }
     try {
       await projectService.updateProject(projectId, { status: newStatus });
-      window.location.reload();
-    } catch (e) { console.error(e); }
+      toast.success(`Project status updated to ${newStatus}`);
+      loadData(); // Refresh data instead of hard reload
+    } catch (e) {
+      console.error(e);
+      toast.error("Failed to update project status");
+    }
+  };
+
+  const handlePurgeProject = async () => {
+    if (!window.confirm("Are you sure you want to purge this project from the registry?")) return;
+    try {
+      await projectService.deleteProject(projectId);
+      toast.success("Project purged successfully");
+      navigate('/dashboard');
+    } catch (e) {
+      toast.error("Purge sequence failed");
+    }
   };
 
   if (loading) return (
@@ -89,9 +112,16 @@ export default function ProjectPage() {
     </div>
   );
 
+  if (!project) return (
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-[#020617] text-white">
+      <p className="font-serif italic text-xl mb-4">Project not found in registry.</p>
+      <Button onClick={() => navigate('/dashboard')}>Return to Dashboard</Button>
+    </div>
+  );
+
   const currentUserId = userProfile?.id || currentUser?.id;
   const isProjectLead = String(currentUserId) === String(project?.lead?.id || project?.lead);
-  const isMember = members.some(m => String(m.user?.id) === String(currentUserId)) || isProjectLead;
+  const isMember = members.some(m => String(m.user?.id || m.userId) === String(currentUserId)) || isProjectLead;
 
   return (
     <div className="h-screen w-full bg-[#020617] text-slate-200 flex overflow-hidden" style={{ fontFamily: '"Outfit", sans-serif' }}>
@@ -168,12 +198,14 @@ export default function ProjectPage() {
                 </Avatar>
               ))}
             </div>
-            <button
-              onClick={() => navigate(`/projects/${projectId}/invite`)}
-              className="bg-white text-black px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-lg shadow-white/5"
-            >
-              + Recruit
-            </button>
+            {isProjectLead && (
+              <button
+                onClick={() => navigate(`/projects/${projectId}/invite`)}
+                className="bg-white text-black px-5 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all shadow-lg shadow-white/5"
+              >
+                + Recruit
+              </button>
+            )}
           </div>
         </header>
 
@@ -186,12 +218,12 @@ export default function ProjectPage() {
               exit={{ opacity: 0, y: -10 }}
               className="h-full max-w-5xl mx-auto"
             >
-              {activeTab === 'overview' && <OverviewTab project={project} isProjectLead={isProjectLead} projectId={projectId} />}
+              {activeTab === 'overview' && <OverviewTab project={project} />}
               {activeTab === 'rooms' && <MeetingRooms projectId={projectId} projectName={project.title} isProjectLead={isProjectLead} />}
-              {activeTab === 'tasks' && <TaskBoard projectId={projectId} project={project} />}
-              {activeTab === 'chat' && <ChatSection projectId={projectId} />}
-              {activeTab === 'team' && <TeamSection projectId={projectId} project={project} />}
-              {activeTab === 'manage' && <SettingsTab project={project} projectId={projectId} isProjectLead={isProjectLead} />}
+              {activeTab === 'tasks' && <TaskBoard projectId={projectId} />}
+              {activeTab === 'chat' && <ChatSection projectId={projectId} currentUserId={currentUserId} />}
+              {activeTab === 'team' && <TeamSection projectId={projectId} />}
+              {activeTab === 'manage' && <SettingsTab project={project} onPurge={handlePurgeProject} onUpdate={loadData} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -204,38 +236,40 @@ export default function ProjectPage() {
           <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Network Load</h4>
           <Card className="p-6 bg-white/[0.02] border-white/5 rounded-3xl">
             <div className="flex items-end justify-between mb-4">
-              <span className="text-4xl font-serif italic text-white leading-none">{project.currentTeamSize + 1}</span>
+              <span className="text-4xl font-serif italic text-white leading-none">{members.length}</span>
               <span className="text-[9px] font-black text-white/30 uppercase">/ {project.maxTeamSize} Capacity</span>
             </div>
             <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: `${((project.currentTeamSize + 1) / project.maxTeamSize) * 100}%` }}
+                animate={{ width: `${(members.length / project.maxTeamSize) * 100}%` }}
                 className="h-full bg-gradient-to-r from-indigo-500 to-cyan-400"
               />
             </div>
           </Card>
         </section>
 
-        <section className="space-y-4">
-          <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Project Terminal</h4>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold uppercase tracking-widest text-white hover:border-cyan-400 transition-all">
-                {project.status?.replace('_', ' ')}
-                <MoreHorizontal size={16} className="text-white/20" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-64 bg-[#0a0a0a] border-white/10 text-white">
-              <DropdownMenuLabel className="text-[10px] uppercase text-white/30 tracking-widest">Update Lifecycle</DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleStatusChange('RECRUITING')} className="hover:bg-white/5 text-xs py-3">Recruiting</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange('IN_PROGRESS')} className="hover:bg-white/5 text-xs py-3">In Progress</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleStatusChange('COMPLETED')} className="hover:bg-indigo-500/20 text-xs py-3 text-cyan-400">Completed</DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-white/5" />
-              <DropdownMenuItem onClick={() => handleStatusChange('CANCELLED')} className="text-rose-500 hover:bg-rose-500/10 text-xs py-3">Cancelled</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </section>
+        {isProjectLead && (
+          <section className="space-y-4">
+            <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Project Terminal</h4>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="w-full flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl text-xs font-bold uppercase tracking-widest text-white hover:border-cyan-400 transition-all">
+                  {project.status?.replace('_', ' ')}
+                  <MoreHorizontal size={16} className="text-white/20" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64 bg-[#0a0a0a] border-white/10 text-white">
+                <DropdownMenuLabel className="text-[10px] uppercase text-white/30 tracking-widest">Update Lifecycle</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleStatusChange('RECRUITING')} className="hover:bg-white/5 text-xs py-3">Recruiting</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange('IN_PROGRESS')} className="hover:bg-white/5 text-xs py-3">In Progress</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleStatusChange('COMPLETED')} className="hover:bg-indigo-500/20 text-xs py-3 text-cyan-400">Completed</DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuItem onClick={() => handleStatusChange('CANCELLED')} className="text-rose-500 hover:bg-rose-500/10 text-xs py-3">Cancelled</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </section>
+        )}
 
         <section className="space-y-4">
           <h4 className="text-[10px] font-black text-white/20 uppercase tracking-[0.3em]">Logical Resources</h4>
@@ -281,8 +315,14 @@ export default function ProjectPage() {
           <DialogFooter>
             <button
               onClick={async () => {
-                await projectService.updateProject(projectId, { status: 'COMPLETED', ...completionLinks });
-                window.location.reload();
+                try {
+                  await projectService.updateProject(projectId, { status: 'COMPLETED', ...completionLinks });
+                  setIsCompletionDialogOpen(false);
+                  loadData();
+                  toast.success("Project lifecycle sealed");
+                } catch (e) {
+                  toast.error("Failed to seal lifecycle");
+                }
               }}
               className="w-full py-4 bg-cyan-400 text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-white transition-all shadow-lg shadow-cyan-400/20"
             >
@@ -297,7 +337,7 @@ export default function ProjectPage() {
 
 /* ─── TABS ──────────────────────────────────────────────────────────────── */
 
-const OverviewTab = ({ project, isProjectLead, projectId }) => (
+const OverviewTab = ({ project }) => (
   <div className="space-y-10">
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
       <Card className="col-span-2 p-10 bg-[#0b1120]/50 border-white/5 rounded-[40px] relative overflow-hidden">
@@ -308,7 +348,7 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => (
           <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20">Project Mission</h3>
           {project.category && (
             <Badge className="bg-indigo-500/10 text-indigo-400 border-none px-4 py-1.5 text-[9px] font-black uppercase tracking-widest">
-              {project.category.name}
+              {project.category?.name || project.category}
             </Badge>
           )}
         </div>
@@ -322,7 +362,7 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => (
           </div>
           <div>
             <p className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-2">Logical Target</p>
-            <p className="text-xs text-cyan-400 italic">Quasar Peer Discovery</p>
+            <p className="text-xs text-cyan-400 italic">{project.title}</p>
           </div>
         </div>
       </Card>
@@ -330,7 +370,7 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => (
       <Card className="p-8 bg-white/[0.02] border-white/5 rounded-[40px]">
         <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 mb-8">Logical Goals</h3>
         <div className="space-y-5">
-          {(project.goals || 'No goals set').split(',').map((goal, i) => (
+          {(project.goals || 'No specific goals defined').split(',').map((goal, i) => (
             <div key={i} className="flex gap-4 items-start group">
               <div className="w-5 h-5 rounded-full border border-indigo-500/30 flex items-center justify-center text-indigo-400 shrink-0 mt-0.5 group-hover:bg-indigo-500 group-hover:text-black transition-all">
                 <CheckCircle2 size={12} />
@@ -359,7 +399,7 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => (
         <div className="flex flex-wrap gap-2.5">
           {project.requiredSkills?.map((ps, i) => (
             <span key={i} className="px-4 py-2 bg-cyan-400/5 border border-cyan-400/10 text-cyan-400 text-[10px] font-black uppercase tracking-widest rounded-lg">
-              {ps.skill?.name}
+              {ps.skill?.name || ps}
             </span>
           ))}
         </div>
@@ -377,19 +417,22 @@ const OverviewTab = ({ project, isProjectLead, projectId }) => (
   </div>
 );
 
-const TaskBoard = ({ projectId, project }) => {
+const TaskBoard = ({ projectId }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     setLoading(true);
     try {
       const res = await projectService.getProjectTasks(projectId);
-      setTasks(res?.content || res?.data || []);
+      // getProjectTasks returns response directly
+      setTasks(res?.data || res || []);
+    } catch (err) {
+      toast.error("Failed to load task board");
     } finally { setLoading(false); }
-  };
+  }, [projectId]);
 
-  useEffect(() => { fetchTasks(); }, [projectId]);
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   return (
     <div className="space-y-10">
@@ -398,9 +441,6 @@ const TaskBoard = ({ projectId, project }) => {
           <h2 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 mb-2">Development Sprint</h2>
           <h1 className="font-serif italic text-4xl text-white">Logic Board</h1>
         </div>
-        <button onClick={() => { }} className="bg-cyan-400 text-black px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all">
-          + New Logic Task
-        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -412,11 +452,13 @@ const TaskBoard = ({ projectId, project }) => {
             </div>
 
             <div className="space-y-4">
-              {(Array.isArray(tasks) ? tasks : []).filter(t => t.status === status).map(task => (
+              {loading ? (
+                <div className="p-6 bg-white/5 animate-pulse rounded-3xl h-24" />
+              ) : (Array.isArray(tasks) ? tasks : []).filter(t => (t.status || 'TODO') === status).map(task => (
                 <Card key={task.id} className="p-6 bg-[#0b1120]/50 border-white/5 rounded-3xl hover:border-indigo-500/40 transition-all group">
                   <div className="flex justify-between mb-4">
                     <span className="text-[8px] font-black uppercase text-indigo-400 tracking-tighter bg-indigo-500/10 px-2 py-0.5 rounded">
-                      {task.priority} Priority
+                      {task.priority || 'MEDIUM'} Priority
                     </span>
                     <MoreHorizontal size={14} className="text-white/10 group-hover:text-white transition-colors" />
                   </div>
@@ -432,50 +474,69 @@ const TaskBoard = ({ projectId, project }) => {
   );
 };
 
-const ChatSection = ({ projectId }) => {
+const ChatSection = ({ projectId, currentUserId }) => {
   const [messages, setMessages] = useState([]);
   const [msg, setMsg] = useState("");
   const scrollRef = useRef(null);
 
-  useEffect(() => {
-    const fetch = async () => {
+  const fetchMessages = useCallback(async () => {
+    try {
       const res = await chatService.getRecentMessages(projectId);
-      setMessages(res.data?.content || res.data || []);
-    };
-    fetch();
-    const int = setInterval(fetch, 5000);
-    return () => clearInterval(int);
+      setMessages(res.data || res || []);
+    } catch (err) {
+      console.error('Chat fetch error:', err);
+    }
   }, [projectId]);
 
-  useEffect(() => { if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight; }, [messages]);
+  useEffect(() => {
+    fetchMessages();
+    const int = setInterval(fetchMessages, 4000); // Poll every 4s
+    return () => clearInterval(int);
+  }, [fetchMessages]);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!msg.trim()) return;
+    try {
+      await chatService.sendMessage(projectId, msg);
+      setMsg("");
+      fetchMessages();
+    } catch (e) {
+      toast.error("Transmission failed");
+    }
+  };
 
   return (
     <div className="h-[calc(100vh-250px)] flex flex-col bg-white/[0.02] border border-white/5 rounded-[40px] overflow-hidden">
       <div ref={scrollRef} className="flex-1 p-8 space-y-6 overflow-y-auto no-scrollbar">
         {messages.map(m => (
-          <div key={m.id} className={`flex flex-col ${m.sender?.id === 'me' ? 'items-end' : 'items-start'}`}>
+          <div key={m.id} className={`flex flex-col ${String(m.sender?.id) === String(currentUserId) ? 'items-end' : 'items-start'}`}>
             <div className="flex items-center gap-3 mb-2">
               <span className="text-[9px] font-black uppercase text-white/20 tracking-widest">{m.sender?.firstName}</span>
               <span className="text-[8px] text-white/10">{new Date(m.sentAt).toLocaleTimeString()}</span>
             </div>
-            <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-xs font-light tracking-wide max-w-lg leading-relaxed italic font-serif">
+            <div className={`p-4 rounded-2xl text-xs font-light tracking-wide max-w-lg leading-relaxed italic font-serif ${String(m.sender?.id) === String(currentUserId)
+                ? 'bg-indigo-500/10 border border-indigo-500/20'
+                : 'bg-white/5 border border-white/5'
+              }`}>
               {m.content}
             </div>
           </div>
         ))}
       </div>
       <div className="p-6 bg-black/40 border-t border-white/5">
-        <div className="flex gap-4 items-center bg-white/5 p-2 px-6 rounded-2xl border border-white/10">
+        <div className="flex gap-4 items-center bg-white/5 p-2 px-6 rounded-2xl border border-white/10 focus-within:border-cyan-400/50 transition-all">
           <input
             value={msg}
             onChange={e => setMsg(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
             placeholder="Transmit message..."
-            className="flex-1 bg-transparent border-none py-3 text-xs outline-none font-light uppercase tracking-widest italic"
+            className="flex-1 bg-transparent border-none py-3 text-xs outline-none font-light uppercase tracking-widest italic text-white"
           />
-          <button onClick={async () => {
-            await chatService.sendMessage(projectId, msg);
-            setMsg("");
-          }} className="p-2 text-cyan-400 hover:text-white transition-colors">
+          <button onClick={handleSendMessage} className="p-2 text-cyan-400 hover:text-white transition-colors">
             <Send size={20} />
           </button>
         </div>
@@ -484,11 +545,14 @@ const ChatSection = ({ projectId }) => {
   );
 };
 
-const TeamSection = ({ projectId, project }) => {
+const TeamSection = ({ projectId }) => {
   const [members, setMembers] = useState([]);
 
   useEffect(() => {
-    projectService.getProjectMembers(projectId).then(res => setMembers(res.data?.content || res.data || []));
+    projectService.getProjectMembers(projectId).then(res => {
+      const list = res?.data || res || [];
+      setMembers(Array.isArray(list) ? list : (list.content || []));
+    });
   }, [projectId]);
 
   return (
@@ -512,37 +576,71 @@ const TeamSection = ({ projectId, project }) => {
   );
 };
 
-const SettingsTab = ({ project, projectId, isProjectLead }) => (
-  <div className="max-w-3xl mx-auto space-y-10">
-    <Card className="p-10 bg-[#0b1120]/50 border-white/5 rounded-[40px]">
-      <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 mb-8">Logic Modification</h3>
-      <div className="space-y-6">
-        <div className="space-y-2">
-          <Label className="text-[9px] font-black uppercase text-white/20">Registry Title</Label>
-          <Input defaultValue={project.title} className="bg-white/5 border-white/10 h-14 rounded-2xl font-serif italic text-xl" />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-[9px] font-black uppercase text-white/20">Manifest Description</Label>
-          <Textarea defaultValue={project.description} className="bg-white/5 border-white/10 rounded-2xl min-h-[150px] font-serif italic text-lg leading-relaxed" />
-        </div>
-        <div className="flex justify-end pt-4">
-          <button className="bg-white text-black px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all">
-            Update Logic Core
-          </button>
-        </div>
-      </div>
-    </Card>
+const SettingsTab = ({ project, onPurge, onUpdate }) => {
+  const [formData, setFormData] = useState({
+    title: project.title,
+    description: project.description
+  });
+  const [isUpdating, setIsUpdating] = useState(false);
 
-    {isProjectLead && (
+  const handleUpdate = async () => {
+    setIsUpdating(true);
+    try {
+      await projectService.updateProject(project.id, formData);
+      toast.success("Logic core updated");
+      onUpdate();
+    } catch (e) {
+      toast.error("Failed to update project data");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto space-y-10">
+      <Card className="p-10 bg-[#0b1120]/50 border-white/5 rounded-[40px]">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-white/20 mb-8">Logic Modification</h3>
+        <div className="space-y-6">
+          <div className="space-y-2">
+            <Label className="text-[9px] font-black uppercase text-white/20">Registry Title</Label>
+            <Input
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="bg-white/5 border-white/10 h-14 rounded-2xl font-serif italic text-xl text-white"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-[9px] font-black uppercase text-white/20">Manifest Description</Label>
+            <Textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              className="bg-white/5 border-white/10 rounded-2xl min-h-[150px] font-serif italic text-lg leading-relaxed text-white"
+            />
+          </div>
+          <div className="flex justify-end pt-4">
+            <button
+              onClick={handleUpdate}
+              disabled={isUpdating}
+              className="bg-white text-black px-10 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-cyan-400 transition-all disabled:opacity-50"
+            >
+              {isUpdating ? "Syncing..." : "Update Logic Core"}
+            </button>
+          </div>
+        </div>
+      </Card>
+
       <div className="p-10 border border-rose-500/20 bg-rose-500/[0.02] rounded-[40px] flex justify-between items-center">
         <div>
           <h4 className="text-rose-500 font-black text-[10px] uppercase tracking-widest">Danger Sequence</h4>
           <p className="text-xs text-rose-500/40 italic font-serif mt-1 tracking-wider">Purge project from registry permanently.</p>
         </div>
-        <button className="px-8 py-4 border border-rose-500/40 text-rose-500 rounded-xl text-[10px] font-black uppercase hover:bg-rose-500 hover:text-black transition-all">
+        <button
+          onClick={onPurge}
+          className="px-8 py-4 border border-rose-500/40 text-rose-500 rounded-xl text-[10px] font-black uppercase hover:bg-rose-500 hover:text-black transition-all"
+        >
           Purge Project
         </button>
       </div>
-    )}
-  </div>
-);
+    </div>
+  );
+};

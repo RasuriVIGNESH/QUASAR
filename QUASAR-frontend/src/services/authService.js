@@ -77,20 +77,20 @@ class AuthService {
     }
 
     // LinkedIn OAuth
-    async loginWithLinkedIn() {
+    // async loginWithLinkedIn() {
 
-        try {
+    //     try {
 
-            const linkedInAuthUrl =
-                `http://localhost:8080/oauth2/authorize/linkedin`;
+    //         const linkedInAuthUrl =
+    //             `http://localhost:8080/oauth2/authorize/linkedin`;
 
-            window.location.href = linkedInAuthUrl;
+    //         window.location.href = linkedInAuthUrl;
 
-        } catch (error) {
+    //     } catch (error) {
 
-            throw new Error('LinkedIn authentication failed');
-        }
-    }
+    //         throw new Error('LinkedIn authentication failed');
+    //     }
+    // }
 
     // GitHub OAuth
     async loginWithGitHub() {
