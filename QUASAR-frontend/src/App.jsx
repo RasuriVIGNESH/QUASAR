@@ -52,7 +52,7 @@ export default function App() {
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/complete-profile" element={<CompleteProfile />} />
               <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+              <Route path="/auth/oauth2/redirect" element={<OAuth2RedirectHandler />} />
 
               {/* Protected Routes - Layout is STATIC and will NOT unmount */}
               <Route element={<ProtectedRoute><ResponsiveLayout /></ProtectedRoute>}>
