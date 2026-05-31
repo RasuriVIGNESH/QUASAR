@@ -15,6 +15,7 @@ import com.ADP.peerConnect.service.Interface.iMeetingRoomService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
@@ -42,6 +43,7 @@ public class MeetingRoomService implements iMeetingRoomService {
     }
 
     // Meeting Room Methods
+    @Transactional(readOnly = true)
     public List<MeetingRoom> getMeetingRoomsByProjectId(String projectId, String userId) {
         if (!projectService.isUserMemberOrLead(projectId, userId)) {
             throw new AccessDeniedException("User is not a member of this project.");

@@ -6,7 +6,7 @@ import React, { useState, Suspense } from 'react';
 
 import {
     Briefcase, Zap, User, LogOut, Menu, X,
-    Home, Bell
+    Home, Bell, PlusSquare, Search, Compass
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -17,8 +17,9 @@ export default function ResponsiveLayout() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const navigationItems = [
-        { id: 'dashboard', label: 'Dashboard', icon: Home, route: '/dashboard' },
-        { id: 'my-projects', label: 'My Projects', icon: Briefcase, route: '/projects/my-projects' },
+        { id: 'dashboard', label: 'Home', icon: Home, route: '/dashboard' },
+        { id: 'discover', label: 'Explore', icon: Compass, route: '/discover/projects' },
+        { id: 'my-projects', label: 'Projects', icon: Briefcase, route: '/projects/my-projects' },
         { id: 'skills', label: 'Skills', icon: Zap, route: '/skills' },
         { id: 'profile', label: 'Profile', icon: User, route: '/profile' },
     ];
@@ -31,27 +32,17 @@ export default function ResponsiveLayout() {
     const isActive = (route) => location.pathname === route;
 
     return (
-        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-            {/* DESKTOP SIDEBAR */}
-            <aside className="hidden lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-72 lg:bg-white lg:border-r lg:border-slate-200 lg:flex lg:flex-col lg:z-40">
-                {/* Logo Section */}
-                <div className="p-6 border-b border-slate-100">
-                    <div className="flex items-center gap-3">
-                        <img
-                            src="/Logo.png"
-                            alt="Quasar Logo"
-                            className="w-10 h-10 object-contain"
-                            onError={(e) => { e.target.src = "https://placehold.co/40x40?text=Q" }}
-                        />
-                        <div>
-                            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Quasar</h1>
-                            <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">Project Hub</p>
-                        </div>
+        <div className="min-h-screen bg-white text-slate-900 font-sans selection:bg-indigo-100">
+            {/* DESKTOP SIDEBAR - Professional & Minimalist */}
+            <aside className="hidden lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-64 lg:bg-white lg:border-r lg:border-slate-200 lg:flex lg:flex-col lg:z-40">
+                <div className="p-8">
+                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
+                        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">Q</div>
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Quasar</h1>
                     </div>
                 </div>
 
-                {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                <nav className="flex-1 px-4 space-y-1">
                     {navigationItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.route);
@@ -59,119 +50,46 @@ export default function ResponsiveLayout() {
                             <button
                                 key={item.id}
                                 onClick={() => handleNavigate(item.route)}
-                                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${active
-                                    ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
-                                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                                className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 ${active
+                                    ? 'bg-slate-50 text-indigo-600 font-bold'
+                                    : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
                                     }`}
                             >
-                                <Icon size={20} />
-                                <span className="font-semibold text-sm">{item.label}</span>
+                                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
+                                <span className="text-sm">{item.label}</span>
                             </button>
                         );
                     })}
                 </nav>
 
-                {/* User Profile & Logout */}
-                <div className="p-4 border-t border-slate-100 space-y-3 bg-slate-50/50">
-                    <div className="flex items-center gap-3 p-2">
-                        <div className="w-10 h-10 bg-blue-100 border border-blue-200 rounded-full text-blue-700 flex items-center justify-center font-bold text-sm shadow-sm">
-                            {userProfile?.firstName?.charAt(0) || 'U'}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-slate-900 truncate">
-                                {userProfile?.firstName} {userProfile?.lastName}
-                            </p>
-                            <p className="text-xs text-slate-500 truncate">{userProfile?.email}</p>
-                        </div>
-                    </div>
-                    <Button
+                <div className="p-4 border-t border-slate-100">
+                    <button
                         onClick={logout}
-                        variant="ghost"
-                        className="w-full justify-start gap-2 text-slate-600 hover:text-red-600 hover:bg-red-50 rounded-xl"
+                        className="w-full flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 font-medium"
                     >
-                        <LogOut size={18} />
-                        <span className="font-semibold">Sign Out</span>
-                    </Button>
+                        <LogOut size={20} />
+                        <span className="text-sm">Log Out</span>
+                    </button>
                 </div>
             </aside>
 
-            {/* MOBILE HEADER */}
-            <header className="lg:hidden sticky top-0 z-40 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <img src="/Logo.png" alt="Quasar Logo" className="w-8 h-8 object-contain" />
-                    <h1 className="text-lg font-bold text-slate-900 tracking-tight">Quasar</h1>
+            {/* MOBILE TOP BAR - Instagram Style */}
+            <header className="lg:hidden sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 h-14 flex items-center justify-between">
+                <div className="flex items-center gap-2" onClick={() => navigate('/dashboard')}>
+                    <h1 className="text-xl font-bold text-slate-900 tracking-tight italic">Quasar</h1>
                 </div>
-                <div className="flex items-center gap-1">
-                    <Button size="sm" variant="ghost" className="rounded-full" onClick={() => navigate('/messages')}>
-                        <Bell size={20} className="text-slate-600" />
-                    </Button>
-                    <Button size="sm" variant="ghost" className="rounded-full" onClick={() => setSidebarOpen(!sidebarOpen)}>
-                        {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
-                    </Button>
+                <div className="flex items-center gap-3">
+                    <button onClick={() => navigate('/projects/create')} className="text-slate-900">
+                        <PlusSquare size={24} strokeWidth={2} />
+                    </button>
+                    <button onClick={() => navigate('/messages')} className="text-slate-900 relative">
+                        <Bell size={24} strokeWidth={2} />
+                    </button>
                 </div>
             </header>
 
-            {/* MOBILE SIDEBAR OVERLAY */}
-            <AnimatePresence>
-                {sidebarOpen && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="lg:hidden fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30"
-                        onClick={() => setSidebarOpen(false)}
-                    />
-                )}
-            </AnimatePresence>
-
-            {/* MOBILE SIDEBAR */}
-            <motion.aside
-                initial={{ x: -300 }}
-                animate={{ x: sidebarOpen ? 0 : -300 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                className="lg:hidden fixed left-0 top-0 h-full w-72 bg-white z-50 shadow-2xl"
-            >
-                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                        <img src="/Logo.png" alt="Quasar Logo" className="w-8 h-8 object-contain" />
-                        <span className="font-bold text-lg">Quasar</span>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setSidebarOpen(false)}>
-                        <X size={20} />
-                    </Button>
-                </div>
-                <nav className="p-4 space-y-2">
-                    {navigationItems.map((item) => {
-                        const Icon = item.icon;
-                        const active = isActive(item.route);
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => handleNavigate(item.route)}
-                                className={`w-full flex items-center gap-4 px-4 py-4 rounded-xl font-semibold transition-all ${active
-                                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-100'
-                                    : 'text-slate-600 hover:bg-slate-100'
-                                    }`}
-                            >
-                                <Icon size={22} />
-                                <span>{item.label}</span>
-                            </button>
-                        );
-                    })}
-                </nav>
-                <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-100">
-                    <Button
-                        onClick={logout}
-                        variant="outline"
-                        className="w-full justify-center gap-2 text-red-600 border-red-100 hover:bg-red-50 rounded-xl"
-                    >
-                        <LogOut size={18} />
-                        <span className="font-bold">Sign Out</span>
-                    </Button>
-                </div>
-            </motion.aside>
-
-            <main className="lg:ml-72 min-h-screen pb-24 lg:pb-0">
+            {/* MAIN CONTENT AREA */}
+            <main className="lg:ml-64 min-h-screen pb-20 lg:pb-0 bg-slate-50/30">
                 <div className="max-w-full">
                     <Suspense fallback={<PageLoader />}>
                         <Outlet />
@@ -179,9 +97,9 @@ export default function ResponsiveLayout() {
                 </div>
             </main>
 
-            {/* MOBILE BOTTOM NAVIGATION */}
-            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 z-40 px-2 pb-safe">
-                <div className="flex items-center justify-around h-16">
+            {/* MOBILE BOTTOM NAVIGATION - Instagram Style */}
+            <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-100 z-40 px-2 pb-safe">
+                <div className="flex items-center justify-around h-14">
                     {navigationItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.route);
@@ -190,17 +108,25 @@ export default function ResponsiveLayout() {
                                 key={item.id}
                                 onClick={() => handleNavigate(item.route)}
                                 className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${active
-                                    ? 'text-blue-600'
+                                    ? 'text-slate-900 scale-110'
                                     : 'text-slate-400 hover:text-slate-600'
                                     }`}
                             >
-                                <Icon size={22} strokeWidth={active ? 2.5 : 2} />
-                                <span className={`text-[10px] mt-1 font-bold ${active ? 'opacity-100' : 'opacity-70'}`}>
-                                    {item.label}
-                                </span>
+                                <Icon size={26} strokeWidth={active ? 2.5 : 2} />
                             </button>
                         );
                     })}
+                    {/* Profile Link in Instagram Style often uses Avatar */}
+                    <button
+                        onClick={() => handleNavigate('/profile')}
+                        className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${isActive('/profile') ? 'scale-110' : ''}`}
+                    >
+                        <div className={`w-7 h-7 rounded-full overflow-hidden border-2 ${isActive('/profile') ? 'border-slate-900' : 'border-transparent'}`}>
+                            <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700">
+                                {userProfile?.firstName?.charAt(0) || 'U'}
+                            </div>
+                        </div>
+                    </button>
                 </div>
             </nav>
         </div>

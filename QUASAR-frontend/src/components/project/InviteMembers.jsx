@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,12 +9,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Search, Users, UserPlus, Check, ArrowLeft, ArrowRight,
-  Loader2, Sparkles, MapPin, GraduationCap, Trophy, Filter, X,
-  ChevronRight
+  Search, Users, UserPlus, Check, ArrowLeft,
+  Loader2, MapPin, Filter, X, ChevronDown
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import userService from '../../services/userService';
 import { projectService } from '../../services/projectService';
 
@@ -30,7 +29,7 @@ export default function InviteMembers() {
   const [filteredStudents, setFilteredStudents] = useState([]);
   const [error, setError] = useState(null);
   const [invitedUserIds, setInvitedUserIds] = useState([]);
-  const [invitationsMap, setInvitationsMap] = useState({}); // userId -> invitationId
+  const [invitationsMap, setInvitationsMap] = useState({});
   const [showFilters, setShowFilters] = useState(false);
   const [applyLoading, setApplyLoading] = useState(false);
 
@@ -45,9 +44,7 @@ export default function InviteMembers() {
   const graduationYears = [2024, 2025, 2026, 2027, 2028];
   const availabilityStatuses = ['AVAILABLE', 'BUSY', 'OPEN_TO_WORK', 'OFFLINE'];
 
-  useEffect(() => {
-    fetchStudents();
-  }, [projectId]);
+  useEffect(() => { fetchStudents(); }, [projectId]);
 
   useEffect(() => {
     const term = searchTerm.toLowerCase();
@@ -60,6 +57,7 @@ export default function InviteMembers() {
   const fetchStudents = async (customFilters = filters) => {
     try {
       setLoading(true);
+      setApplyLoading(true);
       const apiParams = { size: 50 };
       if (customFilters.branch && customFilters.branch !== 'ALL') apiParams.branch = customFilters.branch;
       if (customFilters.graduationYear && customFilters.graduationYear !== 'ALL') apiParams.graduationYear = parseInt(customFilters.graduationYear);
@@ -73,18 +71,15 @@ export default function InviteMembers() {
         projectService.getProjectInvitations(projectId)
       ]);
 
-      // Safely extract students from response
       let allStudents = [];
       if (usersRes?.data?.content) allStudents = usersRes.data.content;
       else if (Array.isArray(usersRes?.data)) allStudents = usersRes.data;
       else if (usersRes?.content) allStudents = usersRes.content;
       else if (Array.isArray(usersRes)) allStudents = usersRes;
 
-      // Safely extract members
       const currentMembers = membersRes?.data || (Array.isArray(membersRes) ? membersRes : []);
       const memberIds = new Set(currentMembers.map(m => m.user?.id || m.userId || m.id));
-      
-      // Project Lead
+
       const projectData = projectRes?.data || projectRes || {};
       const leadId = projectData.lead?.id || projectData.Lead?.id || projectData.leadId;
       if (leadId) memberIds.add(leadId);
@@ -109,7 +104,6 @@ export default function InviteMembers() {
             (s.profilePhoto ? (s.profilePhoto.startsWith('data:') ? s.profilePhoto : `data:image/jpeg;base64,${s.profilePhoto}`) : null)
         }));
 
-      // Safely extract invites
       const invites = invitesRes?.data?.content || invitesRes?.data || (Array.isArray(invitesRes) ? invitesRes : []);
       const newInvitesMap = {};
       if (Array.isArray(invites)) {
@@ -120,13 +114,13 @@ export default function InviteMembers() {
           }
         });
       }
-      
+
       setInvitationsMap(newInvitesMap);
       setInvitedUserIds(Object.keys(newInvitesMap));
       setStudents(processed);
       setFilteredStudents(processed);
     } catch (err) {
-      console.error('InviteMembers: Fetch Error:', err);
+      console.error('InviteMembers fetch error:', err);
       setError('Failed to fetch the talent pool.');
     } finally {
       setLoading(false);
@@ -139,299 +133,256 @@ export default function InviteMembers() {
       const resp = await projectService.sendInvitation(projectId, {
         invitedUserId: student.id,
         role: 'MEMBER',
-        message: `Join our team for this project!`
+        message: 'Join our team for this project!'
       });
-      // Response logic might vary, let's assume it has the new invitation
       const invId = resp?.data?.id || resp?.id;
-      if (invId) {
-        setInvitationsMap(prev => ({ ...prev, [student.id]: invId }));
-      }
+      if (invId) setInvitationsMap(prev => ({ ...prev, [student.id]: invId }));
       setInvitedUserIds(prev => [...prev, student.id]);
-    } catch (err) {
-      alert("Invitation failed to send.");
+      toast.success(`Invitation sent to ${student.displayName}`);
+    } catch {
+      toast.error('Failed to send invitation.');
     }
   };
 
   const handleCancelInvite = async (studentId) => {
     const invId = invitationsMap[studentId];
     if (!invId) return;
-
     try {
       await projectService.cancelInvitation(invId);
       setInvitedUserIds(prev => prev.filter(id => id !== studentId.toString() && id !== studentId));
-      setInvitationsMap(prev => {
-        const next = { ...prev };
-        delete next[studentId];
-        return next;
-      });
-    } catch (err) {
-      alert("Failed to cancel invitation.");
+      setInvitationsMap(prev => { const next = { ...prev }; delete next[studentId]; return next; });
+      toast.success('Invitation cancelled');
+    } catch {
+      toast.error('Failed to cancel invitation.');
     }
   };
 
-  if (loading) return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
-      <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4" />
-      <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs animate-pulse">Scanning Talent Pool...</p>
-    </div>
-  );
+  const resetFilters = () => {
+    const empty = { branch: '', graduationYear: '', availabilityStatus: '', skills: '' };
+    setFilters(empty);
+    fetchStudents(empty);
+  };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-[#020617] font-sans selection:bg-blue-100 dark:selection:bg-blue-900">
-      {/* Sticky Header */}
-      <header className="sticky top-0 z-50 bg-white/90 dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 h-16 px-6 flex items-center justify-between">
+    <div className="min-h-screen bg-slate-50/50">
+      {/* STICKY HEADER - Professional Minimalist */}
+      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 h-16 px-6 flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             onClick={() => navigate(`/projects/${projectId}`)}
-            className="text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold text-xs p-0 px-2"
+            className="text-slate-600 hover:text-indigo-600 font-bold text-xs px-2 h-9 rounded-lg"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" /> EXIT RECRUITMENT
+            <ArrowLeft className="w-4 h-4 mr-2" /> Project
           </Button>
-          <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" />
-          <h1 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Peers for {projectId?.slice(0, 6)}</h1>
+          <div className="h-4 w-px bg-slate-200" />
+          <h1 className="text-sm font-bold text-slate-900 tracking-tight">
+            Recruit Members
+          </h1>
         </div>
-        <Badge className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-none font-black px-3 py-1 text-[10px]">
-          {invitedUserIds.length} INVITED
+        <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold px-3 py-1 text-[10px] rounded-full">
+          {invitedUserIds.length} Sent
         </Badge>
       </header>
 
-      <main className="max-w-6xl mx-auto px-6 py-12">
-        {/* Hero Section */}
-        <div className="mb-12">
-          <motion.h2
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tight"
-          >
-            Find your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-violet-600 dark:from-blue-400 dark:to-violet-400">Dream Team.</span>
-          </motion.h2>
-          <p className="text-slate-500 dark:text-slate-400 mt-3 font-medium text-lg">Browse skilled peers from your campus and beyond.</p>
+      <main className="max-w-6xl mx-auto px-4 lg:px-6 py-8">
+        {/* HERO SECTION - Clean UI */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
+            Find Talent
+          </h2>
+          <p className="text-slate-500 text-sm font-medium mt-1">Connect with skilled peers to build your team.</p>
         </div>
 
-        {/* Search & Filter Bar */}
-        <div className="mb-10 space-y-4">
-          <div className="flex gap-3">
+        {/* SEARCH & FILTER - Professional UI */}
+        <div className="mb-6 space-y-3">
+          <div className="flex gap-2">
             <div className="relative flex-1 group">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
               <Input
-                placeholder="Search peers by name or skills..."
+                placeholder="Search by name or skill..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-14 pl-12 rounded-xl bg-white dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 focus:ring-2 focus:ring-blue-500/20 shadow-sm transition-all text-base dark:text-white"
+                className="h-10 pl-10 rounded-lg bg-white border-slate-200 text-sm shadow-sm"
               />
             </div>
             <Button
               onClick={() => setShowFilters(!showFilters)}
-              variant={showFilters ? "secondary" : "outline"}
-              className={`h-14 px-6 rounded-xl font-bold transition-all ${showFilters ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300' : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 text-slate-700 dark:text-slate-300'}`}
+              variant="outline"
+              className={`h-10 px-4 rounded-lg font-bold text-xs border-slate-200 bg-white text-slate-700 ${showFilters ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : ''}`}
             >
-              <Filter className="w-4 h-4 mr-2" /> Filters
+              <Filter className="w-3.5 h-3.5 mr-2" /> Filters
             </Button>
           </div>
 
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="bg-white dark:bg-slate-900 p-6 rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl"
-              >
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Branch</Label>
-                    <Select value={filters.branch} onValueChange={(v) => setFilters(p => ({ ...p, branch: v }))}>
-                      <SelectTrigger className="h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><SelectValue placeholder="All Branches" /></SelectTrigger>
-                      <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
-                        <SelectItem value="ALL">All Branches</SelectItem>
-                        {branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Graduation Year</Label>
-                    <Select value={filters.graduationYear} onValueChange={(v) => setFilters(p => ({ ...p, graduationYear: v }))}>
-                      <SelectTrigger className="h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><SelectValue placeholder="Any Year" /></SelectTrigger>
-                      <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
-                        <SelectItem value="ALL">Any Year</SelectItem>
-                        {graduationYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Availability</Label>
-                    <Select value={filters.availabilityStatus} onValueChange={(v) => setFilters(p => ({ ...p, availabilityStatus: v }))}>
-                      <SelectTrigger className="h-11 rounded-lg border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"><SelectValue placeholder="Any Status" /></SelectTrigger>
-                      <SelectContent className="dark:bg-slate-800 dark:border-slate-700">
-                        <SelectItem value="ALL">Any Status</SelectItem>
-                        {availabilityStatuses.map(s => <SelectItem key={s} value={s}>{s.replace('_', ' ')}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Skills</Label>
-                    <Input
-                      value={filters.skills}
-                      onChange={(e) => setFilters(p => ({ ...p, skills: e.target.value }))}
-                      placeholder="React, Java..."
-                      className="h-11 border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white rounded-lg"
-                    />
-                  </div>
+          {showFilters && (
+            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-md space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Branch</Label>
+                  <Select value={filters.branch} onValueChange={(v) => setFilters(p => ({ ...p, branch: v }))}>
+                    <SelectTrigger className="h-9 rounded-lg border-slate-200 text-xs">
+                      <SelectValue placeholder="All Branches" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-slate-200">
+                      <SelectItem value="ALL">All Branches</SelectItem>
+                      {branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex justify-end gap-3 mt-8 border-t border-slate-50 dark:border-slate-800 pt-6">
-                  <Button variant="ghost" onClick={() => fetchStudents({ branch: '', graduationYear: '', availabilityStatus: '', skills: '' })} className="font-bold text-slate-500 dark:text-slate-400">Reset</Button>
-                  <Button onClick={() => fetchStudents()} className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-11 rounded-lg font-bold shadow-lg shadow-blue-100 dark:shadow-blue-900/20">
-                    {applyLoading ? <Loader2 className="animate-spin h-4 w-4" /> : "Refresh Talent Pool"}
-                  </Button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
 
-        {error && <Alert variant="destructive" className="mb-8 rounded-xl bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200 border-red-100 dark:border-red-900/50"><AlertDescription>{error}</AlertDescription></Alert>}
-
-        {/* Talent Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <AnimatePresence>
-            {loading ? (
-              [...Array(6)].map((_, i) => (
-                <div key={i}>
-                  <Card className="h-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm flex flex-col p-6">
-                    <div className="flex items-center gap-4 mb-6">
-                      <Skeleton className="h-14 w-14 rounded-xl bg-slate-100 dark:bg-slate-800" />
-                      <div className="flex-1 space-y-2">
-                        <Skeleton className="h-5 w-3/4 bg-slate-100 dark:bg-slate-800" />
-                        <Skeleton className="h-3 w-1/2 bg-slate-100 dark:bg-slate-800" />
-                      </div>
-                    </div>
-                    <div className="space-y-4 mb-6 flex-grow">
-                      <Skeleton className="h-3 w-1/3 bg-slate-100 dark:bg-slate-800" />
-                      <div className="space-y-2">
-                        <Skeleton className="h-3 w-full bg-slate-100 dark:bg-slate-800" />
-                        <Skeleton className="h-3 w-5/6 bg-slate-100 dark:bg-slate-800" />
-                      </div>
-                      <div className="flex gap-2 pt-2">
-                        <Skeleton className="h-5 w-16 rounded bg-slate-100 dark:bg-slate-800" />
-                        <Skeleton className="h-5 w-16 rounded bg-slate-100 dark:bg-slate-800" />
-                        <Skeleton className="h-5 w-16 rounded bg-slate-100 dark:bg-slate-800" />
-                      </div>
-                    </div>
-                    <Skeleton className="h-11 w-full rounded-lg bg-slate-100 dark:bg-slate-800" />
-                  </Card>
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Graduation</Label>
+                  <Select value={filters.graduationYear} onValueChange={(v) => setFilters(p => ({ ...p, graduationYear: v }))}>
+                    <SelectTrigger className="h-9 rounded-lg border-slate-200 text-xs">
+                      <SelectValue placeholder="Any Year" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-slate-200">
+                      <SelectItem value="ALL">Any Year</SelectItem>
+                      {graduationYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                 </div>
-              ))
-            ) : filteredStudents.map((student, idx) => {
-              const isInvited = invitedUserIds.includes(student.id);
-              return (
-                <motion.div
-                  key={student.id || idx}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.05 }}
+
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Availability</Label>
+                  <Select value={filters.availabilityStatus} onValueChange={(v) => setFilters(p => ({ ...p, availabilityStatus: v }))}>
+                    <SelectTrigger className="h-9 rounded-lg border-slate-200 text-xs">
+                      <SelectValue placeholder="Any Status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white border-slate-200">
+                      <SelectItem value="ALL">Any Status</SelectItem>
+                      {availabilityStatuses.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, ' ')}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Skills</Label>
+                  <Input
+                    value={filters.skills}
+                    onChange={(e) => setFilters(p => ({ ...p, skills: e.target.value }))}
+                    placeholder="React, UI/UX..."
+                    className="h-9 border-slate-200 rounded-lg text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-4 border-t border-slate-50">
+                <Button variant="ghost" onClick={resetFilters} size="sm" className="font-bold text-xs text-slate-500">
+                  Reset
+                </Button>
+                <Button
+                  onClick={() => fetchStudents(filters)}
+                  size="sm"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 h-9 rounded-lg font-bold text-xs"
                 >
-                  <Card className="h-full bg-white dark:bg-slate-900/60 backdrop-blur-sm border-slate-200 dark:border-slate-800 hover:border-blue-300 dark:hover:border-blue-700/50 hover:shadow-xl dark:hover:shadow-blue-900/10 transition-all duration-300 group overflow-hidden flex flex-col">
-                    <CardContent className="p-6 flex-1 flex flex-col">
-                      <div className="flex items-center gap-4 mb-4">
-                        <Avatar className="h-14 w-14 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
-                          <AvatarImage src={student.profilePictureUrl} />
-                          <AvatarFallback className="bg-blue-600 text-white font-black text-lg">{student.displayName?.[0]}</AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">{student.displayName}</h3>
-                            {student.availabilityStatus && (
-                              <Badge variant="outline" className={`text-[9px] px-1.5 py-0 h-5 font-bold border-0 ${student.availabilityStatus === 'AVAILABLE' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' :
-                                student.availabilityStatus === 'OPEN_TO_WORK' ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
-                                }`}>
-                                {student.availabilityStatus.replace(/_/g, ' ')}
-                              </Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest truncate">{student.branch || 'Student'}</span>
-                            {student.graduationYear && (
-                              <>
-                                <span className="text-[10px] text-slate-300 dark:text-slate-600">•</span>
-                                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400">'{student.graduationYear.toString().slice(-2)}</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="space-y-4 mb-6 flex-grow">
-                        {student.collegeName && (
-                          <div className="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400">
-                            <MapPin className="h-3 w-3 text-blue-600 dark:text-blue-400 shrink-0" />
-                            <span className="truncate">{student.collegeName}</span>
-                          </div>
-                        )}
-
-                        <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2 leading-relaxed italic bg-slate-50 dark:bg-slate-800/50 p-2 rounded-lg border border-slate-100 dark:border-slate-800">
-                          "{student.bio || 'Ready to contribute my skills to high-impact campus projects.'}"
-                        </p>
-
-                        <div className="flex flex-wrap gap-1.5">
-                          {student.studentSkills.slice(0, 5).map((skill, si) => (
-                            <Badge key={si} variant="secondary" className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold text-[10px] px-2 hover:border-blue-300 dark:hover:border-blue-700 transition-colors cursor-default">
-                              {skill.name}
-                              {skill.level && <span className="ml-1 text-[8px] opacity-60 font-medium border-l border-slate-200 dark:border-slate-600 pl-1">{skill.level}</span>}
-                            </Badge>
-                          ))}
-                          {student.studentSkills.length > 5 && (
-                            <span className="text-[9px] font-black text-slate-400 py-1 px-1">+{student.studentSkills.length - 5}</span>
-                          )}
-                        </div>
-                      </div>
-
-                      <Button
-                        onClick={() => isInvited ? handleCancelInvite(student.id) : handleInvite(student)}
-                        disabled={!student.id}
-                        className={`w-full h-11 rounded-lg font-bold transition-all ${isInvited
-                          ? 'bg-rose-50 text-rose-600 border-rose-100 hover:bg-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30'
-                          : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                      >
-                        {isInvited ? (
-                          <span className="flex items-center gap-2 group-hover:hidden animate-in fade-in"><Check className="h-4 w-4" /> Invited</span>
-                        ) : (
-                          <span className="flex items-center gap-2 animate-in slide-in-from-bottom-2"><UserPlus className="h-4 w-4" /> Send Invitation</span>
-                        )}
-                        {isInvited && <span className="hidden group-hover:flex items-center gap-2 animate-in zoom-in-95 text-rose-600 dark:text-rose-400 font-black tracking-widest"><X className="h-4 w-4" /> CANCEL</span>}
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
+                  {applyLoading ? <Loader2 className="animate-spin h-3 w-3 mr-2" /> : 'Apply'}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {filteredStudents.length === 0 && (
-          <div className="text-center py-24 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 border-dashed">
-            <Users className="h-12 w-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white">No matching talent found</h3>
-            <p className="text-slate-500 dark:text-slate-400 mb-6">Try adjusting your filters or search keywords.</p>
-            <Button variant="link" onClick={() => fetchStudents({ branch: '', graduationYear: '', availabilityStatus: '', skills: '' })} className="text-blue-600 dark:text-blue-400 font-bold">Clear All Filters</Button>
-          </div>
+        {error && (
+          <Alert variant="destructive" className="mb-6 rounded-lg bg-red-50 text-red-800 border-red-100">
+            <AlertDescription className="text-xs font-medium">{error}</AlertDescription>
+          </Alert>
         )}
-      </main>
 
-      {/* Floating Go-to-Project Button */}
-      <motion.button
-        onClick={() => navigate(`/projects/${projectId}`)}
-        initial={{ opacity: 0, scale: 0.8, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ delay: 0.4, type: 'spring', stiffness: 260, damping: 20 }}
-        whileHover={{ scale: 1.08, boxShadow: '0 8px 30px rgba(59,130,246,0.45)' }}
-        whileTap={{ scale: 0.95 }}
-        title="Go to Project"
-        className="fixed bottom-8 right-8 z-50 flex items-center gap-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm px-5 py-3.5 rounded-2xl shadow-xl shadow-blue-900/30 transition-colors cursor-pointer"
-      >
-        <span className="hidden sm:inline">Go to Project</span>
-        <ArrowRight className="w-5 h-5" />
-      </motion.button>
+        {/* STUDENT GRID - Professional & Minimalist */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {loading ? (
+            [1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                <CardContent className="p-5 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </div>
+                  <div className="flex gap-1.5 pt-2">
+                    <Skeleton className="h-4 w-10 rounded" />
+                    <Skeleton className="h-4 w-10 rounded" />
+                    <Skeleton className="h-4 w-10 rounded" />
+                  </div>
+                  <div className="pt-4 border-t border-slate-50">
+                    <Skeleton className="h-9 w-full rounded-lg" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : filteredStudents.length === 0 ? (
+            <div className="col-span-full py-20 text-center bg-white rounded-xl border border-dashed border-slate-200">
+              <Users className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+              <p className="text-slate-500 font-bold text-sm">No talent found matching your criteria</p>
+              <p className="text-slate-400 text-xs mt-1">Try adjusting your filters or search term.</p>
+            </div>
+          ) : (
+            filteredStudents.map((student) => {
+              const isInvited = invitedUserIds.includes(student.id.toString()) || invitedUserIds.includes(student.id);
+              return (
+                <Card key={student.id} className="border-slate-200 rounded-xl bg-white hover:border-indigo-200 hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden group">
+                  <CardContent className="p-5 flex flex-col h-full">
+                    <div className="flex items-start gap-3 mb-4">
+                      <Avatar className="h-12 w-12 border border-slate-100 group-hover:border-indigo-100 transition-colors">
+                        <AvatarImage src={student.profilePictureUrl} />
+                        <AvatarFallback className="bg-indigo-50 text-indigo-700 text-sm font-bold">
+                          {student.displayName?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-indigo-600 transition-colors">
+                          {student.displayName}
+                        </h3>
+                        <p className="text-[11px] text-slate-500 font-medium truncate">
+                          {student.branch} • {student.graduationYear}
+                        </p>
+                        <div className="flex items-center gap-1 mt-1">
+                          <MapPin size={10} className="text-slate-300" />
+                          <span className="text-[10px] text-slate-400 font-medium truncate">{student.collegeName || 'Campus'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1 mb-5 min-h-[40px]">
+                      {student.studentSkills?.slice(0, 4).map((skill, idx) => (
+                        <Badge key={idx} variant="secondary" className="bg-slate-50 text-slate-500 border-none font-bold text-[9px] px-1.5 py-0">
+                          {skill.name}
+                        </Badge>
+                      ))}
+                      {student.studentSkills?.length > 4 && (
+                        <span className="text-[9px] font-bold text-slate-300">+{student.studentSkills.length - 4} more</span>
+                      )}
+                    </div>
+
+                    <div className="mt-auto pt-4 border-t border-slate-50">
+                      {isInvited ? (
+                        <Button
+                          variant="outline"
+                          onClick={() => handleCancelInvite(student.id)}
+                          className="w-full h-9 rounded-lg border-indigo-100 text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 hover:text-indigo-700 font-bold text-xs"
+                        >
+                          <Check className="w-3.5 h-3.5 mr-1.5" /> Invited
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={() => handleInvite(student)}
+                          className="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-sm"
+                        >
+                          <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Invite to Team
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
+        </div>
+      </main>
     </div>
   );
 }

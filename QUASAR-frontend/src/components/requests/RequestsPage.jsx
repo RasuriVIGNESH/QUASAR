@@ -1,75 +1,72 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRequests } from '../../contexts/RequestContext';
 import SentRequestsTab from './SentRequestsTab';
 import InvitationsTab from './InvitationsTab';
 import ProjectRequestsTab from './ProjectRequestsTab';
-import { Inbox, Users, Send, Sparkles, ShieldCheck } from 'lucide-react';
+import { Inbox, Users, Send, Sparkles } from 'lucide-react';
 
 export default function RequestsPage() {
   const { pendingCount } = useRequests();
 
+  const tabs = [
+    { id: 'invitations', label: 'Invitations', icon: <Sparkles size={14} /> },
+    { id: 'project-requests', label: 'Team Requests', icon: <Users size={14} /> },
+    { id: 'sent', label: 'Sent', icon: <Send size={14} /> },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#FDFDFD] dark:bg-[#020617] pb-20">
-      {/* HEADER SECTION */}
-      <div className="bg-slate-900 dark:bg-[#0B1120] pt-20 pb-28 px-8 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-[50%] h-full bg-blue-600/10 blur-[120px] rounded-full translate-x-1/2" />
-        <div className="max-w-6xl mx-auto relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-500/20">
-                <Inbox size={20} />
-              </div>
-              <h1 className="text-3xl md:text-5xl font-black text-white tracking-tighter">Communication Center</h1>
+    <div className="min-h-screen bg-slate-50/50 pb-20">
+      {/* HEADER - Professional Minimalist */}
+      <header className="bg-white border-b border-slate-200 px-4 lg:px-8 py-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-3 mb-1">
+            <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+              <Inbox size={16} />
             </div>
-            <p className="text-slate-400 text-lg max-w-xl font-medium leading-relaxed">
-              Review incoming project invites and manage your active collaboration requests in one central hub.
-            </p>
-          </motion.div>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Collaboration Center</h1>
+          </div>
+          <p className="text-slate-500 font-medium text-xs">
+            Manage your project invitations and team requests.
+          </p>
         </div>
-      </div>
+      </header>
 
-      <main className="max-w-6xl mx-auto px-8 -mt-12 relative z-20">
-        <Tabs defaultValue="invitations" className="space-y-10">
-
-          {/* MODERN TAB LIST */}
-          <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl p-2 rounded-[32px] shadow-2xl shadow-slate-200/40 dark:shadow-slate-900/40 border border-white dark:border-slate-800 sticky top-24">
-            <TabsList className="grid grid-cols-3 bg-transparent h-16 p-0 gap-2">
-              {[
-                { id: 'invitations', label: 'My Invitations', icon: <Sparkles size={16} /> },
-                { id: 'project-requests', label: 'Team Requests', icon: <Users size={16} /> },
-                { id: 'sent', label: 'Sent Log', icon: <Send size={16} /> }
-              ].map((tab) => (
+      <main className="max-w-6xl mx-auto px-4 lg:px-8 py-8">
+        <Tabs defaultValue="invitations" className="space-y-6">
+          {/* TAB LIST - Clean & Minimal */}
+          <div className="flex justify-center sm:justify-start">
+            <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-500">
+              {tabs.map((tab) => (
                 <TabsTrigger
                   key={tab.id}
                   value={tab.id}
-                  className="rounded-[24px] h-full data-[state=active]:bg-slate-900 dark:data-[state=active]:bg-blue-600 data-[state=active]:text-white data-[state=active]:shadow-xl transition-all duration-500 font-black text-xs uppercase tracking-widest gap-3 dark:text-slate-400 dark:data-[state=active]:text-white"
+                  className="inline-flex items-center justify-center whitespace-nowrap rounded-md px-4 py-1.5 text-xs font-bold ring-offset-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-white data-[state=active]:text-indigo-600 data-[state=active]:shadow-sm"
                 >
-                  {tab.icon}
-                  <span className="hidden sm:inline">{tab.label}</span>
-                  {tab.id === 'invitations' && pendingCount > 0 && (
-                    <span className="bg-blue-600 dark:bg-white dark:text-blue-600 text-white text-[10px] w-5 h-5 rounded-full flex items-center justify-center ring-4 ring-blue-50 dark:ring-blue-900/20">
-                      {pendingCount}
-                    </span>
-                  )}
+                  <span className="flex items-center gap-2">
+                    {tab.icon}
+                    {tab.label}
+                    {tab.id === 'invitations' && pendingCount > 0 && (
+                      <span className="ml-1 flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-[9px] font-bold text-white">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </span>
                 </TabsTrigger>
               ))}
             </TabsList>
           </div>
 
-          <div className="px-2 pt-4">
-            <AnimatePresence mode="wait">
-              <TabsContent value="invitations">
-                <InvitationsTab />
-              </TabsContent>
-              <TabsContent value="project-requests">
-                <ProjectRequestsTab />
-              </TabsContent>
-              <TabsContent value="sent">
-                <SentRequestsTab />
-              </TabsContent>
-            </AnimatePresence>
+          <div className="mt-4">
+            <TabsContent value="invitations" className="mt-0 focus-visible:outline-none">
+              <InvitationsTab />
+            </TabsContent>
+            <TabsContent value="project-requests" className="mt-0 focus-visible:outline-none">
+              <ProjectRequestsTab />
+            </TabsContent>
+            <TabsContent value="sent" className="mt-0 focus-visible:outline-none">
+              <SentRequestsTab />
+            </TabsContent>
           </div>
         </Tabs>
       </main>

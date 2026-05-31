@@ -54,15 +54,18 @@ export default function App() {
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/auth/oauth2/redirect" element={<OAuth2RedirectHandler />} />
 
+              {/* Full-screen protected routes — no sidebar layout */}
+              <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
+              <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
+              <Route path="/projects/create" element={<CreateProject />} />
+
               {/* Protected Routes - Layout is STATIC and will NOT unmount */}
               <Route element={<ProtectedRoute><ResponsiveLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects/my-projects" element={<MyProjects />} />
-                <Route path="/projects/create" element={<CreateProject />} />
-                <Route path="/projects/:id" element={<ProjectPage />} />
+
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/skills" element={<SkillMastery />} />
-                <Route path="/events/:id" element={<EventDetails />} />
                 <Route path="/messages" element={<RequestsPage />} />
                 <Route path="/discover/projects" element={<ProjectDiscovery />} />
                 <Route path="/discover/students" element={<StudentDiscovery />} />

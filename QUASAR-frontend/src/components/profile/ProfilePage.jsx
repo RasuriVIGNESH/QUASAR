@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,13 +9,14 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     Mail, GraduationCap, Github, Linkedin, Globe,
-    Camera, Save, Edit3, CheckCircle, AlertTriangle, Loader2,
-    MapPin, Briefcase, Link as LinkIcon, Building2, Calendar, User,
-    LayoutGrid // FIXED: Added LayoutGrid here
+    Camera, Save, Edit3, Loader2,
+    MapPin, Briefcase, Link as LinkIcon, Building2, Calendar,
+    LayoutGrid
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+// Use service layer — no direct fetch
+import userService from '../../services/userService';
 
 export default function ProfilePage() {
     const { userProfile, fetchUserProfile } = useAuth();
@@ -64,22 +64,13 @@ export default function ProfilePage() {
     const handleSave = async () => {
         try {
             setLoading(true);
-            const res = await fetch(`${API_BASE_URL}/students/profile`, {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
-
-            if (!res.ok) throw new Error('Update failed');
-
-            toast.success('Profile Synced Successfully');
+            // Use userService instead of direct fetch
+            await userService.updateUserProfile(formData);
+            toast.success('Profile updated successfully');
             setIsEditing(false);
             if (fetchUserProfile) await fetchUserProfile();
         } catch (err) {
-            toast.error('Failed to update logic core');
+            toast.error(err.message || 'Failed to update profile');
         } finally {
             setLoading(false);
         }
@@ -89,17 +80,10 @@ export default function ProfilePage() {
         const file = e.target.files?.[0];
         if (!file) return;
         try {
-            const data = new FormData();
-            data.append('file', file);
-            const res = await fetch(`${API_BASE_URL}/students/profile-photo`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-                body: data
-            });
-            if (res.ok) {
-                toast.success('Visual Identity Updated');
-                if (fetchUserProfile) await fetchUserProfile();
-            }
+            // Use userService.uploadProfilePicture instead of direct fetch
+            await userService.uploadProfilePicture(file);
+            toast.success('Profile photo updated');
+            if (fetchUserProfile) await fetchUserProfile();
         } catch (err) {
             toast.error('Photo upload failed');
         }
@@ -117,8 +101,8 @@ export default function ProfilePage() {
             <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 lg:px-8 py-4">
                 <div className="max-w-6xl mx-auto flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Identity Profile</h2>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Logic Core / User Data</p>
+                        <h2 className="text-xl font-black text-slate-900 tracking-tight">My Profile</h2>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Account / Settings</p>
                     </div>
                     <Button
                         onClick={() => isEditing ? handleSave() : setIsEditing(true)}
@@ -127,7 +111,7 @@ export default function ProfilePage() {
                             } shadow-lg text-white`}
                     >
                         {loading ? <Loader2 className="animate-spin mr-2" size={18} /> : isEditing ? <Save className="mr-2" size={18} /> : <Edit3 className="mr-2" size={18} />}
-                        {isEditing ? 'Save Registry' : 'Edit Profile'}
+                        {isEditing ? 'Save Changes' : 'Edit Profile'}
                     </Button>
                 </div>
             </header>
@@ -153,7 +137,7 @@ export default function ProfilePage() {
                                                 <Camera size={24} />
                                             </button>
                                         )}
-                                        <input ref={fileInputRef} type="file" className="hidden" onChange={handlePhotoUpload} />
+                                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
                                     </div>
                                     <div className="flex-1 pb-2 text-center sm:text-left">
                                         <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
@@ -171,13 +155,13 @@ export default function ProfilePage() {
                                 </div>
 
                                 <div className="pt-6 border-t border-slate-50">
-                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Executive Summary</Label>
+                                    <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-3 block">Bio</Label>
                                     {isEditing ? (
                                         <Textarea
                                             name="bio"
                                             value={formData.bio}
                                             onChange={handleInputChange}
-                                            className="min-h-[120px] rounded-2xl border-slate-200 text-base"
+                                            className="min-h-[120px] rounded-2xl border-slate-200 text-base text-slate-900"
                                             placeholder="Write your professional bio..."
                                         />
                                     ) : (
@@ -190,22 +174,22 @@ export default function ProfilePage() {
                         </Card>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Card className="rounded-3xl border-slate-200/60">
-                                <CardHeader><CardTitle className="text-sm font-black uppercase text-slate-400">Core Details</CardTitle></CardHeader>
+                            <Card className="rounded-3xl border-slate-200/60 bg-white">
+                                <CardHeader><CardTitle className="text-sm font-black uppercase text-slate-400">Personal Details</CardTitle></CardHeader>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-1.5">
                                         <Label className="text-xs font-bold text-slate-500">First Name</Label>
-                                        <Input name="firstName" disabled={!isEditing} value={formData.firstName} onChange={handleInputChange} className="rounded-xl bg-slate-50/50 border-none font-semibold h-11" />
+                                        <Input name="firstName" disabled={!isEditing} value={formData.firstName} onChange={handleInputChange} className="rounded-xl bg-slate-50/50 border-none font-semibold h-11 text-slate-900" />
                                     </div>
                                     <div className="space-y-1.5">
                                         <Label className="text-xs font-bold text-slate-500">Last Name</Label>
-                                        <Input name="lastName" disabled={!isEditing} value={formData.lastName} onChange={handleInputChange} className="rounded-xl bg-slate-50/50 border-none font-semibold h-11" />
+                                        <Input name="lastName" disabled={!isEditing} value={formData.lastName} onChange={handleInputChange} className="rounded-xl bg-slate-50/50 border-none font-semibold h-11 text-slate-900" />
                                     </div>
                                 </CardContent>
                             </Card>
 
-                            <Card className="rounded-3xl border-slate-200/60">
-                                <CardHeader><CardTitle className="text-sm font-black uppercase text-slate-400">System Status</CardTitle></CardHeader>
+                            <Card className="rounded-3xl border-slate-200/60 bg-white">
+                                <CardHeader><CardTitle className="text-sm font-black uppercase text-slate-400">Status</CardTitle></CardHeader>
                                 <CardContent className="space-y-6">
                                     <div className="space-y-1.5">
                                         <Label className="text-xs font-bold text-slate-500">Availability</Label>
@@ -214,7 +198,7 @@ export default function ProfilePage() {
                                             disabled={!isEditing}
                                             value={formData.availabilityStatus}
                                             onChange={handleInputChange}
-                                            className="w-full h-11 bg-slate-50/50 rounded-xl px-4 font-bold text-sm text-slate-700 border-none"
+                                            className="w-full h-11 bg-slate-50/50 rounded-xl px-4 font-bold text-sm text-slate-700 border border-slate-200"
                                         >
                                             <option value="AVAILABLE">Available</option>
                                             <option value="BUSY">Busy</option>
@@ -224,7 +208,7 @@ export default function ProfilePage() {
                                     <div className="flex items-center gap-3 p-3 bg-indigo-50/50 rounded-2xl">
                                         <Mail className="text-indigo-600" size={20} />
                                         <div className="min-w-0">
-                                            <p className="text-[10px] font-black text-indigo-400 uppercase">Network Email</p>
+                                            <p className="text-[10px] font-black text-indigo-400 uppercase">Email</p>
                                             <p className="text-sm font-bold text-slate-700 truncate">{userProfile?.email}</p>
                                         </div>
                                     </div>
@@ -235,43 +219,41 @@ export default function ProfilePage() {
 
                     {/* RIGHT COLUMN */}
                     <div className="lg:col-span-4 space-y-8">
-                        <Card className="rounded-[32px] border-slate-200/60 shadow-xl shadow-slate-200/40">
+                        <Card className="rounded-[32px] border-slate-200/60 shadow-xl shadow-slate-200/40 bg-white">
                             <CardHeader>
                                 <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 flex items-center gap-2">
-                                    <GraduationCap size={16} className="text-indigo-600" /> Academic Base
+                                    <GraduationCap size={16} className="text-indigo-600" /> Academic Info
                                 </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="space-y-6">
-                                    <div className="flex items-start gap-4">
-                                        <Building2 className="text-slate-400 mt-1" size={20} />
-                                        <div>
-                                            <p className="text-[10px] font-black text-slate-400 uppercase">University</p>
-                                            <p className="text-sm font-black text-slate-800">{userProfile?.college?.name}</p>
-                                            <p className="text-xs font-bold text-indigo-500 flex items-center gap-1 mt-1"><MapPin size={10} /> {userProfile?.college?.location}</p>
-                                        </div>
+                                <div className="flex items-start gap-4">
+                                    <Building2 className="text-slate-400 mt-1" size={20} />
+                                    <div>
+                                        <p className="text-[10px] font-black text-slate-400 uppercase">University</p>
+                                        <p className="text-sm font-black text-slate-800">{userProfile?.college?.name}</p>
+                                        <p className="text-xs font-bold text-indigo-500 flex items-center gap-1 mt-1"><MapPin size={10} /> {userProfile?.college?.location}</p>
                                     </div>
-                                    <div className="flex items-start gap-4">
-                                        <LayoutGrid className="text-slate-400 mt-1" size={20} />
-                                        <div className="flex-1">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase">Branch</p>
-                                            {isEditing ? (
-                                                <Input name="branch" value={formData.branch} onChange={handleInputChange} className="h-9 bg-slate-50 border-none font-bold text-xs" />
-                                            ) : (
-                                                <p className="text-sm font-black text-slate-800">{formData.branch}</p>
-                                            )}
-                                        </div>
+                                </div>
+                                <div className="flex items-start gap-4">
+                                    <LayoutGrid className="text-slate-400 mt-1" size={20} />
+                                    <div className="flex-1">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase">Branch</p>
+                                        {isEditing ? (
+                                            <Input name="branch" value={formData.branch} onChange={handleInputChange} className="h-9 bg-slate-50 border-none font-bold text-xs text-slate-900" />
+                                        ) : (
+                                            <p className="text-sm font-black text-slate-800">{formData.branch || '—'}</p>
+                                        )}
                                     </div>
-                                    <div className="flex items-start gap-4">
-                                        <Calendar className="text-slate-400 mt-1" size={20} />
-                                        <div className="flex-1">
-                                            <p className="text-[10px] font-black text-slate-400 uppercase">Graduation</p>
-                                            {isEditing ? (
-                                                <Input name="graduationYear" type="number" value={formData.graduationYear} onChange={handleInputChange} className="h-9 bg-slate-50 border-none font-bold text-xs" />
-                                            ) : (
-                                                <p className="text-sm font-black text-slate-800">Class of {formData.graduationYear}</p>
-                                            )}
-                                        </div>
+                                </div>
+                                <div className="flex items-start gap-4">
+                                    <Calendar className="text-slate-400 mt-1" size={20} />
+                                    <div className="flex-1">
+                                        <p className="text-[10px] font-black text-slate-400 uppercase">Graduation Year</p>
+                                        {isEditing ? (
+                                            <Input name="graduationYear" type="number" value={formData.graduationYear} onChange={handleInputChange} className="h-9 bg-slate-50 border-none font-bold text-xs text-slate-900" />
+                                        ) : (
+                                            <p className="text-sm font-black text-slate-800">Class of {formData.graduationYear || '—'}</p>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>
@@ -282,47 +264,32 @@ export default function ProfilePage() {
                                 <CardTitle className="text-xs font-black uppercase text-indigo-400">Professional Links</CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="space-y-4">
-                                    <div className="group">
+                                {[
+                                    { key: 'githubUrl', icon: Github, label: 'GitHub', placeholder: 'https://github.com/...' },
+                                    { key: 'linkedinUrl', icon: Linkedin, label: 'LinkedIn', placeholder: 'https://linkedin.com/in/...' },
+                                    { key: 'portfolioUrl', icon: Globe, label: 'Portfolio', placeholder: 'https://yoursite.com' },
+                                ].map(({ key, icon: Icon, label, placeholder }) => (
+                                    <div key={key} className="group">
                                         <div className="flex items-center gap-3 mb-2">
-                                            <Github size={16} className="text-indigo-400" />
-                                            <Label className="text-[10px] font-black uppercase text-slate-500">GitHub Registry</Label>
+                                            <Icon size={16} className="text-indigo-400" />
+                                            <Label className="text-[10px] font-black uppercase text-slate-500">{label}</Label>
                                         </div>
                                         {isEditing ? (
-                                            <Input name="githubUrl" value={formData.githubUrl} onChange={handleInputChange} className="h-9 bg-white/5 border-none text-white text-xs" />
+                                            <Input
+                                                name={key}
+                                                value={formData[key]}
+                                                onChange={handleInputChange}
+                                                placeholder={placeholder}
+                                                className="h-9 bg-white/5 border-none text-white text-xs placeholder:text-slate-600"
+                                            />
                                         ) : (
-                                            <a href={formData.githubUrl} target="_blank" rel="noreferrer" className="text-sm font-bold text-slate-200 hover:text-white flex items-center justify-between group">
-                                                {formData.githubUrl ? "Launch Repository" : "No Link"} <LinkIcon size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                            <a href={formData[key]} target="_blank" rel="noreferrer" className={`text-sm font-bold flex items-center justify-between group ${formData[key] ? 'text-slate-200 hover:text-white' : 'text-slate-600 pointer-events-none'}`}>
+                                                {formData[key] ? `Visit ${label}` : 'Not set'}
+                                                {formData[key] && <LinkIcon size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />}
                                             </a>
                                         )}
                                     </div>
-                                    <div className="group">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <Linkedin size={16} className="text-indigo-400" />
-                                            <Label className="text-[10px] font-black uppercase text-slate-500">LinkedIn Connect</Label>
-                                        </div>
-                                        {isEditing ? (
-                                            <Input name="linkedinUrl" value={formData.linkedinUrl} onChange={handleInputChange} className="h-9 bg-white/5 border-none text-white text-xs" />
-                                        ) : (
-                                            <a href={formData.linkedinUrl} target="_blank" rel="noreferrer" className="text-sm font-bold text-slate-200 hover:text-white flex items-center justify-between group">
-                                                {formData.linkedinUrl ? "Sync LinkedIn" : "No Link"} <LinkIcon size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            </a>
-                                        )}
-                                    </div>
-                                    <div className="group">
-                                        <div className="flex items-center gap-3 mb-2">
-                                            <Globe size={16} className="text-indigo-400" />
-                                            <Label className="text-[10px] font-black uppercase text-slate-500">Portfolio Domain</Label>
-                                        </div>
-                                        {isEditing ? (
-                                            <Input name="portfolioUrl" value={formData.portfolioUrl} onChange={handleInputChange} className="h-9 bg-white/5 border-none text-white text-xs" />
-                                        ) : (
-                                            <a href={formData.portfolioUrl} target="_blank" rel="noreferrer" className="text-sm font-bold text-slate-200 hover:text-white flex items-center justify-between group">
-                                                {formData.portfolioUrl ? "Visit Domain" : "No Link"} <LinkIcon size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
+                                ))}
                             </CardContent>
                         </Card>
                     </div>
