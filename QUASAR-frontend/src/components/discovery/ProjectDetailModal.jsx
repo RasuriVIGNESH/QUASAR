@@ -10,10 +10,9 @@ import {
     Send,
     Loader2,
     ChevronRight,
+    X
 } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
 import { joinRequestService } from '../../services/JoinRequestService';
-import ProjectChatBot from './ProjectChatBot';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function ProjectDetailModal({ project, open, onOpenChange, onJoinSuccess }) {
@@ -29,8 +28,6 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
 
             setCheckingStatus(true);
             try {
-                // Optimistically check if we already have the status passed down, 
-                // otherwise fetch from API
                 const response = await joinRequestService.getMyJoinRequests();
                 const hasJoined = response.some(req => req.project?.id === project.id);
                 setHasApplied(hasJoined);
@@ -42,7 +39,6 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
         };
 
         checkApplicationStatus();
-        // Reset message when opening new project
         if (open) {
             setJoinRequestMessage('');
         }
@@ -61,7 +57,6 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
             }
         } catch (e) {
             console.error("Error sending request:", e);
-            // Ideally show toast error here
         } finally {
             setIsSubmitting(false);
         }
@@ -71,138 +66,136 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl max-h-[90vh] rounded-[32px] p-0 border-none overflow-hidden shadow-2xl flex flex-col bg-white dark:bg-slate-950">
-                <AnimatePresence>
-                    <div className="flex flex-col w-full h-full overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300 relative z-50">
-                        {/* Header Section */}
-                        <div className="bg-slate-900 p-10 text-white relative overflow-hidden shrink-0">
-                            <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full -mr-32 -mt-32 blur-3xl pointer-events-none" />
-                            <div className="relative z-10">
-                                <div className="flex items-center gap-3 mb-4">
-                                    {project.categoryName && (
-                                        <Badge className="bg-blue-600 text-white border-none font-bold px-3">
-                                            {project.categoryName}
-                                        </Badge>
-                                    )}
-                                    {project.status && (
-                                        <Badge variant="outline" className="text-slate-400 border-slate-700 font-bold px-3 uppercase tracking-widest text-[10px]">
-                                            {project.status}
-                                        </Badge>
-                                    )}
-                                    {project.priority && (
-                                        <Badge className="bg-amber-500/10 text-amber-500 border border-amber-500/20 font-bold px-3 text-[10px] uppercase tracking-wider">
-                                            Priority #{project.priority}
-                                        </Badge>
-                                    )}
-                                </div>
-
-                                <h2 className="text-4xl font-black mb-4 tracking-tight leading-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-100">
-                                    {project.title}
-                                </h2>
-
-                                <div className="flex items-center gap-6 text-slate-400 text-xs font-bold uppercase tracking-widest">
-                                    <span className="flex items-center gap-2">
-                                        <Users className="h-4 w-4" />
-                                        {project.currentTeamSize || 1} / {project.maxTeamSize || 4} Capacity
-                                    </span>
-                                    <span className="flex items-center gap-2">
-                                        <Clock className="h-4 w-4" />
-                                        Posted recently
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Scrollable Content */}
-                        <div className="p-10 bg-white dark:bg-slate-950 overflow-y-auto scrollbar-hide flex-1 min-h-0">
-                            <div className="space-y-8">
-                                {/* Description */}
-                                <div className="space-y-4">
-                                    <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Objective & Scope</h4>
-                                    <p className="text-slate-600 dark:text-slate-300 text-lg leading-relaxed font-medium">
-                                        {project.description || project.goals || 'The team has not yet provided a detailed description for this objective.'}
-                                    </p>
-                                </div>
-
-                                {/* Skills */}
-                                {project.requiredSkills?.length > 0 && (
-                                    <div className="space-y-4">
-                                        <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Required Expertise</h4>
-                                        <div className="flex flex-wrap gap-2">
-                                            {project.requiredSkills.map((s, i) => (
-                                                <Badge
-                                                    key={i}
-                                                    className="bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-4 py-1.5 rounded-xl text-sm font-bold shadow-sm"
-                                                >
-                                                    {typeof s === 'string' ? s : s.skill?.name || s.name}
-                                                </Badge>
-                                            ))}
-                                        </div>
-                                    </div>
+            <DialogContent className="max-w-2xl max-h-[90vh] rounded-xl p-0 border-slate-200 overflow-hidden shadow-lg flex flex-col bg-white">
+                {/* HEADER - Light Mode */}
+                <div className="bg-gradient-to-br from-slate-50 to-white p-6 border-b border-slate-100 shrink-0">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-3">
+                                {project.categoryName && (
+                                    <Badge className="bg-indigo-100 text-indigo-700 border-none font-bold text-xs px-2 py-0">
+                                        {project.categoryName}
+                                    </Badge>
                                 )}
-
-                                {/* Application Form */}
-                                <div className="pt-4 space-y-4">
-                                    {!hasApplied && !checkingStatus && (
-                                        <>
-                                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Application Message</h4>
-                                            <Textarea
-                                                placeholder="Express your interest. Why are you excited about this project?"
-                                                className="rounded-2xl border-slate-200 dark:border-slate-700 min-h-[120px] p-5 text-base focus:ring-2 focus:ring-blue-500 shadow-inner dark:bg-slate-900 dark:text-white"
-                                                value={joinRequestMessage}
-                                                onChange={(e) => setJoinRequestMessage(e.target.value)}
-                                            />
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Footer Actions */}
-                        <div className="p-8 bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 flex gap-4 justify-between shrink-0 items-center">
-                            <div className="flex items-center gap-3">
-                                {project.lead && (
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="w-10 h-10 border-2 border-white dark:border-slate-800 shadow-sm">
-                                            <AvatarImage src={project.lead.profilePictureUrl} />
-                                            <AvatarFallback className="bg-blue-100 text-blue-700 font-bold">
-                                                {project.lead.firstName?.[0]}
-                                            </AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="text-sm font-bold text-slate-900 dark:text-white">{project.lead.firstName} {project.lead.lastName}</p>
-                                            <p className="text-xs text-slate-500 font-medium">Project Lead</p>
-                                        </div>
-                                    </div>
+                                {project.status && (
+                                    <Badge variant="outline" className="text-slate-600 border-slate-200 font-bold px-2 text-[9px] uppercase tracking-wide">
+                                        {project.status}
+                                    </Badge>
                                 )}
                             </div>
-
-                            <Button
-                                onClick={handleJoinRequest}
-                                disabled={isSubmitting || hasApplied || checkingStatus}
-                                className={`rounded-xl px-10 h-12 font-black transition-all shadow-lg hover:scale-105 ${hasApplied
-                                    ? 'bg-emerald-500 hover:bg-emerald-600 text-white'
-                                    : 'bg-blue-600 hover:bg-blue-700 text-white shadow-blue-100 dark:shadow-none'
-                                    }`}
-                            >
-                                {isSubmitting || checkingStatus ? (
-                                    <Loader2 className="animate-spin h-5 w-5" />
-                                ) : hasApplied ? (
-                                    <span className="flex items-center gap-2">
-                                        <Send className="h-4 w-4" /> Application Sent
-                                    </span>
-                                ) : (
-                                    <span className="flex items-center gap-2">
-                                        Submit Application <ChevronRight className="h-4 w-4" />
-                                    </span>
-                                )}
-                            </Button>
+                            <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight mb-2">
+                                {project.title}
+                            </h2>
+                            <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                                <span className="flex items-center gap-1.5">
+                                    <Users className="h-3.5 w-3.5 text-indigo-600" />
+                                    {project.currentTeamSize || 1} / {project.maxTeamSize || 4}
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <Clock className="h-3.5 w-3.5 text-indigo-600" />
+                                    Posted recently
+                                </span>
+                            </div>
                         </div>
-
-                        {/* AI Chat Bot Assistant */}
-                        <ProjectChatBot project={project} />
+                        <button
+                            onClick={() => onOpenChange(false)}
+                            className="text-slate-400 hover:text-slate-600 transition-colors p-1"
+                        >
+                            <X size={20} />
+                        </button>
                     </div>
-                </AnimatePresence>
+                </div>
+
+                {/* SCROLLABLE CONTENT */}
+                <div className="overflow-y-auto flex-1 min-h-0">
+                    <div className="p-6 space-y-6">
+                        {/* Description */}
+                        <div className="space-y-2">
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">About This Project</h4>
+                            <p className="text-sm text-slate-600 leading-relaxed">
+                                {project.description || project.goals || 'The team has not yet provided a detailed description for this project.'}
+                            </p>
+                        </div>
+
+                        {/* Skills */}
+                        {project.requiredSkills?.length > 0 && (
+                            <div className="space-y-3">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Required Skills</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    {project.requiredSkills.map((s, i) => (
+                                        <Badge
+                                            key={i}
+                                            className="bg-slate-100 border-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold"
+                                        >
+                                            {typeof s === 'string' ? s : s.skill?.name || s.name}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Application Form */}
+                        {!hasApplied && !checkingStatus && (
+                            <div className="space-y-3 pt-4 border-t border-slate-100">
+                                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Message</h4>
+                                <Textarea
+                                    placeholder="Tell the team why you're interested in this project..."
+                                    className="rounded-lg border-slate-200 min-h-[100px] p-3 text-sm focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
+                                    value={joinRequestMessage}
+                                    onChange={(e) => setJoinRequestMessage(e.target.value)}
+                                />
+                            </div>
+                        )}
+
+                        {hasApplied && (
+                            <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                                <p className="text-sm font-semibold text-emerald-700">✓ Application sent successfully</p>
+                                <p className="text-xs text-emerald-600 mt-1">The team will review your message soon.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* FOOTER - Actions */}
+                <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-4 justify-between items-center shrink-0">
+                    <div className="flex items-center gap-3">
+                        {project.lead && (
+                            <div className="flex items-center gap-3">
+                                <Avatar className="w-9 h-9 border border-slate-200 shadow-sm">
+                                    <AvatarImage src={project.lead.profilePictureUrl} />
+                                    <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold text-xs">
+                                        {project.lead.firstName?.[0]}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="min-w-0">
+                                    <p className="text-xs font-bold text-slate-900">{project.lead.firstName} {project.lead.lastName}</p>
+                                    <p className="text-[11px] text-slate-500 font-medium">Lead</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <Button
+                        onClick={handleJoinRequest}
+                        disabled={isSubmitting || hasApplied || checkingStatus}
+                        className={`rounded-lg px-6 h-10 font-bold text-sm transition-all ${hasApplied
+                            ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                            }`}
+                    >
+                        {isSubmitting || checkingStatus ? (
+                            <Loader2 className="animate-spin h-4 w-4" />
+                        ) : hasApplied ? (
+                            <span className="flex items-center gap-2">
+                                <Send className="h-3.5 w-3.5" /> Sent
+                            </span>
+                        ) : (
+                            <span className="flex items-center gap-2">
+                                Apply Now <ChevronRight className="h-3.5 w-3.5" />
+                            </span>
+                        )}
+                    </Button>
+                </div>
             </DialogContent>
         </Dialog>
     );

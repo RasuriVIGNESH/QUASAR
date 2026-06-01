@@ -65,10 +65,6 @@ public class ProjectJoinRequestService implements iProjectJoinRequestService {
         joinRequest.setStatus(InvitationStatus.PENDING);
 
         ProjectJoinRequest savedRequest = joinRequestRepository.save(joinRequest);
-
-        // TODO: Notify project Lead [cite: 312]
-        // notificationService.createNotification(project.getLead(), "New join request for " + project.getTitle());
-
         return savedRequest;
     }
 

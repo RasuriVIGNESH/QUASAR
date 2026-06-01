@@ -417,7 +417,7 @@ export default function AdminEvents() {
                                         <div className="grid grid-cols-2 gap-4 text-sm mt-2">
                                             <div>
                                                 <span className="text-slate-500 font-medium">Lead: </span>
-                                                {project.Lead?.firstName} {project.Lead?.lastName}
+                                                {project.lead?.firstName || project.Lead?.firstName} {project.lead?.lastName || project.Lead?.lastName}
                                             </div>
                                             <div>
                                                 <span className="text-slate-500 font-medium">Team Size: </span>

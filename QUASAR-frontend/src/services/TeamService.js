@@ -251,11 +251,11 @@ class TeamService {
 
       while (hasMore) {
         const response = await this.getProjectInvitations(projectId, page, pageSize);
-        const invitations = response?.data?.content || [];
+        const invitations = response?.content || response?.data?.content || [];
 
         allInvitations = [...allInvitations, ...invitations];
 
-        hasMore = !response?.data?.last && invitations.length > 0;
+        hasMore = !(response?.last ?? response?.data?.last) && invitations.length > 0;
         page++;
 
         // Safety check to prevent infinite loops

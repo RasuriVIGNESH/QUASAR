@@ -499,8 +499,8 @@ class ProjectService {
         this.getJoinedProjects(page, size)
       ]);
 
-      const ownedProjects = ownedResponse?.data?.content || [];
-      const joinedProjects = joinedResponse?.data?.content || [];
+      const ownedProjects = ownedResponse?.content || ownedResponse?.data?.content || [];
+      const joinedProjects = joinedResponse?.content || joinedResponse?.data?.content || [];
 
       // Combine and remove duplicates based on project ID
       const allProjects = [...ownedProjects];

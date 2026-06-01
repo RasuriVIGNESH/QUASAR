@@ -37,7 +37,7 @@ export default function ResponsiveLayout() {
             <aside className="hidden lg:fixed lg:left-0 lg:top-0 lg:h-screen lg:w-64 lg:bg-white lg:border-r lg:border-slate-200 lg:flex lg:flex-col lg:z-40">
                 <div className="p-8">
                     <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/dashboard')}>
-                        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold">Q</div>
+                        <img src="/Logo.png" alt="Quasar" className="w-8 h-8 rounded-lg object-cover" />
                         <h1 className="text-xl font-bold text-slate-900 tracking-tight">Quasar</h1>
                     </div>
                 </div>
@@ -75,8 +75,9 @@ export default function ResponsiveLayout() {
 
             {/* MOBILE TOP BAR - Instagram Style */}
             <header className="lg:hidden sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-slate-100 px-4 h-14 flex items-center justify-between">
-                <div className="flex items-center gap-2" onClick={() => navigate('/dashboard')}>
-                    <h1 className="text-xl font-bold text-slate-900 tracking-tight italic">Quasar</h1>
+                <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
+                    <img src="/Logo.png" alt="Quasar" className="w-7 h-7 rounded-lg object-cover" />
+                    <h1 className="text-lg font-bold text-slate-900 tracking-tight">Quasar</h1>
                 </div>
                 <div className="flex items-center gap-3">
                     <button onClick={() => navigate('/projects/create')} className="text-slate-900">
@@ -116,17 +117,7 @@ export default function ResponsiveLayout() {
                             </button>
                         );
                     })}
-                    {/* Profile Link in Instagram Style often uses Avatar */}
-                    <button
-                        onClick={() => handleNavigate('/profile')}
-                        className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${isActive('/profile') ? 'scale-110' : ''}`}
-                    >
-                        <div className={`w-7 h-7 rounded-full overflow-hidden border-2 ${isActive('/profile') ? 'border-slate-900' : 'border-transparent'}`}>
-                            <div className="w-full h-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-700">
-                                {userProfile?.firstName?.charAt(0) || 'U'}
-                            </div>
-                        </div>
-                    </button>
+
                 </div>
             </nav>
         </div>

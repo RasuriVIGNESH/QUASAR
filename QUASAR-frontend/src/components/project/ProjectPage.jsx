@@ -135,12 +135,12 @@ export default function ProjectPage() {
 
       {/* SIDEBAR NAV */}
       <aside className="w-16 lg:w-20 bg-white border-r border-slate-200 flex flex-col items-center py-6 gap-8 z-50 shrink-0">
-        <div
+        <img
+          src="/Logo.png"
+          alt="Quasar"
           onClick={() => navigate('/dashboard')}
-          className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md cursor-pointer hover:bg-indigo-700 transition-colors"
-        >
-          <Zap size={18} className="text-white fill-white" />
-        </div>
+          className="w-9 h-9 rounded-xl object-cover shadow-md cursor-pointer hover:opacity-90 transition-opacity"
+        />
 
         <nav className="flex flex-col gap-2 flex-1">
           {NAV_TABS.map((item) => (

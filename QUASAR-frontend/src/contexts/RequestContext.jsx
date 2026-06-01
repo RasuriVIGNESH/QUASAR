@@ -50,7 +50,7 @@ export const RequestProvider = ({ children }) => {
         : invitationsRes?.content || invitationsRes?.data || [];
       const myProjects = myProjectsResponse?.content || [];
 
-      const ownedProjects = myProjects.filter(p => p.Lead?.id === userId);
+      const ownedProjects = myProjects.filter(p => (p.lead?.id || p.Lead?.id) === userId);
 
       // ✅ LIMIT API CALLS (max 3 projects only)
       const limitedProjects = ownedProjects.slice(0, 3);

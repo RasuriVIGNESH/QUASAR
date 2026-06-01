@@ -123,7 +123,7 @@ export default function AdminEventDetails() {
                                         <div className="flex items-center justify-between">
                                             <span className="text-slate-500 flex items-center gap-1"><User className="w-4 h-4"/> Lead</span>
                                             <span className="font-medium text-slate-900 dark:text-slate-100">
-                                                {project.Lead?.firstName} {project.Lead?.lastName}
+                                                {project.lead?.firstName || project.Lead?.firstName} {project.lead?.lastName || project.Lead?.lastName}
                                             </span>
                                         </div>
                                         <div className="flex items-center justify-between">

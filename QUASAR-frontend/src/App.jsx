@@ -20,6 +20,7 @@ const MyProjects = lazy(() => import('./components/projects/MyProjects'));
 const CreateProject = lazy(() => import('./components/projects/CreateProject'));
 const ProfilePage = lazy(() => import('./components/profile/ProfilePage'));
 const ProjectPage = lazy(() => import('./components/project/ProjectPage'));
+const InviteMembers = lazy(() => import('./components/project/InviteMembers'));
 const StudentDiscovery = lazy(() => import('./components/discovery/StudentDiscovery'));
 const ProjectDiscovery = lazy(() => import('./components/discovery/ProjectDiscovery'));
 const RequestsPage = lazy(() => import('./components/requests/RequestsPage'));
@@ -58,6 +59,7 @@ export default function App() {
               <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
               <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
               <Route path="/projects/create" element={<CreateProject />} />
+              <Route path="/projects/:projectId/invite" element={<ProtectedRoute><InviteMembers /></ProtectedRoute>} />
 
               {/* Protected Routes - Layout is STATIC and will NOT unmount */}
               <Route element={<ProtectedRoute><ResponsiveLayout /></ProtectedRoute>}>

@@ -13,15 +13,16 @@ import java.util.Optional;
 @Repository
 public interface ProjectJoinRequestRepository extends JpaRepository<ProjectJoinRequest, Long> {
 
-    @Query("SELECT r FROM ProjectJoinRequest r " +
-            "JOIN FETCH r.project p " +
-            "JOIN FETCH p.lead " +
-            "JOIN FETCH r.user " +
-            "WHERE r.project.id = :projectId " +
-            "ORDER BY r.createdAt DESC")
-    default List<ProjectJoinRequest> findByProjectIdWithAssociations(@Param("projectId") String projectId) {
-        return null;
-    }
+    @Query("""
+        SELECT r FROM ProjectJoinRequest r
+        JOIN FETCH r.project p
+        JOIN FETCH p.lead
+        JOIN FETCH r.user
+        WHERE r.project.id = :projectId
+        ORDER BY r.createdAt DESC
+        """)
+    List<ProjectJoinRequest> findByProjectIdWithAssociations(
+            @Param("projectId") String projectId);
     @Query("SELECT DISTINCT r FROM ProjectJoinRequest r " +
             "JOIN FETCH r.project p " +
             "JOIN FETCH p.lead " +
