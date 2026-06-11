@@ -1,0 +1,39 @@
+{
+  "reflection": [
+    {
+      "type": "java.util.UUID[]"
+    },
+    {
+      "type": "java.util.UUID",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true
+    },
+    {
+      "type": "java.lang.Long[]"
+    },
+    {
+      "type": "java.lang.Integer[]"
+    },
+    {
+      "type": "java.lang.String[]"
+    },
+    {
+      "type": "com.cloudinary.http5.UploaderStrategy",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.cloudinary.http5.ApiStrategy",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    },
+    {
+      "type": "com.cloudinary.Cloudinary",
+      "allDeclaredConstructors": true,
+      "allDeclaredMethods": true,
+      "allDeclaredFields": true
+    }
+  ]
+}
