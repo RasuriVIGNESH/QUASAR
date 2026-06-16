@@ -1,7 +1,7 @@
 package com.ADP.peerConnect.service.Interface;
 
 
-import com.ADP.peerConnect.model.dto.request.Admin.CreateMentorRequest;
+import com.ADP.peerConnect.model.dto.request.CreateMentorRequest;
 import com.ADP.peerConnect.model.dto.response.MentorResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.Mentor;

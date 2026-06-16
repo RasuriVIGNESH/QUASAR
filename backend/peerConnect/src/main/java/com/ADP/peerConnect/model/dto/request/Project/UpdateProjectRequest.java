@@ -7,10 +7,17 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.List;
-
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 public class UpdateProjectRequest {
     @Size(min = 5, max = 100)
     private String title;
@@ -60,62 +67,4 @@ public class UpdateProjectRequest {
     private String projectForId;
     @Size(max = 200)
     private String projectForName;
-
-    public UpdateProjectRequest() {}
-
-    // Getters & Setters
-
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
-
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-
-    public Long getCategoryId() { return categoryId; }
-    public void setCategoryId(Long categoryId) { this.categoryId = categoryId; }
-
-    public List<ProjectSkillRequest> getSkills() { return skills; }
-    public void setSkills(List<ProjectSkillRequest> skills) { this.skills = skills; }
-
-    public String getCategoryName() { return categoryName; }
-    public void setCategoryName(String categoryName) { this.categoryName = categoryName; }
-
-    public Integer getMaxTeamSize() { return maxTeamSize; }
-    public void setMaxTeamSize(Integer maxTeamSize) { this.maxTeamSize = maxTeamSize; }
-
-    public ProjectStatus getStatus() { return status; }
-    public void setStatus(ProjectStatus status) { this.status = status; }
-
-    public LocalDate getExpectedStartDate() { return expectedStartDate; }
-    public void setExpectedStartDate(LocalDate expectedStartDate) { this.expectedStartDate = expectedStartDate; }
-
-    public LocalDate getExpectedEndDate() { return expectedEndDate; }
-    public void setExpectedEndDate(LocalDate expectedEndDate) { this.expectedEndDate = expectedEndDate; }
-
-    public String getRequirements() { return requirements; }
-    public void setRequirements(String requirements) { this.requirements = requirements; }
-
-    public String getGoals() { return goals; }
-    public void setGoals(String goals) { this.goals = goals; }
-
-    public String getProblemStatement() { return problemStatement; }
-    public void setProblemStatement(String problemStatement) { this.problemStatement = problemStatement; }
-
-    public String getObjectives() { return objectives; }
-    public void setObjectives(String objectives) { this.objectives = objectives; }
-
-    public List<String> getTechStack() { return techStack; }
-    public void setTechStack(List<String> techStack) { this.techStack = techStack; }
-
-    public String getGithubRepo() { return githubRepo; }
-    public void setGithubRepo(String githubRepo) { this.githubRepo = githubRepo; }
-
-    public String getDemoUrl() { return demoUrl; }
-    public void setDemoUrl(String demoUrl) { this.demoUrl = demoUrl; }
-
-    public String getProjectForId() { return projectForId; }
-    public void setProjectForId(String projectForId) { this.projectForId = projectForId; }
-
-    public String getProjectForName() { return projectForName; }
-    public void setProjectForName(String projectForName) { this.projectForName = projectForName; }
 }

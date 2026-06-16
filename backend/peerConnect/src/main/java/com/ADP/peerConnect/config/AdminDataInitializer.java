@@ -28,7 +28,7 @@ public class AdminDataInitializer {
                 admin1.setFirstName("Vingesh");
                 admin1.setLastName("Admin");
                 admin1.setRole(Role.ADMIN);
-                admin1.setVerified(true);
+                admin1.setIsVerified(true);
 
                 // keep others optional / null
                 userRepository.save(admin1);
@@ -45,7 +45,7 @@ public class AdminDataInitializer {
                 admin2.setFirstName("Platform");
                 admin2.setLastName("Admin");
                 admin2.setRole(Role.ADMIN);
-                admin2.setVerified(true);
+                admin2.setIsVerified(true);
 
                 userRepository.save(admin2);
             }

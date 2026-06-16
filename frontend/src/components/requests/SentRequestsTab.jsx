@@ -34,8 +34,9 @@ export default function SentRequestsTab() {
     );
   }
 
-  const pendingSentRequests = sentJoinRequests.filter(req => req.status === 'PENDING');
-  const respondedSentRequests = sentJoinRequests.filter(req => req.status !== 'PENDING');
+  const requests = Array.isArray(sentJoinRequests) ? sentJoinRequests : [];
+  const pendingSentRequests = requests.filter(req => req.status === 'PENDING');
+  const respondedSentRequests = requests.filter(req => req.status !== 'PENDING');
 
   return (
     <motion.div

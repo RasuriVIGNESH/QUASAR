@@ -130,7 +130,7 @@ export default function Dashboard() {
                       <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                         <span className="text-[11px] font-semibold text-slate-400">Lead: {p.lead?.firstName}</span>
                         <div className="flex items-center gap-1 text-slate-400 text-[11px] font-bold">
-                          <Users size={12} /> {p.currentTeamSize}/{p.maxTeamSize}
+                          <Users size={12} /> {p.currentTeamSize + 1}/{p.maxTeamSize}
                         </div>
                       </div>
                     </CardContent>

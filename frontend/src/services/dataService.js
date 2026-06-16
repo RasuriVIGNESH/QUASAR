@@ -1,393 +1,560 @@
 import apiService from './api.js';
 
+/**
+ * DataService
+ * 
+ * Comprehensive data management service for static data, events, and recommendations.
+ * Implements production-grade error handling, validation, and caching strategies.
+ * Eliminates mock data fallbacks in favor of real backend responses.
+ */
 class DataService {
-  // Get available branches - matches StaticDataController endpoint
+  constructor() {
+    // Cache TTL for static data (120 seconds - rarely changes)
+    this.staticDataCacheTTL = 120000;
+    // Cache TTL for event data (30 seconds)
+    this.eventCacheTTL = 30000;
+    // Cache TTL for recommendations (60 seconds)
+    this.recommendationCacheTTL = 60000;
+  }
+
+  /**
+   * Get available branches
+   * @returns {Promise} List of branches
+   */
   async getBranches() {
     try {
-      console.log('DataService: Getting branches...');
-      const response = await apiService.get('/branches');
-      console.log('DataService: Branches response:', response);
+      const response = await apiService.get(
+        '/branches',
+        {},
+        { cacheTTL: this.staticDataCacheTTL }
+      );
+
       return response;
     } catch (error) {
       console.error('DataService: Error getting branches:', error);
-      throw new Error(error.message || 'Failed to get branches data');
+      throw error;
     }
   }
 
-  // Get graduation years - matches StaticDataController endpoint
+  /**
+   * Get graduation years
+   * @returns {Promise} List of graduation years
+   */
   async getGraduationYears() {
     try {
-      console.log('DataService: Getting graduation years...');
-      const response = await apiService.get('/graduation-years');
-      console.log('DataService: Graduation years response:', response);
+      const response = await apiService.get(
+        '/graduation-years',
+        {},
+        { cacheTTL: this.staticDataCacheTTL }
+      );
+
       return response;
     } catch (error) {
       console.error('DataService: Error getting graduation years:', error);
-      throw new Error(error.message || 'Failed to get graduation years');
+      throw error;
     }
   }
 
-  // Get colleges - matches the /api/colleges endpoint
-  async getColleges(options = {}) {
+  /**
+   * Get all colleges
+   * @returns {Promise} List of colleges
+   */
+  async getColleges() {
     try {
-      console.log('DataService: Getting colleges...');
-      const response = await apiService.get('/colleges', {}, options);
-      console.log('DataService: Colleges response:', response);
+      const response = await apiService.get(
+        '/colleges',
+        {},
+        { cacheTTL: this.staticDataCacheTTL }
+      );
 
-      // Handle different response formats
-      if (response && Array.isArray(response) && response.length > 0) {
+      // Normalize response format
+      if (Array.isArray(response)) {
         return { data: response };
-      } else if (response && Array.isArray(response.data) && response.data.length > 0) {
-        return response;
-      } else {
-        console.warn('DataService: No data from colleges endpoint, using mock data');
-        // Mock data as requested
-        const mockColleges = [
-          { id: 1, name: 'woxsen', location: 'hyderabad' },
-          { id: 2, name: 'mahendra', location: 'telangana' }
-        ];
-        return { data: mockColleges };
       }
+
+      return response;
     } catch (error) {
       console.error('DataService: Error getting colleges:', error);
-      console.warn('DataService: Using mock data for colleges due to error');
-      // Mock data as requested
-      const mockColleges = [
-        { id: 1, name: 'woxsen', location: 'hyderabad' },
-        { id: 2, name: 'mahendra', location: 'telangana' }
-      ];
-      return { data: mockColleges };
-    }
-  }
-
-  // Get single collage by ID
-  async getCollageById(id) {
-    try {
-      if (!id) throw new Error('Collage ID is required');
-      return await apiService.get(`/colleges/${id}`);
-    } catch (error) {
-      console.error(`DataService: Error getting collage ${id}:`, error);
       throw error;
     }
   }
 
-  // Get collage by name
-  async getCollageByName(name) {
+  /**
+   * Get single college by ID
+   * @param {string|number} id - College ID
+   * @returns {Promise} College details
+   */
+  async getCollegeById(id) {
     try {
-      if (!name) throw new Error('Collage name is required');
-      return await apiService.get(`/colleges/name/${encodeURIComponent(name)}`);
+      if (!id) throw new Error('College ID is required');
+
+      const response = await apiService.get(
+        `/colleges/${id}`,
+        {},
+        { cacheTTL: this.staticDataCacheTTL }
+      );
+
+      return response;
     } catch (error) {
-      console.error(`DataService: Error getting collage by name ${name}:`, error);
+      console.error(`DataService: Error getting college ${id}:`, error);
       throw error;
     }
   }
 
-  // Create collage (Admin only)
-  async createCollage(collageData) {
+  /**
+   * Get college by name
+   * @param {string} name - College name
+   * @returns {Promise} College details
+   */
+  async getCollegeByName(name) {
     try {
-      return await apiService.post('/colleges', collageData);
+      if (!name) throw new Error('College name is required');
+
+      const response = await apiService.get(
+        `/colleges/name/${encodeURIComponent(name)}`,
+        {},
+        { cacheTTL: this.staticDataCacheTTL }
+      );
+
+      return response;
     } catch (error) {
-      console.error('DataService: Error creating collage:', error);
+      console.error(`DataService: Error getting college by name ${name}:`, error);
       throw error;
     }
   }
 
-  // Delete collage (Admin only)
-  async deleteCollage(id) {
+  /**
+   * Create college (admin only)
+   * @param {Object} collegeData - College data
+   * @returns {Promise} Created college
+   */
+  async createCollege(collegeData) {
     try {
-      if (!id) throw new Error('Collage ID is required');
-      return await apiService.delete(`/colleges/${id}`);
+      if (!collegeData.name || !collegeData.location) {
+        throw new Error('College name and location are required');
+      }
+
+      const response = await apiService.post('/colleges', collegeData);
+
+      // Invalidate college cache after creation
+      apiService.invalidateCache('/colleges');
+
+      return response;
     } catch (error) {
-      console.error(`DataService: Error deleting collage ${id}:`, error);
+      console.error('DataService: Error creating college:', error);
       throw error;
     }
   }
 
-  // Get project categories (for getAllStaticData)
+  /**
+   * Delete college (admin only)
+   * @param {string|number} id - College ID
+   * @returns {Promise} Deletion response
+   */
+  async deleteCollege(id) {
+    try {
+      if (!id) throw new Error('College ID is required');
+
+      const response = await apiService.delete(`/colleges/${id}`);
+
+      // Invalidate college cache after deletion
+      apiService.invalidateCache('/colleges');
+
+      return response;
+    } catch (error) {
+      console.error(`DataService: Error deleting college ${id}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get project categories
+   * @returns {Promise} List of project categories
+   */
   async getProjectCategories() {
     try {
-      // If projectService has this, we can duplicate logic or just call the endpoint
-      return await apiService.get('/projects/categories');
+      const response = await apiService.get(
+        '/projects/categories',
+        {},
+        { cacheTTL: this.staticDataCacheTTL }
+      );
+
+      return response;
     } catch (error) {
       console.error('DataService: Error getting project categories:', error);
-      return { data: [] };
+      throw error;
     }
   }
 
-  // Get recommended projects for a user
+  /**
+   * Get recommended projects for a user
+   * @param {string} userId - User ID
+   * @returns {Promise} Recommended projects
+   */
   async getRecommendedProjects(userId) {
     try {
       if (!userId) throw new Error('User ID is required');
-      console.log(`DataService: Getting recommended projects for user ${userId}...`);
-      const response = await apiService.get(`/recommendations/user/${userId}`);
-      console.log('DataService: Recommended projects response:', response);
+
+      const response = await apiService.get(
+        `/recommendations/user/${userId}`,
+        {},
+        { cacheTTL: this.recommendationCacheTTL }
+      );
+
       return response;
     } catch (error) {
       console.error(`DataService: Error getting recommended projects for user ${userId}:`, error);
-      return { recommendedProjects: [] }; // Return empty list as fallback
+      throw error;
     }
   }
 
-  // Get top 5 recommended projects for a user
+  /**
+   * Get top recommended projects for a user
+   * @param {string} userId - User ID
+   * @param {number} limit - Number of projects to return
+   * @returns {Promise} Top recommended projects
+   */
   async getTopRecommendedProjects(userId, limit = 5) {
     try {
       if (!userId) throw new Error('User ID is required');
-      console.log(`DataService: Getting top ${limit} recommended projects for user ${userId}...`);
-      const response = await apiService.get(`/recommendations/user/${userId}/top?limit=${limit}`);
-      console.log('DataService: Top recommended projects response:', response);
+
+      const params = { limit };
+      const response = await apiService.get(
+        `/recommendations/user/${userId}/top`,
+        params,
+        { cacheTTL: this.recommendationCacheTTL }
+      );
+
       return response;
     } catch (error) {
       console.error(`DataService: Error getting top recommended projects for user ${userId}:`, error);
-      return { recommendedProjects: [] };
+      throw error;
     }
   }
 
-  // Get system counts (users, projects, etc.)
+  /**
+   * Get system-wide counts (users, projects, etc.)
+   * @returns {Promise} System counts
+   */
   async getSystemCounts() {
     try {
-      console.log('DataService: Getting system counts...');
-      const response = await apiService.get('/count', {}, { preventRedirect: true });
-      console.log('DataService: System counts response:', response);
+      const response = await apiService.get(
+        '/count',
+        {},
+        { preventRedirect: true, cacheTTL: this.staticDataCacheTTL }
+      );
+
       return response;
     } catch (error) {
       console.error('DataService: Error getting system counts:', error);
-      return {};
+      throw error;
     }
   }
 
-  // --- Event Endpoints ---
-
-  // Create event (Admin)
+  /**
+   * Create event (admin only)
+   * @param {Object} eventData - Event data
+   * @returns {Promise} Created event
+   */
   async createEvent(eventData) {
     try {
-      console.log('DataService: Creating event...', eventData);
-      return await apiService.post('/events', eventData);
+      if (!eventData.name) throw new Error('Event name is required');
+
+      const response = await apiService.post('/events', eventData);
+
+      // Invalidate event caches after creation
+      apiService.invalidateCache('/events');
+
+      return response;
     } catch (error) {
       console.error('DataService: Error creating event:', error);
       throw error;
     }
   }
 
-  // Update event (Admin)
+  /**
+   * Update event (admin only)
+   * @param {string|number} id - Event ID
+   * @param {Object} eventData - Updated event data
+   * @returns {Promise} Updated event
+   */
   async updateEvent(id, eventData) {
     try {
       if (!id) throw new Error('Event ID is required');
-      console.log(`DataService: Updating event ${id}...`, eventData);
-      return await apiService.put(`/events/${id}`, eventData);
+
+      const response = await apiService.put(`/events/${id}`, eventData);
+
+      // Invalidate event caches after update
+      apiService.invalidateCache('/events');
+
+      return response;
     } catch (error) {
       console.error(`DataService: Error updating event ${id}:`, error);
       throw error;
     }
   }
 
-  // Delete event (Admin)
+  /**
+   * Delete event (admin only)
+   * @param {string|number} id - Event ID
+   * @returns {Promise} Deletion response
+   */
   async deleteEvent(id) {
     try {
       if (!id) throw new Error('Event ID is required');
-      console.log(`DataService: Deleting event ${id}...`);
-      return await apiService.delete(`/events/${id}`);
+
+      const response = await apiService.delete(`/events/${id}`);
+
+      // Invalidate event caches after deletion
+      apiService.invalidateCache('/events');
+
+      return response;
     } catch (error) {
       console.error(`DataService: Error deleting event ${id}:`, error);
       throw error;
     }
   }
 
-  // Get upcoming events
+  /**
+   * Get upcoming events
+   * @returns {Promise} List of upcoming events
+   */
   async getUpcomingEvents() {
     try {
-      console.log('DataService: Getting upcoming events...');
-      const response = await apiService.get('/events/upcoming');
-      console.log('DataService: Upcoming events response:', response);
+      const response = await apiService.get(
+        '/events/upcoming',
+        {},
+        { cacheTTL: this.eventCacheTTL }
+      );
+
       return response;
     } catch (error) {
       console.error('DataService: Error getting upcoming events:', error);
-      console.warn('DataService: Using mock data for upcoming events');
-      return [
-        {
-          id: 1,
-          name: 'Tech Innovation Summit 2025',
-          description: 'Join us for a day of inspiring talks and networking with industry leaders.',
-          startDate: '2025-03-15T09:00:00',
-          endDate: '2025-03-15T17:00:00',
-          status: 'UPCOMING',
-          location: 'Innovation Hub'
-        },
-        {
-          id: 2,
-          name: 'Hackathon: Future of AI',
-          description: 'A 48-hour coding marathon to build the next generation of AI solutions.',
-          startDate: '2025-04-10T18:00:00',
-          endDate: '2025-04-12T18:00:00',
-          status: 'UPCOMING',
-          location: 'Online'
-        }
-      ];
+      throw error;
     }
   }
 
-  // Get recent events
+  /**
+   * Get recent events
+   * @returns {Promise} List of recent events
+   */
   async getRecentEvents() {
     try {
-      console.log('DataService: Getting recent events...');
-      const response = await apiService.get('/events/recent');
-      console.log('DataService: Recent events response:', response);
+      const response = await apiService.get(
+        '/events/recent',
+        {},
+        { cacheTTL: this.eventCacheTTL }
+      );
+
       return response;
     } catch (error) {
       console.error('DataService: Error getting recent events:', error);
-      console.warn('DataService: Using mock data for recent events');
-      return [
-        {
-          id: 3,
-          name: 'Web Dev Workshop',
-          description: 'Learn the latest web development trends and best practices.',
-          startDate: '2025-02-20T10:00:00',
-          endDate: '2025-02-20T14:00:00',
-          status: 'COMPLETED',
-          location: 'CS Building'
-        }
-      ];
+      throw error;
     }
   }
 
-  // Get all events
+  /**
+   * Get all events
+   * @returns {Promise} List of all events
+   */
   async getAllEvents() {
     try {
-      console.log('DataService: Getting all events...');
-      const response = await apiService.get('/events/all');
+      const response = await apiService.get(
+        '/events/all',
+        {},
+        { cacheTTL: this.eventCacheTTL }
+      );
+
       return response;
     } catch (error) {
       console.error('DataService: Error getting all events:', error);
-      console.warn('DataService: Using mock data for all events');
-      return [
-        {
-          id: 1,
-          name: 'Tech Innovation Summit 2025',
-          description: 'Join us for a day of inspiring talks and networking with industry leaders.',
-          startDate: '2025-03-15T09:00:00',
-          endDate: '2025-03-15T17:00:00',
-          status: 'UPCOMING',
-          location: 'Innovation Hub'
-        },
-        {
-          id: 2,
-          name: 'Hackathon: Future of AI',
-          description: 'A 48-hour coding marathon to build the next generation of AI solutions.',
-          startDate: '2025-04-10T18:00:00',
-          endDate: '2025-04-12T18:00:00',
-          status: 'UPCOMING',
-          location: 'Online'
-        },
-        {
-          id: 3,
-          name: 'Web Dev Workshop',
-          description: 'Learn the latest web development trends and best practices.',
-          startDate: '2025-02-20T10:00:00',
-          endDate: '2025-02-20T14:00:00',
-          status: 'COMPLETED',
-          location: 'CS Building'
-        }
-      ];
+      throw error;
     }
   }
 
-  // Get event by ID
+  /**
+   * Get event by ID
+   * @param {string|number} id - Event ID
+   * @returns {Promise} Event details
+   */
   async getEventById(id) {
     try {
       if (!id) throw new Error('Event ID is required');
-      return await apiService.get(`/events/${id}`);
+
+      const response = await apiService.get(
+        `/events/${id}`,
+        {},
+        { cacheTTL: this.eventCacheTTL }
+      );
+
+      return response;
     } catch (error) {
       console.error(`DataService: Error getting event ${id}:`, error);
       throw error;
     }
   }
 
-  // Get event users
-  async getEventUsers(id) {
+  /**
+   * Get event attendees
+   * @param {string|number} id - Event ID
+   * @returns {Promise} List of event attendees
+   */
+  async getEventAttendees(id) {
     try {
       if (!id) throw new Error('Event ID is required');
-      return await apiService.get(`/events/${id}/students`);
+
+      const response = await apiService.get(
+        `/events/${id}/students`,
+        {},
+        { cacheTTL: this.eventCacheTTL }
+      );
+
+      return response;
     } catch (error) {
-      console.error(`DataService: Error getting event users ${id}:`, error);
-      return [];
+      console.error(`DataService: Error getting event attendees ${id}:`, error);
+      throw error;
     }
   }
 
-  // Get event projects
+  /**
+   * Get event projects
+   * @param {string|number} id - Event ID
+   * @returns {Promise} List of event projects
+   */
   async getEventProjects(id) {
     try {
       if (!id) throw new Error('Event ID is required');
-      return await apiService.get(`/events/${id}/projects`);
+
+      const response = await apiService.get(
+        `/events/${id}/projects`,
+        {},
+        { cacheTTL: this.eventCacheTTL }
+      );
+
+      return response;
     } catch (error) {
       console.error(`DataService: Error getting event projects ${id}:`, error);
-      return [];
+      throw error;
     }
   }
 
-  // Check if user is in event
-  async checkEventUserExists(eventId, userId) {
+  /**
+   * Check if user is registered for event
+   * @param {string|number} eventId - Event ID
+   * @param {string} userId - User ID
+   * @returns {Promise} Registration status
+   */
+  async checkEventRegistration(eventId, userId) {
     try {
-      if (!eventId || !userId) throw new Error('Event ID and User ID are required');
-      return await apiService.get(`/events/${eventId}/students/${userId}/exists`);
+      if (!eventId || !userId) {
+        throw new Error('Event ID and User ID are required');
+      }
+
+      const response = await apiService.get(
+        `/events/${eventId}/students/${userId}/exists`,
+        {},
+        { cacheTTL: this.eventCacheTTL }
+      );
+
+      return response;
     } catch (error) {
-      console.error(`DataService: Error checking event user exists:`, error);
-      return false;
+      console.error('DataService: Error checking event registration:', error);
+      throw error;
     }
   }
 
-  // Get event user count
-  async getEventUserCount(id) {
+  /**
+   * Get event attendee count
+   * @param {string|number} id - Event ID
+   * @returns {Promise} Attendee count
+   */
+  async getEventAttendeeCount(id) {
     try {
       if (!id) throw new Error('Event ID is required');
-      return await apiService.get(`/events/${id}/students/count`);
+
+      const response = await apiService.get(
+        `/events/${id}/students/count`,
+        {},
+        { cacheTTL: this.eventCacheTTL }
+      );
+
+      return response;
     } catch (error) {
-      console.error(`DataService: Error getting event user count ${id}:`, error);
-      return 0;
+      console.error(`DataService: Error getting event attendee count ${id}:`, error);
+      throw error;
     }
   }
 
-  // Register current student for an event - POST /api/events/{eventId}/register (STUDENT role)
+  /**
+   * Register current user for event
+   * @param {string|number} eventId - Event ID
+   * @returns {Promise} Registration response
+   */
   async registerForEvent(eventId) {
     try {
       if (!eventId) throw new Error('Event ID is required');
-      return await apiService.post(`/events/${eventId}/register`, {});
+
+      const response = await apiService.post(`/events/${eventId}/register`, {});
+
+      // Invalidate event caches after registration
+      apiService.invalidateCache(`/events/${eventId}`);
+
+      return response;
     } catch (error) {
       console.error(`DataService: Error registering for event ${eventId}:`, error);
       throw error;
     }
   }
-  // REMOVED METHODS: The following methods don't have corresponding backend endpoints
-  // If you need these functionalities, implement them in the backend first:
 
-  // async getSkillsData() - No backend endpoint
-  // async getProjectTemplates() - No backend endpoint  
-  // async getAchievements() - No backend endpoint
-
-  // Utility method to get all static data at once
+  /**
+   * Get all static data at once (optimized batch call)
+   * @returns {Promise} All static data
+   */
   async getAllStaticData() {
     try {
-      console.log('DataService: Getting all static data...');
-
-      const [branches, graduationYears, projectCategories] = await Promise.all([
+      const [branches, graduationYears, projectCategories, colleges] = await Promise.all([
         this.getBranches(),
         this.getGraduationYears(),
-        this.getProjectCategories()
+        this.getProjectCategories(),
+        this.getColleges()
       ]);
 
-      const staticData = {
-        branches: branches?.data || branches,
-        graduationYears: graduationYears?.data || graduationYears,
-        projectCategories: projectCategories?.data || projectCategories
-      };
-
-      console.log('DataService: All static data retrieved:', staticData);
       return {
         success: true,
-        data: staticData,
+        data: {
+          branches: branches?.data || branches,
+          graduationYears: graduationYears?.data || graduationYears,
+          projectCategories: projectCategories?.data || projectCategories,
+          colleges: colleges?.data || colleges
+        },
         message: 'All static data retrieved successfully'
       };
     } catch (error) {
       console.error('DataService: Error getting all static data:', error);
-      throw new Error(error.message || 'Failed to get static data');
+      throw error;
+    }
+  }
+
+  /**
+   * Batch fetch events
+   * @param {Array} eventIds - Array of event IDs
+   * @returns {Promise} Events data
+   */
+  async getEventsBatch(eventIds) {
+    try {
+      if (!eventIds || eventIds.length === 0) {
+        throw new Error('At least one event ID is required');
+      }
+
+      const promises = eventIds.map(id =>
+        this.getEventById(id).catch(() => null)
+      );
+
+      const results = await Promise.all(promises);
+      return results.filter(event => event !== null);
+    } catch (error) {
+      console.error('DataService: Error batch fetching events:', error);
+      throw error;
     }
   }
 }

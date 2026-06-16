@@ -4,10 +4,17 @@ import com.ADP.peerConnect.model.enums.SkillLevel;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 /**
  * Add user skill request DTO
  */
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter @Getter
 public class AddUserSkillRequest {
 
     @NotBlank(message = "Skill name is required")
@@ -19,41 +26,6 @@ public class AddUserSkillRequest {
     @Size(max = 500, message = "Experience description must not exceed 500 characters")
     private String experience;
 
-    public AddUserSkillRequest() {
-    }
-
-    // Getters and Setters
-    public String getSkillName() {
-        return skillName;
-    }
-
-    public void setSkillName(String skillName) {
-        this.skillName = skillName;
-    }
-
-    public SkillLevel getLevel() {
-        return level;
-    }
-
-    public void setLevel(SkillLevel level) {
-        this.level = level;
-    }
-
-    public String getExperience() {
-        return experience;
-    }
-
-    public void setExperience(String experience) {
-        this.experience = experience;
-    }
-
     private String category;
 
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
 }

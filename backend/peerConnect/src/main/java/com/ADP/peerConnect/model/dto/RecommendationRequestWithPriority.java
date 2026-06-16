@@ -4,9 +4,17 @@ package com.ADP.peerConnect.model.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.List;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 public class RecommendationRequestWithPriority {
 
     @NotNull(message = "User ID is required")
@@ -16,27 +24,4 @@ public class RecommendationRequestWithPriority {
     @Valid
     private List<ProjectRecommendationDTO> recommendations;
 
-    public RecommendationRequestWithPriority() {
-    }
-
-    public RecommendationRequestWithPriority(String userId, List<ProjectRecommendationDTO> recommendations) {
-        this.userId = userId;
-        this.recommendations = recommendations;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public List<ProjectRecommendationDTO> getRecommendations() {
-        return recommendations;
-    }
-
-    public void setRecommendations(List<ProjectRecommendationDTO> recommendations) {
-        this.recommendations = recommendations;
-    }
 }

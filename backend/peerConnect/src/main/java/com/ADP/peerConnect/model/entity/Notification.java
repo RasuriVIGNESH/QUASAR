@@ -6,11 +6,18 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter @Getter
 @Table(name = "notifications", indexes = {
         @Index(name = "idx_notification_user", columnList = "user_id"),
         @Index(name = "idx_notification_type", columnList = "type"),
@@ -64,8 +71,6 @@ public class Notification {
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
-    public Notification() {
-    }
 
     public Notification(User user, NotificationType type, String title, String message) {
         this.user = user;
@@ -79,119 +84,5 @@ public class Notification {
         this(user, type, title, message);
         this.relatedEntityId = relatedEntityId;
         this.relatedEntityType = relatedEntityType;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public NotificationType getType() {
-        return type;
-    }
-
-    public void setType(NotificationType type) {
-        this.type = type;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public Boolean getIsRead() {
-        return isRead;
-    }
-
-    public void setIsRead(Boolean isRead) {
-        this.isRead = isRead;
-    }
-
-    public String getRelatedEntityId() {
-        return relatedEntityId;
-    }
-
-    public void setRelatedEntityId(String relatedEntityId) {
-        this.relatedEntityId = relatedEntityId;
-    }
-
-    public String getRelatedEntityType() {
-        return relatedEntityType;
-    }
-
-    public void setRelatedEntityType(String relatedEntityType) {
-        this.relatedEntityType = relatedEntityType;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getReadAt() {
-        return readAt;
-    }
-
-    public void setReadAt(LocalDateTime readAt) {
-        this.readAt = readAt;
-    }
-
-    public void markAsRead() {
-        this.isRead = true;
-        this.readAt = LocalDateTime.now();
-    }
-
-    public void markAsUnread() {
-        this.isRead = false;
-        this.readAt = null;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Notification)) return false;
-        Notification that = (Notification) o;
-        return id != null && id.equals(that.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "Notification{" +
-                "id=" + id +
-                ", type=" + type +
-                ", title='" + title + '\'' +
-                ", isRead=" + isRead +
-                ", createdAt=" + createdAt +
-                '}';
     }
 }

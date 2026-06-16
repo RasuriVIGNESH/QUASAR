@@ -1,8 +1,8 @@
 package com.ADP.peerConnect.controller;
 
 import com.ADP.peerConnect.exception.UnauthorizedException;
-import com.ADP.peerConnect.model.dto.request.Auth.LoginRequest;
-import com.ADP.peerConnect.model.dto.request.Auth.RegisterRequest;
+import com.ADP.peerConnect.model.dto.request.Auth.Login;
+import com.ADP.peerConnect.model.dto.request.Auth.Register;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.AuthResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
@@ -27,15 +27,15 @@ public class AuthController {
     private iAuthService authService;
 
     @PostMapping("/register")
-    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody Register registerRequest) {
         AuthResponse authResponse = authService.register(registerRequest);
         ApiResponse<AuthResponse> response = ApiResponse.success("User registered successfully", authResponse);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody LoginRequest loginRequest) {
-        AuthResponse authResponse = authService.login(loginRequest);
+    public ResponseEntity<ApiResponse<AuthResponse>> login(@Valid @RequestBody Login loginn) {
+        AuthResponse authResponse = authService.login(loginn);
         ApiResponse<AuthResponse> response = ApiResponse.success("Login successful", authResponse);
         return ResponseEntity.ok(response);
     }

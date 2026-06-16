@@ -18,16 +18,17 @@ public interface ProjectJoinRequestRepository extends JpaRepository<ProjectJoinR
      * Does NOT need projectSkills — ProjectCardResponse not used here.
      */
     @Query("""
-        SELECT DISTINCT r FROM ProjectJoinRequest r
-        JOIN FETCH r.project p
-        JOIN FETCH p.lead
-        JOIN FETCH r.user
-        WHERE r.project.id = :projectId
-        ORDER BY r.createdAt DESC
-        """)
+    SELECT DISTINCT r FROM ProjectJoinRequest r
+    JOIN FETCH r.project p
+    JOIN FETCH p.lead
+    LEFT JOIN FETCH p.projectSkills ps
+    LEFT JOIN FETCH ps.skill
+    JOIN FETCH r.user
+    WHERE r.project.id = :projectId
+    ORDER BY r.createdAt DESC
+    """)
     List<ProjectJoinRequest> findByProjectIdWithAssociations(
             @Param("projectId") String projectId);
-
     /**
      * Used by admin/lead to list all requests for a project with full project details.
      * Includes projectSkills chain for ProjectCardResponse.

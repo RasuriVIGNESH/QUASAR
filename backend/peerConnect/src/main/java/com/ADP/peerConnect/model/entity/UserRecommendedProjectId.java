@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @Embeddable
+
 public class UserRecommendedProjectId implements Serializable {
 
     @Column(name = "user_id")

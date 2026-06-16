@@ -5,6 +5,10 @@ import jakarta.persistence.*;
 import com.ADP.peerConnect.model.enums.Role;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -14,6 +18,9 @@ import java.util.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter @Getter
 @Table(
         name = "users",
         indexes = {
@@ -128,199 +135,7 @@ public class User {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public User() {
-        this.id = UUID.randomUUID().toString();
-    }
 
-    public String getGithubId() {
-        return githubId;
-    }
-
-    public void setGithubId(String githubId) {
-        this.githubId = githubId;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-
-    public College getCollege() {
-        return college;
-    }
-
-    public void setCollege(College college) {
-        this.college = college;
-    }
-
-    public String getBranch() {
-        return branch;
-    }
-
-    public void setBranch(String branch) {
-        this.branch = branch;
-    }
-
-    public Integer getGraduationYear() {
-        return graduationYear;
-    }
-
-    public void setGraduationYear(Integer graduationYear) {
-        this.graduationYear = graduationYear;
-    }
-
-    public AvailabilityStatus getAvailabilityStatus() {
-        return availabilityStatus;
-    }
-
-    public void setAvailabilityStatus(AvailabilityStatus availabilityStatus) {
-        this.availabilityStatus = availabilityStatus;
-    }
-
-    public String getProfilePictureUrl() {
-        return profilePictureUrl;
-    }
-
-    public void setProfilePictureUrl(String profilePictureUrl) {
-        this.profilePictureUrl = profilePictureUrl;
-    }
-
-
-//    public byte[] getProfilePhoto() {
-//        return profilePhoto;
-//    }
-//
-//
-//    public void setProfilePhoto(byte[] profilePhoto) {
-//        this.profilePhoto = profilePhoto;
-//    }
-
-    public String getGithubUrl() {
-        return githubUrl;
-    }
-
-    public void setGithubUrl(String githubUrl) {
-        this.githubUrl = githubUrl;
-    }
-
-    public String getLinkedinUrl() {
-        return linkedinUrl;
-    }
-
-    public void setLinkedinUrl(String linkedinUrl) {
-        this.linkedinUrl = linkedinUrl;
-    }
-
-    public String getPortfolioUrl() {
-        return portfolioUrl;
-    }
-
-    public void setPortfolioUrl(String portfolioUrl) {
-        this.portfolioUrl = portfolioUrl;
-    }
-
-    public String getLinkedinId() {
-        return linkedinId;
-    }
-
-    public void setLinkedinId(String linkedinId) {
-        this.linkedinId = linkedinId;
-    }
-
-    public boolean isVerified() {
-        return isVerified;
-    }
-
-    public void setVerified(boolean verified) {
-        isVerified = verified;
-    }
-
-    public void setIsVerified(boolean verified) {
-        this.isVerified = verified;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Set<UserSkill> getUserSkills() {
-        return userSkills;
-    }
-
-    public void setUserSkills(Set<UserSkill> userSkills) {
-        this.userSkills = userSkills;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public Set<Project> getRecommendedProjects() {
-        return recommendedProjects;
-    }
-
-    public void setRecommendedProjects(Set<Project> recommendedProjects) {
-        this.recommendedProjects = recommendedProjects;
-    }
 
     public void addRecommendedProject(Project project) {
         this.recommendedProjects.add(project);
@@ -329,7 +144,9 @@ public class User {
     public void removeRecommendedProject(Project project) {
         this.recommendedProjects.remove(project);
     }
-
+    public void setIsVerified(boolean verified) {
+        this.isVerified = verified;
+    }
     public void addUserSkill(UserSkill userSkill) {
         userSkills.add(userSkill);
         userSkill.setUser(this);
@@ -339,4 +156,5 @@ public class User {
         userSkills.remove(userSkill);
         userSkill.setUser(null);
     }
+
 }

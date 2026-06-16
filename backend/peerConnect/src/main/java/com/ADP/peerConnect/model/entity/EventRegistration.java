@@ -1,11 +1,18 @@
 package com.ADP.peerConnect.model.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter @Getter
 @Table(name = "event_registrations", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"event_id", "user_id"})
 })
@@ -26,17 +33,10 @@ public class EventRegistration {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public EventRegistration() {}
 
     public EventRegistration(Event event, String userId) {
         this.event = event;
         this.userId = userId;
     }
 
-    public Long getId() { return id; }
-    public Event getEvent() { return event; }
-    public void setEvent(Event event) { this.event = event; }
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
 }

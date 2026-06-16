@@ -3,6 +3,10 @@ package com.ADP.peerConnect.model.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.nio.charset.StandardCharsets;
@@ -11,6 +15,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 @Table(name = "skills", indexes = {
         @Index(name = "idx_skill_name", columnList = "name", unique = true),
         @Index(name = "idx_skill_normalized_name", columnList = "normalized_name", unique = true),
@@ -75,9 +83,6 @@ public class Skill {
     // CONSTRUCTORS
     // =============================
 
-    public Skill() {
-    }
-
     public Skill(String name, String category, Boolean isPredefined) {
         this.name = name;
         this.normalizedName = normalizeName(name);
@@ -85,71 +90,23 @@ public class Skill {
         this.category = category;
         this.isPredefined = isPredefined;
     }
-
     public Skill(String name) {
         this(name, null, false);
     }
-
-    // =============================
-    // DETERMINISTIC ID GENERATION
-    // =============================
-
-    /**
-     * Generate deterministic ID from skill name using MD5 hash
-     *
-     * Why MD5?
-     * - Fast computation
-     * - Deterministic (same input always produces same output)
-     * - Wide distribution (minimal collisions)
-     *
-     * Algorithm:
-     * 1. Take normalized skill name (lowercase, trimmed)
-     * 2. Compute MD5 hash
-     * 3. Convert first 8 bytes to Long
-     * 4. Ensure positive number
-     *
-     * Examples:
-     * - "java" -> 5234987623498765
-     * - "python" -> 8765432109876543
-     * - "react" -> 1234567890123456
-     *
-     * @param normalizedName Lowercase, trimmed skill name
-     * @return Deterministic Long ID
-     */
     public static Long generateIdFromName(String normalizedName) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");
             byte[] hash = md.digest(normalizedName.getBytes(StandardCharsets.UTF_8));
-
-            // Convert first 8 bytes to Long
             long result = 0;
             for (int i = 0; i < 8; i++) {
                 result = (result << 8) | (hash[i] & 0xFF);
             }
-
-            // Ensure positive (avoid negative IDs)
             return Math.abs(result);
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate skill ID for: " + normalizedName, e);
         }
     }
 
-    /**
-     * Normalize skill name for consistent comparison and ID generation
-     *
-     * Rules:
-     * - Convert to lowercase
-     * - Trim whitespace
-     * - Remove extra spaces
-     *
-     * Examples:
-     * - "Java" -> "java"
-     * - " Python " -> "python"
-     * - "REACT JS" -> "react js"
-     *
-     * @param name Original skill name
-     * @return Normalized skill name
-     */
     public static String normalizeName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Skill name cannot be null or empty");
@@ -157,99 +114,7 @@ public class Skill {
         return name.trim().toLowerCase().replaceAll("\\s+", " ");
     }
 
-    // =============================
-    // GETTERS / SETTERS
-    // =============================
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-        this.normalizedName = normalizeName(name);
-        this.id = generateIdFromName(this.normalizedName);
-    }
-
-    public String getNormalizedName() {
-        return normalizedName;
-    }
-
-    public void setNormalizedName(String normalizedName) {
-        this.normalizedName = normalizedName;
-    }
-
-    public String getCategory() {
-        return category;
-    }
-
-    public void setCategory(String category) {
-        this.category = category;
-    }
-
-    public Boolean getIsPredefined() {
-        return isPredefined;
-    }
-
-    public void setIsPredefined(Boolean isPredefined) {
-        this.isPredefined = isPredefined;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public Integer getUsersCount() {
-        return usersCount;
-    }
-
-    public void setUsersCount(Integer usersCount) {
-        this.usersCount = usersCount;
-    }
-
-    public Integer getProjectsCount() {
-        return projectsCount;
-    }
-
-    public void setProjectsCount(Integer projectsCount) {
-        this.projectsCount = projectsCount;
-    }
-
-    public List<UserSkill> getUserSkills() {
-        return userSkills;
-    }
-
-    public void setUserSkills(List<UserSkill> userSkills) {
-        this.userSkills = userSkills;
-    }
-
-    public List<ProjectSkill> getProjectSkills() {
-        return projectSkills;
-    }
-
-    public void setProjectSkills(List<ProjectSkill> projectSkills) {
-        this.projectSkills = projectSkills;
-    }
-
-    // =============================
-    // UTILITY METHODS
-    // =============================
-
-    /**
-     * Increment user count (call when UserSkill is created)
-     */
     public void incrementUsersCount() {
         this.usersCount++;
     }
@@ -291,34 +156,6 @@ public class Skill {
      */
     public boolean isInDemand() {
         return this.projectsCount > 20; // Threshold can be adjusted
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof Skill))
-            return false;
-        Skill skill = (Skill) o;
-        return id != null && id.equals(skill.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "Skill{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", normalizedName='" + normalizedName + '\'' +
-                ", category='" + category + '\'' +
-                ", isPredefined=" + isPredefined +
-                ", usersCount=" + usersCount +
-                ", projectsCount=" + projectsCount +
-                '}';
     }
 
     public Integer getUsers() {

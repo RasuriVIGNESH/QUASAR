@@ -134,12 +134,23 @@ public class ProjectJoinRequestService implements iProjectJoinRequestService {
         joinRequestRepository.delete(request);
     }
 
-    public List<ProjectJoinRequest> getProjectJoinRequests(String projectId, String userId) {
+    public List<ProjectJoinRequestResponse> getProjectJoinRequests(
+            String projectId,
+            String userId) {
+
         Project project = projectService.findById(projectId);
+
         if (!project.isLead(userId)) {
-            throw new UnauthorizedException("Only the project Lead can view join requests.");
+            throw new UnauthorizedException(
+                    "Only the project Lead can view join requests."
+            );
         }
-        return joinRequestRepository.findByProjectIdWithAssociations(projectId);
+
+        return joinRequestRepository
+                .findByProjectIdWithAssociations(projectId)
+                .stream()
+                .map(ProjectJoinRequestResponse::new)
+                .toList();
     }
 
     public List<ProjectJoinRequest> getUserJoinRequests(String userId) {

@@ -1,9 +1,17 @@
 package com.ADP.peerConnect.model.dto.request;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Set;
 
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 public class RecommendationRequest {
 
     @NotNull(message = "User ID is required")
@@ -11,28 +19,4 @@ public class RecommendationRequest {
 
     @NotEmpty(message = "At least one project ID is required")
     private Set<String> projectIds;
-
-    public RecommendationRequest() {
-    }
-
-    public RecommendationRequest(String userId, Set<String> projectIds) {
-        this.userId = userId;
-        this.projectIds = projectIds;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public Set<String> getProjectIds() {
-        return projectIds;
-    }
-
-    public void setProjectIds(Set<String> projectIds) {
-        this.projectIds = projectIds;
-    }
 }

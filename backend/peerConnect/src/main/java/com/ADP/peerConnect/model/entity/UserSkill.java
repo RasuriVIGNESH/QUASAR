@@ -5,11 +5,19 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 @Table(name = "user_skills", indexes = {
         @Index(name = "idx_user_skill_user", columnList = "user_id"),
         @Index(name = "idx_user_skill_skill", columnList = "skill_id"),
@@ -52,9 +60,6 @@ public class UserSkill {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    public UserSkill() {
-    }
-
     public UserSkill(User user, Skill skill, SkillLevel level) {
         this.user = user;
         this.skill = skill;
@@ -64,77 +69,5 @@ public class UserSkill {
     public UserSkill(User user, Skill skill, SkillLevel level, String experience) {
         this(user, skill, level);
         this.experience = experience;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Skill getSkill() {
-        return skill;
-    }
-
-    public void setSkill(Skill skill) {
-        this.skill = skill;
-    }
-
-    public SkillLevel getLevel() {
-        return level;
-    }
-
-    public void setLevel(SkillLevel level) {
-        this.level = level;
-    }
-
-    public String getExperience() {
-        return experience;
-    }
-
-    public void setExperience(String experience) {
-        this.experience = experience;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof UserSkill))
-            return false;
-        UserSkill userSkill = (UserSkill) o;
-        return id != null && id.equals(userSkill.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "UserSkill{" +
-                "id=" + id +
-                ", level=" + level +
-                ", experience='" + experience + '\'' +
-                '}';
     }
 }

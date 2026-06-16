@@ -1,11 +1,12 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { RequestProvider } from './contexts/RequestContext';
 import { Toaster } from '@/components/ui/sonner';
 import GlobalErrorManager from './components/GlobalErrorManager';
 import ResponsiveLayout from './components/layout/ResponsiveLayout';
+import { apiService } from '@/services/api';
 
 // Lazy Imports
 const LandingPage = lazy(() => import('./components/LandingPage'));
@@ -27,9 +28,21 @@ const RequestsPage = lazy(() => import('./components/requests/RequestsPage'));
 const SkillMastery = lazy(() => import('./components/profile/SkillMastery'));
 const EventsPage = lazy(() => import('./components/events/EventsPage'));
 const OAuth2RedirectHandler = lazy(() => import('./components/auth/OAuth2RedirectHandler'));
-const NotFound = lazy(() => import('./components/common/NotFound'));
 
-// FIXED: This loader is now strictly light mode and won't cause a black flash
+/**
+ * NavigationRegistrar
+ * Small component to bridge React Router navigate with our static ApiService
+ */
+function NavigationRegistrar() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    apiService.setNavigate(navigate);
+  }, [navigate]);
+
+  return null;
+}
+
 export function PageLoader() {
   return (
     <div className="w-full h-full flex items-center justify-center bg-[#F8FAFC] min-h-[200px]">
@@ -41,9 +54,9 @@ export function PageLoader() {
 export default function App() {
   return (
     <Router>
+      <NavigationRegistrar />
       <AuthProvider>
         <RequestProvider>
-          {/* Main Suspense for the entire app */}
           <Suspense fallback={<div className="min-h-screen bg-[#F8FAFC]" />}>
             <Routes>
               {/* Public Routes */}
@@ -55,17 +68,15 @@ export default function App() {
               <Route path="/onboarding" element={<Onboarding />} />
               <Route path="/auth/oauth2/redirect" element={<OAuth2RedirectHandler />} />
 
-              {/* Full-screen protected routes — no sidebar layout */}
+              {/* Protected Routes */}
               <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
               <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
-              <Route path="/projects/create" element={<CreateProject />} />
+              <Route path="/projects/create" element={<ProtectedRoute><CreateProject /></ProtectedRoute>} />
               <Route path="/projects/:projectId/invite" element={<ProtectedRoute><InviteMembers /></ProtectedRoute>} />
 
-              {/* Protected Routes - Layout is STATIC and will NOT unmount */}
               <Route element={<ProtectedRoute><ResponsiveLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/projects/my-projects" element={<MyProjects />} />
-
                 <Route path="/profile" element={<ProfilePage />} />
                 <Route path="/skills" element={<SkillMastery />} />
                 <Route path="/messages" element={<RequestsPage />} />
@@ -74,11 +85,17 @@ export default function App() {
                 <Route path="/events" element={<EventsPage />} />
               </Route>
 
-              <Route path="/404" element={<NotFound />} />
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
-          <Toaster />
+
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            expand={true}
+          />
+
           <GlobalErrorManager />
         </RequestProvider>
       </AuthProvider>

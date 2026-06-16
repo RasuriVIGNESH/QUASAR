@@ -1,4 +1,4 @@
-package com.ADP.peerConnect.controller.Admin;
+package com.ADP.peerConnect.controller;
 
 import com.ADP.peerConnect.model.dto.response.event.EventsResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
@@ -36,12 +36,6 @@ public class EventController {
         return ResponseEntity.ok(response);
     }
 
-//    @GetMapping("/upcoming")
-//    public ResponseEntity<List<EventsResponse>> getUpcomingEvents() {
-//        List<Event> events = eventService.getUpcomingEvents();
-//        List<EventsResponse> responses = events.stream().map(EventsResponse::new).collect(Collectors.toList());
-//        return ResponseEntity.ok(responses);
-//    }
     @GetMapping("/upcoming")
     public ResponseEntity<List<Event>> getUpcomingEvents() {
         return ResponseEntity.ok(eventService.getUpcomingEvents());
@@ -58,37 +52,6 @@ public class EventController {
         return ResponseEntity.ok(new EventsResponse(reg.getEvent()));
     }
 
-    /**
-     * Admin creates a new event
-     */
-    @PostMapping("")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EventsResponse> createEvent(@RequestBody Event event) {
-        Event created = eventService.createEvent(event);
-        return ResponseEntity.ok(new EventsResponse(created));
-    }
-
-    /**
-     * Admin updates an event
-     */
-    @PutMapping("/{eventId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<EventsResponse> updateEvent(@PathVariable Long eventId, @RequestBody Event event) {
-        event.setId(eventId);
-        Event updated = eventService.updateEvent(event);
-        return ResponseEntity.ok(new EventsResponse(updated));
-    }
-
-    /**
-     * Admin deletes an event
-     */
-    @DeleteMapping("/{eventId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<?> deleteEvent(@PathVariable Long eventId) {
-        eventService.deleteEvent(eventId);
-        return ResponseEntity.ok().build();
-    }
-
     @GetMapping("/{eventId}/students")
     public ResponseEntity<List<UserResponse>> getEventUsers(@PathVariable Long eventId) {
         List<User> users = eventService.getEventUsers(eventId);
@@ -99,7 +62,6 @@ public class EventController {
 
         return ResponseEntity.ok(userDTOs);
     }
-
     @GetMapping("/{eventId}/students/count")
     @Operation(summary = "Get exact registration count", description = "Get total number of registrations for an event")
     public ResponseEntity<Long> getEventUserCount(@PathVariable Long eventId) {
@@ -116,9 +78,6 @@ public class EventController {
         return ResponseEntity.ok(exists);
     }
 
-    /**
-     * Get all events (regardless of status)
-     */
     @GetMapping("/all")
     public ResponseEntity<List<EventsResponse>> getAllEvents() {
         List<Event> events = eventService.getAllEvents();
@@ -151,4 +110,38 @@ public class EventController {
         // Use ModelMapper or manual mapping
         return new UserResponse(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName());
     }
+
+
+    /**
+     * Admin creates a new event
+//     */
+//    @PostMapping("")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<EventsResponse> createEvent(@RequestBody Event event) {
+//        Event created = eventService.createEvent(event);
+//        return ResponseEntity.ok(new EventsResponse(created));
+//    }
+
+    /**
+     * Admin updates an event
+     */
+//    @PutMapping("/{eventId}")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<EventsResponse> updateEvent(@PathVariable Long eventId, @RequestBody Event event) {
+//        event.setId(eventId);
+//        Event updated = eventService.updateEvent(event);
+//        return ResponseEntity.ok(new EventsResponse(updated));
+//    }
+
+    /**
+     * Admin deletes an event
+     */
+//    @DeleteMapping("/{eventId}")
+//    @PreAuthorize("hasRole('ADMIN')")
+//    public ResponseEntity<?> deleteEvent(@PathVariable Long eventId) {
+//        eventService.deleteEvent(eventId);
+//        return ResponseEntity.ok().build();
+//    }
+
+
 }

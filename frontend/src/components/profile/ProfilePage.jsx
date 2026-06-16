@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     Mail, GraduationCap, Github, Linkedin, Globe,
     Camera, Save, Edit3, Loader2,
-    MapPin, Briefcase, Link as LinkIcon, Building2, Calendar
+    MapPin, Briefcase, Link as LinkIcon, Building2, Calendar, LogOut
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import userService from '../../services/userService';
 
 export default function ProfilePage() {
-    const { userProfile, fetchUserProfile } = useAuth();
+    const { userProfile, fetchUserProfile, logout } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const fileInputRef = useRef(null);
@@ -122,7 +122,8 @@ export default function ProfilePage() {
                             <div className="h-24 bg-gradient-to-r from-indigo-50 to-slate-50 border-b border-slate-100" />
                             <CardContent className="px-6 pb-6">
                                 <div className="relative -mt-12 flex flex-col sm:flex-row items-end gap-4 mb-6">
-                                    <div className="relative group">
+                                    {/* this code when backend is ready to accept images */}
+                                    {/* <div className="relative group">
                                         <Avatar className="w-24 h-24 border-4 border-white shadow-md rounded-lg">
                                             <AvatarImage src={userProfile?.profilePictureUrl} className="object-cover" />
                                             <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xl font-bold">
@@ -135,7 +136,18 @@ export default function ProfilePage() {
                                             </button>
                                         )}
                                         <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
+                                    </div> */}
+
+                                    {/* alternative code to not to show the feature of changing profile picture */}
+                                    <div className="relative">
+                                        <Avatar className="w-24 h-24 border-4 border-white shadow-md rounded-lg">
+                                            <AvatarImage src={userProfile?.profilePictureUrl} className="object-cover" />
+                                            <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xl font-bold">
+                                                {userProfile?.firstName?.[0]}{userProfile?.lastName?.[0]}
+                                            </AvatarFallback>
+                                        </Avatar>
                                     </div>
+
                                     <div className="flex-1 pb-1">
                                         <h3 className="text-2xl font-bold text-slate-900">
                                             {userProfile?.firstName} {userProfile?.lastName}
@@ -293,6 +305,15 @@ export default function ProfilePage() {
                             </CardContent>
                         </Card>
                     </div>
+                </div>
+                <div className="max-w-6xl mx-auto mt-6 border-t border-slate-200 pt-4">
+                    <button
+                        onClick={logout}
+                        className="flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 font-medium"
+                    >
+                        <LogOut size={20} />
+                        <span className="text-sm">Log Out</span>
+                    </button>
                 </div>
             </main>
         </div>

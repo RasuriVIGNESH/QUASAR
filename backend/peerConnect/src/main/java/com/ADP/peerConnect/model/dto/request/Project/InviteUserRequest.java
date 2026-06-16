@@ -4,11 +4,19 @@ import com.ADP.peerConnect.model.enums.ProjectRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 
 /**
  * Invite user to project request DTO
  */
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 public class InviteUserRequest {
     
     @NotBlank(message = "User ID is required")
@@ -19,32 +27,6 @@ public class InviteUserRequest {
     
     @Size(max = 500, message = "Message must not exceed 500 characters")
     private String message;
-    
-    public InviteUserRequest() {}
-    
-    // Getters and Setters
-    public String getUserId() {
-        return userId;
-    }
-    
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-    
-    public ProjectRole getRole() {
-        return role;
-    }
-    
-    public void setRole(ProjectRole role) {
-        this.role = role;
-    }
-    
-    public String getMessage() {
-        return message;
-    }
-    
-    public void setMessage(String message) {
-        this.message = message;
-    }
+
 }
 

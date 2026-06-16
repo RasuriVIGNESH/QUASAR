@@ -1,8 +1,7 @@
 package com.ADP.peerConnect.service.Impl;
 
-import com.ADP.peerConnect.model.dto.request.Admin.CreateMentorRequest;
+import com.ADP.peerConnect.model.dto.request.CreateMentorRequest;
 import com.ADP.peerConnect.model.dto.response.MentorResponse;
-import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.Mentor;
 import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.model.enums.Role;
@@ -15,7 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
+
 
 @Service
 public class AdminService implements iAdminService {
@@ -46,8 +45,7 @@ public class AdminService implements iAdminService {
             throw new RuntimeException("Email already exists");
         }
 
-        // generate random password
-        String rawPassword = generateRandomPassword(request.getFirstName());
+        String rawPassword = generatePassword(request.getFirstName());
 
         User user = new User();
         user.setEmail(request.getEmail());
@@ -55,7 +53,7 @@ public class AdminService implements iAdminService {
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setRole(Role.MENTOR);
-        user.setVerified(true);
+        user.setIsVerified(true);
 
         User savedUser = userRepository.save(user);
 
@@ -72,7 +70,7 @@ public class AdminService implements iAdminService {
                 + rawPassword;
     }
 
-    private String generateRandomPassword(String firstName){
+    private String generatePassword(String firstName){
            return firstName+ "@123";
     }
 

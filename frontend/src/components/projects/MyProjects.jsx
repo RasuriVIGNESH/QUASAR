@@ -8,10 +8,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
-  Search, Settings, Eye, Loader2, Filter, Plus, Zap
+  Search, Calendar, GraduationCap, Loader2, Filter, Plus, Zap
 } from 'lucide-react';
 import { toast } from 'sonner';
 import projectService from '../../services/projectService';
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return null;
+  return new Date(dateStr).toLocaleDateString('en-US', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+};
 
 export default function MyProjects() {
   const navigate = useNavigate();
@@ -58,12 +67,6 @@ export default function MyProjects() {
           <h1 className="text-lg font-bold text-slate-900 tracking-tight">My Projects</h1>
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Manage & Track</p>
         </div>
-        <Button
-          onClick={() => navigate('/projects/create')}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white h-10 px-5 rounded-lg font-bold text-sm"
-        >
-          <Plus size={16} className="mr-2" /> New Project
-        </Button>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
@@ -104,9 +107,9 @@ export default function MyProjects() {
                     <Skeleton className="h-6 w-12 rounded-lg" />
                     <Skeleton className="h-6 w-12 rounded-lg" />
                   </div>
-                  <div className="pt-4 border-t border-slate-100 flex gap-2">
-                    <Skeleton className="h-9 flex-1 rounded-lg" />
-                    <Skeleton className="h-9 flex-1 rounded-lg" />
+                  <div className="pt-4 border-t border-slate-100 space-y-2">
+                    <Skeleton className="h-3 w-24" />
+                    <Skeleton className="h-7 w-full rounded-lg" />
                   </div>
                 </CardContent>
               </Card>
@@ -125,7 +128,11 @@ export default function MyProjects() {
             </div>
           ) : (
             filteredProjects.map((project) => (
-              <Card key={project.id} className="border-slate-200 rounded-lg bg-white hover:border-indigo-200 hover:shadow-md transition-all group shadow-sm overflow-hidden">
+              <Card
+                key={project.id}
+                onClick={() => navigate(`/projects/${project.id}`)}
+                className="border-slate-200 rounded-lg bg-white hover:border-indigo-200 hover:shadow-md transition-all group shadow-sm overflow-hidden cursor-pointer"
+              >
                 <CardContent className="p-5 flex flex-col h-full">
                   <div className="flex items-start justify-between mb-3">
                     <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold text-[9px] px-2 py-0 rounded-lg">
@@ -140,23 +147,32 @@ export default function MyProjects() {
                     {project.title}
                   </h3>
 
-                  <p className="text-slate-500 text-xs line-clamp-2 mb-4 leading-relaxed">
+                  <p className="text-slate-500 text-xs line-clamp-2 mb-3 leading-relaxed">
                     {project.description || 'No description provided.'}
                   </p>
 
+                  {formatDate(project.createdAt) && (
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-semibold mb-4">
+                      <Calendar size={11} />
+                      Created {formatDate(project.createdAt)}
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-1 mb-4">
-                    {project.skillsRequired?.slice(0, 3).map((skill, idx) => (
-                      <Badge key={idx} variant="secondary" className="bg-slate-50 text-slate-500 border-none font-bold text-[8px] px-1.5 py-0">
+                    {(project.techStack || project.skillsRequired)?.slice(0, 3).map((skill, idx) => (
+                      <Badge key={idx} variant="secondary" className="bg-slate-50 text-slate-500 border-none font-bold text-[8px] px-1.5 py-0 rounded-md">
                         {skill}
                       </Badge>
                     ))}
-                    {project.skillsRequired?.length > 3 && (
-                      <span className="text-[8px] font-bold text-slate-300">+{project.skillsRequired.length - 3}</span>
+                    {(project.techStack || project.skillsRequired)?.length > 3 && (
+                      <span className="text-[8px] font-bold text-slate-300">
+                        +{(project.techStack || project.skillsRequired).length - 3}
+                      </span>
                     )}
                   </div>
 
                   <div className="mt-auto pt-4 border-t border-slate-100">
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center gap-2">
                       <Avatar className="h-7 w-7 border border-slate-100">
                         <AvatarImage src={project.lead?.profilePictureUrl} />
                         <AvatarFallback className="bg-indigo-100 text-indigo-700 text-[9px] font-bold">
@@ -167,27 +183,17 @@ export default function MyProjects() {
                         <p className="text-[9px] font-bold text-slate-800 leading-none">
                           {project.lead?.firstName} {project.lead?.lastName}
                         </p>
-                        <p className="text-[8px] text-slate-400">
-                          {project.currentTeamSize || 1} / {project.maxTeamSize || 4}
-                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-[8px] text-slate-400">
+                            {project.currentTeamSize || 0} / {project.maxTeamSize || 4}
+                          </p>
+                          {project.lead?.graduationYear && (
+                            <p className="text-[8px] text-slate-400 flex items-center gap-0.5">
+                              <GraduationCap size={9} /> {project.lead.graduationYear}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => navigate(`/projects/${project.id}`)}
-                        variant="outline"
-                        className="flex-1 h-9 rounded-lg border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs"
-                      >
-                        <Eye size={14} className="mr-1.5" /> View
-                      </Button>
-                      <Button
-                        onClick={() => navigate(`/projects/${project.id}/settings`)}
-                        variant="outline"
-                        className="flex-1 h-9 rounded-lg border-slate-200 text-slate-700 hover:bg-slate-50 font-bold text-xs"
-                      >
-                        <Settings size={14} className="mr-1.5" /> Edit
-                      </Button>
                     </div>
                   </div>
                 </CardContent>

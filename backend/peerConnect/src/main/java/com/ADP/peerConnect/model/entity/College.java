@@ -2,6 +2,10 @@ package com.ADP.peerConnect.model.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +14,9 @@ import java.util.List;
  * College entity representing educational institutions
  */
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter @Getter
 @Table(name = "colleges", indexes = {
         @Index(name = "idx_college_name", columnList = "name")
 })
@@ -35,69 +42,9 @@ public class College {
 
 
 
-    // Constructors
-    public College() {
-    }
-
-    public College(String name, String location) {
+        public College(String name, String location) {
         this.name = name;
         this.location = location;
     }
 
-
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
-    }
-
-    public List<User> getUsers() {
-        return users;
-    }
-
-    public void setUsers(List<User> users) {
-        this.users = users;
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof College)) return false;
-        College college = (College) o;
-        return id != null && id.equals(college.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "College{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", location='" + location + '\'' +
-                '}';
-    }
 }

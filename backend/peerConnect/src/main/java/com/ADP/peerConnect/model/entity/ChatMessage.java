@@ -6,11 +6,18 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter @Getter
 @Table(name = "chat_messages", indexes = {
         @Index(name = "idx_chat_message_project", columnList = "project_id"),
         @Index(name = "idx_chat_message_sender", columnList = "sender_id"),
@@ -48,92 +55,4 @@ public class ChatMessage {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    public ChatMessage() {
-    }
-
-    public ChatMessage(Project project, User sender, String message, MessageType messageType) {
-        this.project = project;
-        this.sender = sender;
-        this.message = message;
-        this.messageType = messageType;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public User getSender() {
-        return sender;
-    }
-
-    public void setSender(User sender) {
-        this.sender = sender;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public MessageType getMessageType() {
-        return messageType;
-    }
-
-    public void setMessageType(MessageType messageType) {
-        this.messageType = messageType;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public boolean isTextMessage() {
-        return messageType == MessageType.TEXT;
-    }
-
-    public boolean isSystemMessage() {
-        return messageType == MessageType.SYSTEM;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof ChatMessage)) return false;
-        ChatMessage that = (ChatMessage) o;
-        return id != null && id.equals(that.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "ChatMessage{" +
-                "id=" + id +
-                ", messageType=" + messageType +
-                ", createdAt=" + createdAt +
-                '}';
-    }
 }

@@ -6,7 +6,7 @@ import jakarta.validation.constraints.*;
 /**
  * Registration request DTO
  */
-public class RegisterRequest {
+public class Register {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
@@ -39,7 +39,7 @@ public class RegisterRequest {
     @Size(max = 500, message = "Bio must not exceed 500 characters")
     private String bio;
 
-    public RegisterRequest() {}
+    public Register() {}
 
     // Getters and Setters
     public String getEmail() {

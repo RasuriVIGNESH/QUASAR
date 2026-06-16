@@ -4,6 +4,10 @@ import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -13,6 +17,10 @@ import java.time.LocalDateTime;
  * FIXED: Removed duplicate 'required' field, kept only 'isRequired'
  */
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 @Table(name = "project_skills", indexes = {
         @Index(name = "idx_project_skill_project", columnList = "project_id"),
         @Index(name = "idx_project_skill_skill", columnList = "skill_id"),
@@ -49,86 +57,11 @@ public class ProjectSkill {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
-    // Constructors
-    public ProjectSkill() {
-    }
+
 
     public ProjectSkill(Project project, Skill skill, Boolean isRequired) {
         this.project = project;
         this.skill = skill;
         this.isRequired = isRequired;
-    }
-
-    // Getters and Setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public Skill getSkill() {
-        return skill;
-    }
-
-    public void setSkill(Skill skill) {
-        this.skill = skill;
-    }
-
-    public Boolean getIsRequired() {
-        return isRequired;
-    }
-
-    public void setIsRequired(Boolean isRequired) {
-        this.isRequired = isRequired;
-    }
-
-    public com.ADP.peerConnect.model.enums.SkillLevel getRequiredLevel() {
-        return requiredLevel;
-    }
-
-    public void setRequiredLevel(com.ADP.peerConnect.model.enums.SkillLevel requiredLevel) {
-        this.requiredLevel = requiredLevel;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof ProjectSkill))
-            return false;
-        ProjectSkill that = (ProjectSkill) o;
-        return id != null && id.equals(that.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "ProjectSkill{" +
-                "id=" + id +
-                ", isRequired=" + isRequired +
-                ", requiredLevel=" + requiredLevel +
-                '}';
     }
 }

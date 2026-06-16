@@ -3,11 +3,19 @@ package com.ADP.peerConnect.model.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.io.Serializable;
 import java.util.Objects;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 @Table(
         name = "user_recommended_projects",
         indexes = {
@@ -40,13 +48,6 @@ public class UserRecommendedProject implements Serializable {
 
     private Integer match_score;
 
-//    @CreationTimestamp
-//    @Column(name = "recommended_at", nullable = false, updatable = false)
-//    private LocalDateTime recommendedAt;
-
-    public UserRecommendedProject() {
-    }
-
     public UserRecommendedProject(User user, Project project, Integer priority) {
         this.user = user;
         this.project = project;
@@ -54,62 +55,5 @@ public class UserRecommendedProject implements Serializable {
         this.id = new UserRecommendedProjectId(user.getId(), project.getId());
     }
 
-    public UserRecommendedProjectId getId() {
-        return id;
-    }
 
-    public void setId(UserRecommendedProjectId id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public Integer getPriority() {
-        return priority;
-    }
-
-    public void setPriority(Integer priority) {
-        this.priority = priority;
-    }
-    public Integer getMatch_score() {
-        return match_score;
-    }
-    public void setMatch_score(Integer match_score) {
-        this.match_score = match_score;
-    }
-
-//    public LocalDateTime getRecommendedAt() {
-//        return recommendedAt;
-//    }
-//
-//    public void setRecommendedAt(LocalDateTime recommendedAt) {
-//        this.recommendedAt = recommendedAt;
-//    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        UserRecommendedProject that = (UserRecommendedProject) o;
-        return Objects.equals(id, that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
 }

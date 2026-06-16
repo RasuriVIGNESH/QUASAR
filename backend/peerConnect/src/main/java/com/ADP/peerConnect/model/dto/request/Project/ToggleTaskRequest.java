@@ -1,10 +1,14 @@
 package com.ADP.peerConnect.model.dto.request.Project;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 public class ToggleTaskRequest {
     private boolean completed;
-
-    public ToggleTaskRequest() {}
-
-    public boolean isCompleted() { return completed; }
-    public void setCompleted(boolean completed) { this.completed = completed; }
 }

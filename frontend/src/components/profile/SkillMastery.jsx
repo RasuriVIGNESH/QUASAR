@@ -8,12 +8,13 @@ import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
     Plus, Trash2, TrendingUp, Zap, Search,
-    Code, Loader2, AlertCircle
+    Code, Loader2, ChevronUp
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-// Import the skills service
 import { skillsService } from '@/services/skillsService';
+
+const LEVELS = ['VIBE_CODING', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
 
 export default function SkillMastery() {
     const { userProfile } = useAuth();
@@ -24,24 +25,20 @@ export default function SkillMastery() {
     const [loading, setLoading] = useState(true);
     const [adding, setAdding] = useState(false);
     const [deleting, setDeleting] = useState(null);
+    const [updatingLevel, setUpdatingLevel] = useState(null); // skillId being updated
 
     useEffect(() => {
         const fetchSkillsData = async () => {
             try {
                 setLoading(true);
-
-                // Use service to get user skills and predefined list
                 const [userSkillsRes, predData] = await Promise.all([
                     skillsService.getUserSkillsByUserId(userProfile?.id),
                     skillsService.getPredefinedSkills()
                 ]);
-
-                // Set user skills (service returns { data: [] })
                 setSkills(userSkillsRes?.data || []);
-
-                // Set predefined skills
-                setPredefinedSkills(predData?.data || []);
-
+                setPredefinedSkills(
+                    Array.isArray(predData?.data) ? predData.data : []
+                );
             } catch (err) {
                 console.error('Fetch Error:', err);
                 toast.error('Failed to sync skill registry');
@@ -55,10 +52,10 @@ export default function SkillMastery() {
 
     const mapLevelToPct = (level) => {
         switch (level?.toUpperCase()) {
-            case 'EXPERT': return 100;
-            case 'ADVANCED': return 80;
-            case 'INTERMEDIATE': return 60;
-            case 'BEGINNER': return 30;
+            case 'ADVANCED': return 100;
+            case 'INTERMEDIATE': return 80;
+            case 'BEGINNER': return 60;
+            case 'VIBE_CODING': return 30;
             default: return 10;
         }
     };
@@ -68,6 +65,41 @@ export default function SkillMastery() {
         if (pct >= 80) return "bg-emerald-500";
         if (pct >= 50) return "bg-indigo-500";
         return "bg-amber-500";
+    };
+
+    const getLevelColor = (level) => {
+        switch (level?.toUpperCase()) {
+            case 'EXPERT': return 'text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100';
+            case 'ADVANCED': return 'text-indigo-600 bg-indigo-50 border-indigo-200 hover:bg-indigo-100';
+            case 'INTERMEDIATE': return 'text-blue-600 bg-blue-50 border-blue-200 hover:bg-blue-100';
+            default: return 'text-amber-600 bg-amber-50 border-amber-200 hover:bg-amber-100';
+        }
+    };
+
+    const getNextLevel = (currentLevel) => {
+        const idx = LEVELS.indexOf(currentLevel?.toUpperCase());
+        if (idx === -1 || idx === LEVELS.length - 1) return LEVELS[0];
+        return LEVELS[idx + 1];
+    };
+
+    const handleUpdateLevel = async (item) => {
+        const nextLevel = getNextLevel(item.level);
+        try {
+            setUpdatingLevel(item.id);
+            await skillsService.updateUserSkill(item.id, {
+                level: nextLevel,
+                experience: item.experience || ''
+            });
+            setSkills(prev =>
+                prev.map(s => s.id === item.id ? { ...s, level: nextLevel } : s)
+            );
+            toast.success(`${item.skill?.name} → ${nextLevel}`);
+        } catch (err) {
+            console.error('Update Level Error:', err);
+            toast.error('Failed to update proficiency');
+        } finally {
+            setUpdatingLevel(null);
+        }
     };
 
     const filteredUserSkills = skills.filter(item => {
@@ -83,22 +115,16 @@ export default function SkillMastery() {
     const handleAddSkill = async (skillName) => {
         const name = skillName || newSkill;
         if (!name.trim()) return;
-
         try {
             setAdding(true);
-
-            // Map UI data to service requirements
             const skillData = {
                 skillName: name,
                 category: 'General',
                 level: 'BEGINNER',
                 experience: '0'
             };
-
             const response = await skillsService.addUserSkill(skillData, userProfile);
-
             if (response) {
-                // If the response is the skill object directly or inside .data
                 const addedSkill = response.data || response;
                 setSkills(prev => [addedSkill, ...prev]);
                 setNewSkill('');
@@ -116,7 +142,6 @@ export default function SkillMastery() {
         try {
             setDeleting(id);
             await skillsService.deleteUserSkill(id);
-
             setSkills(prev => prev.filter(s => s.id !== id));
             toast.success('Skill removed');
         } catch (err) {
@@ -129,7 +154,6 @@ export default function SkillMastery() {
 
     return (
         <div className="min-h-screen bg-slate-50/50 pb-20">
-            {/* STICKY HEADER - Professional Minimalist */}
             <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 lg:px-8 py-4">
                 <div className="max-w-7xl mx-auto">
                     <h2 className="text-lg font-bold text-slate-900 tracking-tight">Skills & Mastery</h2>
@@ -140,7 +164,7 @@ export default function SkillMastery() {
             <main className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-                    {/* LEFT COLUMN: SEARCH & SKILLS LIST (COL 8) */}
+                    {/* LEFT COLUMN: SKILLS LIST */}
                     <div className="lg:col-span-8 space-y-6">
 
                         {/* SEARCH */}
@@ -196,14 +220,30 @@ export default function SkillMastery() {
                                                         </Badge>
                                                     </div>
                                                 </div>
-                                                <button onClick={() => handleDeleteSkill(item.id)} className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all">
-                                                    {deleting === item.id ? <Loader2 className="animate-spin" size={14} /> : <Trash2 size={14} />}
+                                                <button
+                                                    onClick={() => handleDeleteSkill(item.id)}
+                                                    className="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all"
+                                                >
+                                                    {deleting === item.id
+                                                        ? <Loader2 className="animate-spin" size={14} />
+                                                        : <Trash2 size={14} />}
                                                 </button>
                                             </div>
                                             <div className="space-y-2">
-                                                <div className="flex justify-between text-[9px] font-bold text-slate-400 uppercase tracking-tight">
+                                                <div className="flex justify-between items-center text-[9px] font-bold text-slate-400 uppercase tracking-tight">
                                                     <span>Proficiency</span>
-                                                    <span className="text-indigo-600">{item.level}</span>
+                                                    {/* Clickable level badge — cycles to next level */}
+                                                    <button
+                                                        onClick={() => handleUpdateLevel(item)}
+                                                        disabled={updatingLevel === item.id}
+                                                        title={`Upgrade to ${getNextLevel(item.level)}`}
+                                                        className={`flex items-center gap-1 px-2 py-0.5 rounded border text-[9px] font-bold uppercase tracking-tight transition-all ${getLevelColor(item.level)}`}
+                                                    >
+                                                        {updatingLevel === item.id
+                                                            ? <Loader2 className="animate-spin" size={10} />
+                                                            : <ChevronUp size={10} />}
+                                                        {item.level}
+                                                    </button>
                                                 </div>
                                                 <Progress
                                                     value={mapLevelToPct(item.level)}
@@ -218,7 +258,7 @@ export default function SkillMastery() {
                         </div>
                     </div>
 
-                    {/* RIGHT COLUMN: MANUAL ENTRY & RECOMMENDATIONS (COL 4) */}
+                    {/* RIGHT COLUMN: MANUAL ENTRY & RECOMMENDATIONS */}
                     <div className="lg:col-span-4 space-y-6">
                         {/* ADD SKILL CARD */}
                         <Card className="border-slate-200 shadow-sm rounded-lg overflow-hidden bg-white">

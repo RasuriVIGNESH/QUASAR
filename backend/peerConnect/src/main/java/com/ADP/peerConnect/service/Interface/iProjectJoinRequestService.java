@@ -21,7 +21,9 @@ public interface iProjectJoinRequestService {
 
     void cancelJoinRequest(Long requestId, String userId);
 
-    List<ProjectJoinRequest> getProjectJoinRequests(String projectId, String userId);
+    List<ProjectJoinRequestResponse> getProjectJoinRequests(
+            String projectId,
+            String userId);
 
     List<ProjectJoinRequest> getUserJoinRequests(String userId);
 

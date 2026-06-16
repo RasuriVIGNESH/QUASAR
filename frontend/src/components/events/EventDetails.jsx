@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import dataService from '../../services/dataService';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
+import useFetch from '@/hooks/useFetch';
+import dataService from '@/services/dataService';
+import { toast } from 'sonner';
 
 // UI Components
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,7 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
 
 // Icons
 import {
@@ -18,67 +19,75 @@ import {
     CheckCircle, MapPin, Loader2, Info, LayoutGrid,
     CalendarCheck, AlertCircle
 } from 'lucide-react';
-import { toast } from 'sonner';
 
+/**
+ * EventDetails Component
+ * 
+ * Optimized with:
+ * - SWR pattern for instant loading
+ * - Improved data linkage (attendees, projects, dates)
+ * - Parallel fetching of event, attendees, and projects
+ */
 export default function EventDetails() {
-    const { id } = useParams(); // Note: Changed to 'id' to match your App.jsx route /events/:id
+    const { id } = useParams();
     const navigate = useNavigate();
     const { userProfile } = useAuth();
 
-    const [event, setEvent] = useState(null);
-    const [attendees, setAttendees] = useState([]);
-    const [projects, setProjects] = useState([]);
-    const [isRegistered, setIsRegistered] = useState(false);
-    const [loading, setLoading] = useState(true);
     const [registering, setRegistering] = useState(false);
 
-    useEffect(() => {
-        const fetchAllDetails = async () => {
-            try {
-                setLoading(true);
-                if (!id) return;
+    // Fetch event details with SWR
+    const { data: event, loading: eventLoading, refetch: refetchEvent, isValidating: eventValidating } = useFetch(
+        `/events/${id}`,
+        {},
+        { cacheTTL: 30000, revalidateOnFocus: true }
+    );
 
-                // Promise.all to fetch everything in parallel
-                const [eventRes, usersRes, projectsRes] = await Promise.all([
-                    dataService.getEventById(id),
-                    dataService.getEventUsers(id),
-                    dataService.getEventProjects(id)
-                ]);
+    // Fetch event attendees with SWR
+    const { data: attendeesData, loading: attendeesLoading, refetch: refetchAttendees } = useFetch(
+        `/events/${id}/students`,
+        {},
+        { cacheTTL: 30000 }
+    );
 
-                setEvent(eventRes.data || eventRes);
-                setAttendees(Array.isArray(usersRes) ? usersRes : usersRes.data || []);
-                setProjects(Array.isArray(projectsRes) ? projectsRes : projectsRes.data || []);
+    const attendees = useMemo(() => {
+        const data = attendeesData?.data || attendeesData || [];
+        return Array.isArray(data) ? data : [];
+    }, [attendeesData]);
 
-                if (userProfile?.id) {
-                    const exists = await dataService.checkEventUserExists(id, userProfile.id);
-                    setIsRegistered(exists);
-                }
-            } catch (error) {
-                console.error('Core sync failed:', error);
-                toast.error('Failed to load event protocols');
-            } finally {
-                setLoading(false);
-            }
-        };
+    // Fetch event projects with SWR
+    const { data: projectsData, loading: projectsLoading } = useFetch(
+        `/events/${id}/projects`,
+        {},
+        { cacheTTL: 30000 }
+    );
 
-        fetchAllDetails();
-    }, [id, userProfile]);
+    const projects = useMemo(() => {
+        const data = projectsData?.data || projectsData || [];
+        return Array.isArray(data) ? data : [];
+    }, [projectsData]);
 
-    const handleRegister = async () => {
+    // Check if user is registered
+    const { data: registrationData, refetch: refetchRegistration } = useFetch(
+        userProfile?.id ? `/events/${id}/students/${userProfile.id}/exists` : null,
+        {},
+        { skip: !userProfile?.id, cacheTTL: 30000 }
+    );
+
+    const isRegistered = useMemo(() => !!registrationData, [registrationData]);
+
+    const handleRegister = useCallback(async () => {
         try {
             setRegistering(true);
             await dataService.registerForEvent(id);
-            setIsRegistered(true);
             toast.success('Successfully Registered');
-            // Refresh attendee list
-            const usersRes = await dataService.getEventUsers(id);
-            setAttendees(Array.isArray(usersRes) ? usersRes : usersRes.data || []);
+            refetchRegistration();
+            refetchAttendees();
         } catch (error) {
             toast.error('Registration failed');
         } finally {
             setRegistering(false);
         }
-    };
+    }, [id, refetchRegistration, refetchAttendees]);
 
     const formatDate = (dateString) => {
         if (!dateString) return "N/A";
@@ -87,11 +96,11 @@ export default function EventDetails() {
         });
     };
 
-    // SAFETY CHECK 1: If still loading, show skeleton
-    if (loading) return <DetailSkeleton />;
+    const loading = eventLoading || attendeesLoading || projectsLoading;
 
-    // SAFETY CHECK 2: If loading is finished but event is still null (e.g. 404), show error
-    if (!event) {
+    if (loading && !event) return <DetailSkeleton />;
+
+    if (!event && !loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-slate-50">
                 <Card className="p-8 text-center">
@@ -111,10 +120,9 @@ export default function EventDetails() {
                 <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="font-bold gap-2">
                     <ArrowLeft size={18} /> Back
                 </Button>
-                {/* <div className="flex items-center gap-2">
-                    <img src="/Logo.png" alt="Quasar" className="w-8 h-8" />
-                    <span className="font-bold text-indigo-600 tracking-tight">Quasar Hub</span>
-                </div> */}
+                <div className="flex items-center gap-2">
+                    {eventValidating && <Loader2 size={16} className="animate-spin text-indigo-600" />}
+                </div>
                 <Button variant="outline" size="icon" className="rounded-full"><Share2 size={16} /></Button>
             </header>
 
@@ -123,10 +131,9 @@ export default function EventDetails() {
                 <div className="max-w-7xl mx-auto px-6 py-16 md:py-20">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                         <div className="flex items-center gap-3 mb-6">
-                            {/* FIXED: Optional Chaining event?.status */}
                             <Badge className={`px-3 py-1 font-bold uppercase tracking-wider text-[10px] border-none ${event?.status === 'UPCOMING' ? 'bg-blue-50 text-blue-600' : 'bg-emerald-50 text-emerald-600'
                                 }`}>
-                                {event?.status}
+                                {event?.status || 'UPCOMING'}
                             </Badge>
                             <span className="text-slate-400 font-bold text-xs uppercase tracking-tighter flex items-center gap-2">
                                 <CalendarCheck size={14} className="text-indigo-600" />
@@ -148,7 +155,7 @@ export default function EventDetails() {
                                 <div className="p-2.5 bg-slate-50 rounded-xl text-slate-400"><MapPin size={20} /></div>
                                 <div>
                                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Location</p>
-                                    <p className="text-sm font-bold">Campus Hub</p>
+                                    <p className="text-sm font-bold">{event?.location || 'Campus Hub'}</p>
                                 </div>
                             </div>
                         </div>
@@ -162,7 +169,7 @@ export default function EventDetails() {
                         <section className="space-y-6">
                             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">About the Event</h3>
                             <p className="text-xl text-slate-600 leading-relaxed font-medium">
-                                {event?.description}
+                                {event?.description || 'No description provided for this event.'}
                             </p>
                         </section>
 
@@ -172,9 +179,9 @@ export default function EventDetails() {
                             </h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {projects.map(proj => (
-                                    <Card key={proj.id} className="border-slate-200 hover:border-indigo-300 transition-all cursor-pointer">
+                                    <Card key={proj.id} onClick={() => navigate(`/projects/${proj.id}`)} className="border-slate-200 hover:border-indigo-300 transition-all cursor-pointer group">
                                         <CardContent className="p-5">
-                                            <h4 className="font-bold text-slate-900 mb-2 truncate">{proj.title}</h4>
+                                            <h4 className="font-bold text-slate-900 mb-2 truncate group-hover:text-indigo-600 transition-colors">{proj.title}</h4>
                                             <p className="text-xs text-slate-500 line-clamp-2">{proj.description}</p>
                                         </CardContent>
                                     </Card>
@@ -217,6 +224,28 @@ export default function EventDetails() {
                                     )}
                                 </CardContent>
                             </Card>
+
+                            {/* Attendees List Preview */}
+                            {attendees.length > 0 && (
+                                <Card className="border-slate-200 rounded-[32px]">
+                                    <CardContent className="p-6">
+                                        <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Joined Members</h4>
+                                        <div className="flex -space-x-2 overflow-hidden">
+                                            {attendees.slice(0, 8).map((attendee, i) => (
+                                                <Avatar key={i} className="inline-block h-8 w-8 rounded-full ring-2 ring-white">
+                                                    <AvatarImage src={attendee.profilePictureUrl} />
+                                                    <AvatarFallback className="bg-indigo-100 text-indigo-600 text-[10px] font-bold">{attendee.firstName?.[0]}</AvatarFallback>
+                                                </Avatar>
+                                            ))}
+                                            {attendees.length > 8 && (
+                                                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 ring-2 ring-white text-[10px] font-bold text-slate-500">
+                                                    +{attendees.length - 8}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
                     </aside>
                 </div>

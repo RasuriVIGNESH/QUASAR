@@ -12,7 +12,6 @@ public class SkillResponse {
     private String name;
     private String category;
     private Boolean isPredefined;
-
     private Integer users;
 
     public SkillResponse() {}

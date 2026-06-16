@@ -97,12 +97,12 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
                                 </span>
                             </div>
                         </div>
-                        <button
+                        {/* <button
                             onClick={() => onOpenChange(false)}
                             className="text-slate-400 hover:text-slate-600 transition-colors p-1"
                         >
                             <X size={20} />
-                        </button>
+                        </button> */}
                     </div>
                 </div>
 

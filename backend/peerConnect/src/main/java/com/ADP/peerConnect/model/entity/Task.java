@@ -9,12 +9,20 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 @Table(name = "tasks", indexes = {
         @Index(name = "idx_task_project", columnList = "project_id"),
         @Index(name = "idx_task_assignee", columnList = "assigned_to_id"),
@@ -89,68 +97,12 @@ public class Task {
     @Column(name = "actual_hours")
     private Integer actualHours;
 
-    public Task() {
-    }
-
     public Task(String title, String description, Project project, User createdBy) {
         this.title = title;
         this.description = description;
         this.project = project;
         this.createdBy = createdBy;
     }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public User getAssignedTo() {
-        return assignedTo;
-    }
-
-    public void setAssignedTo(User assignedTo) {
-        this.assignedTo = assignedTo;
-    }
-
-    public User getCreatedBy() {
-        return createdBy;
-    }
-
-    public void setCreatedBy(User createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public TaskStatus getStatus() {
-        return status;
-    }
-
     public void setStatus(TaskStatus status) {
         this.status = status;
         if (status == TaskStatus.COMPLETED && this.completedAt == null) {
@@ -161,109 +113,16 @@ public class Task {
         }
     }
 
-    public TaskPriority getPriority() {
-        return priority;
-    }
-
-    public void setPriority(TaskPriority priority) {
-        this.priority = priority;
-    }
-
-    public LocalDate getDueDate() {
-        return dueDate;
-    }
-
-    public void setDueDate(LocalDate dueDate) {
-        this.dueDate = dueDate;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public LocalDateTime getCompletedAt() {
-        return completedAt;
-    }
-
-    public void setCompletedAt(LocalDateTime completedAt) {
-        this.completedAt = completedAt;
-    }
-
-    public User getCompletedBy() {
-        return completedBy;
-    }
-
-    public void setCompletedBy(User completedBy) {
-        this.completedBy = completedBy;
-    }
-
-    public Integer getEstimatedHours() {
-        return estimatedHours;
-    }
-
-    public void setEstimatedHours(Integer estimatedHours) {
-        this.estimatedHours = estimatedHours;
-    }
-
-    public Integer getActualHours() {
-        return actualHours;
-    }
-
-    public void setActualHours(Integer actualHours) {
-        this.actualHours = actualHours;
-    }
-
     public boolean isCompleted() {
         return status == TaskStatus.COMPLETED;
     }
-
     public boolean isOverdue() {
         return dueDate != null && dueDate.isBefore(LocalDate.now()) && !isCompleted();
     }
-
-    public boolean isAssigned() {
-        return assignedTo != null;
-    }
-
     public void complete(User completedBy) {
         setStatus(TaskStatus.COMPLETED);
         this.completedBy = completedBy;
         this.completedAt = LocalDateTime.now();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Task)) return false;
-        Task task = (Task) o;
-        return id != null && id.equals(task.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "Task{" +
-                "id=" + id +
-                ", title='" + title + '\'' +
-                ", status=" + status +
-                ", priority=" + priority +
-                ", dueDate=" + dueDate +
-                '}';
-    }
 }

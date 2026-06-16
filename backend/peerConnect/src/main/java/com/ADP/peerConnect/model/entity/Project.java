@@ -6,6 +6,10 @@ import com.ADP.peerConnect.model.enums.ProjectStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -16,6 +20,9 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter @Getter
 @Table(name = "projects", indexes = {
         @Index(name = "idx_project_lead", columnList = "lead_id"),
         @Index(name = "idx_project_status", columnList = "status"),
@@ -138,251 +145,6 @@ public class Project {
     @JoinColumn(name = "event_id")
     private Event event;
 
-    public Project() {
-        this.id = UUID.randomUUID().toString();
-    }
-
-    public Project(String title, String description, String category, Integer maxTeamSize, User lead) {
-        this();
-        this.title = title;
-        this.description = description;
-        this.category = null;
-        this.maxTeamSize = maxTeamSize;
-        this.lead = lead;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public ProjectCategory getCategory() {
-        return category;
-    }
-
-    public void setCategory(ProjectCategory category) {
-        this.category = category;
-    }
-
-    public Integer getMaxTeamSize() {
-        return maxTeamSize;
-    }
-
-    public void setMaxTeamSize(Integer maxTeamSize) {
-        this.maxTeamSize = maxTeamSize;
-    }
-
-    public ProjectStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ProjectStatus status) {
-        this.status = status;
-    }
-
-    public User getLead() {
-        return lead;
-    }
-
-    public void setLead(User lead) {
-        this.lead = lead;
-    }
-
-    public User getLeader() {
-        return lead;
-    }
-
-    public void setLeader(User leader) {
-        this.lead = leader;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public LocalDate getExpectedStartDate() {
-        return expectedStartDate;
-    }
-
-    public void setExpectedStartDate(LocalDate expectedStartDate) {
-        this.expectedStartDate = expectedStartDate;
-    }
-
-    public LocalDate getExpectedEndDate() {
-        return expectedEndDate;
-    }
-
-    public void setExpectedEndDate(LocalDate expectedEndDate) {
-        this.expectedEndDate = expectedEndDate;
-    }
-
-    public String getGoals() {
-        return goals;
-    }
-
-    public void setGoals(String goals) {
-        this.goals = goals;
-    }
-
-    public String getProblemStatement() {
-        return problemStatement;
-    }
-
-    public void setProblemStatement(String problemStatement) {
-        this.problemStatement = problemStatement;
-    }
-
-    public String getObjectives() {
-        return objectives;
-    }
-
-    public void setObjectives(String objectives) {
-        this.objectives = objectives;
-    }
-
-    public String getTechStack() {
-        return techStack;
-    }
-
-    public void setTechStack(String techStack) {
-        this.techStack = techStack;
-    }
-
-    public String getGithubRepo() {
-        return githubRepo;
-    }
-
-    public void setGithubRepo(String githubRepo) {
-        this.githubRepo = githubRepo;
-    }
-
-    public String getDemoUrl() {
-        return demoUrl;
-    }
-
-    public void setDemoUrl(String demoUrl) {
-        this.demoUrl = demoUrl;
-    }
-
-    public String getNotepadContent() {
-        return notepadContent;
-    }
-
-    public void setNotepadContent(String notepadContent) {
-        this.notepadContent = notepadContent;
-    }
-
-    public Integer getCurrentTeamSize() {
-        return currentTeamSize;
-    }
-
-    public void setCurrentTeamSize(Integer currentTeamSize) {
-        this.currentTeamSize = currentTeamSize;
-    }
-
-    public Integer getOpenTasksCount() {
-        return openTasksCount;
-    }
-
-    public void setOpenTasksCount(Integer openTasksCount) {
-        this.openTasksCount = openTasksCount;
-    }
-
-    public Integer getCompletedTasksCount() {
-        return completedTasksCount;
-    }
-
-    public void setCompletedTasksCount(Integer completedTasksCount) {
-        this.completedTasksCount = completedTasksCount;
-    }
-
-    public List<ProjectSkill> getProjectSkills() {
-        return projectSkills;
-    }
-
-    public void setProjectSkills(List<ProjectSkill> projectSkills) {
-        this.projectSkills = projectSkills;
-    }
-
-    public List<ProjectMember> getProjectMembers() {
-        return projectMembers;
-    }
-
-    public void setProjectMembers(List<ProjectMember> projectMembers) {
-        this.projectMembers = projectMembers;
-    }
-
-    public List<ProjectInvitation> getProjectInvitations() {
-        return projectInvitations;
-    }
-
-    public void setProjectInvitations(List<ProjectInvitation> projectInvitations) {
-        this.projectInvitations = projectInvitations;
-    }
-
-    public List<Task> getTasks() {
-        return tasks;
-    }
-
-    public void setTasks(List<Task> tasks) {
-        this.tasks = tasks;
-    }
-
-    public List<MeetingRoom> getMeetingRooms() {
-        return meetingRooms;
-    }
-
-    public void setMeetingRooms(List<MeetingRoom> meetingRooms) {
-        this.meetingRooms = meetingRooms;
-    }
-
-    public List<ProjectJoinRequest> getProjectJoinRequests() {
-        return projectJoinRequests;
-    }
-
-    public void setProjectJoinRequests(List<ProjectJoinRequest> projectJoinRequests) {
-        this.projectJoinRequests = projectJoinRequests;
-    }
-
-    public Event getEvent() {
-        return event;
-    }
-
-    public void setEvent(Event event) {
-        this.event = event;
-    }
-
     public boolean isFull() {
         return getCurrentTeamSize() >= maxTeamSize;
     }
@@ -427,29 +189,12 @@ public class Project {
             this.techStack = null;
         }
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Project)) return false;
-        Project project = (Project) o;
-        return id != null && id.equals(project.getId());
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return "Project{" +
-                "id='" + id + '\'' +
-                ", title='" + title + '\'' +
-                ", category='" + (category != null ? category.getName() : null) + '\'' +
-                ", maxTeamSize=" + maxTeamSize +
-                ", currentTeamSize=" + currentTeamSize +
-                ", status=" + status +
-                '}';
+    public Project(String title, String description, String category, Integer maxTeamSize, User lead) {
+        this();
+        this.title = title;
+        this.description = description;
+        this.category = null;
+        this.maxTeamSize = maxTeamSize;
+        this.lead = lead;
     }
 }

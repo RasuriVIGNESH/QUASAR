@@ -4,8 +4,15 @@ import com.ADP.peerConnect.model.enums.ProjectRole;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 public class SendInvitationRequest {
     @NotBlank(message = "Invited user ID is required")
     private String invitedUserId;
@@ -15,16 +22,4 @@ public class SendInvitationRequest {
 
     @NotNull(message = "Role is required")
     private ProjectRole role;
-
-    // Constructors, getters, setters
-    public SendInvitationRequest() {}
-
-    public String getInvitedUserId() { return invitedUserId; }
-    public void setInvitedUserId(String invitedUserId) { this.invitedUserId = invitedUserId; }
-
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
-
-    public ProjectRole getRole() { return role; }
-    public void setRole(ProjectRole role) { this.role = role; }
 }

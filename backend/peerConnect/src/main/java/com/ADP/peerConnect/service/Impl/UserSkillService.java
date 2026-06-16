@@ -92,11 +92,9 @@ public class UserSkillService implements iUserSkillService {
             String category = req.getCategory();
 
             if (skillName == null || skillName.trim().isEmpty()) {
-                // skip invalid entries
                 continue;
             }
             if (level == null) {
-                // skip invalid entries
                 continue;
             }
 

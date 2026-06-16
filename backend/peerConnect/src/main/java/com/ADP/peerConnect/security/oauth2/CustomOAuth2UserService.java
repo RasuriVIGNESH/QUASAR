@@ -6,6 +6,7 @@ import com.ADP.peerConnect.model.enums.AvailabilityStatus;
 import com.ADP.peerConnect.model.enums.Role;
 import com.ADP.peerConnect.repository.UserRepository;
 import com.ADP.peerConnect.security.UserPrincipal;
+import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -163,10 +164,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.setFirstName(first);
         user.setLastName("---");
         user.setGithubId(userInfo.getId());
+        user.setGithubUrl(userInfo.getHtmlUrl());
         user.setProfilePictureUrl(userInfo.getAvatarUrl());
         user.setIsVerified(true);
         user.setBio(userInfo.getBio());
-        user.setGithubId(userInfo.getHtmlUrl());
         user.setAvailabilityStatus(AvailabilityStatus.AVAILABLE);
         user.setRole(Role.STUDENT);
 
@@ -184,20 +185,30 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         return userRepository.save(user);
     }
 
-    private User updateExistingUser(User existingUser, GitHubOAuth2UserInfo userInfo) {
-        if (!StringUtils.hasText(existingUser.getGithubId())) {
-            existingUser.setGithubId(userInfo.getId());
+    private User updateExistingUser(
+            User existingUser,
+            GitHubOAuth2UserInfo userInfo) {
+
+        User managedUser =
+                userRepository.findById(existingUser.getId())
+                        .orElseThrow();
+
+        if (!StringUtils.hasText(managedUser.getGithubId())) {
+            managedUser.setGithubId(userInfo.getId());
         }
 
-        if (StringUtils.hasText(userInfo.getAvatarUrl()) && !StringUtils.hasText(existingUser.getProfilePictureUrl())) {
-            existingUser.setProfilePictureUrl(userInfo.getAvatarUrl());
+        if (StringUtils.hasText(userInfo.getAvatarUrl())) {
+            managedUser.setProfilePictureUrl(
+                    userInfo.getAvatarUrl()
+            );
         }
 
-        if (StringUtils.hasText(userInfo.getName()) && (existingUser.getFirstName() == null ||
-                userInfo.getName().length() > existingUser.getFirstName().length())) {
-            existingUser.setFirstName(userInfo.getName());
+        if (StringUtils.hasText(userInfo.getName())) {
+            managedUser.setFirstName(
+                    userInfo.getName()
+            );
         }
 
-        return userRepository.save(existingUser);
+        return managedUser;
     }
 }

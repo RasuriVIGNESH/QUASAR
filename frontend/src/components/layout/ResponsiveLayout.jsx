@@ -61,16 +61,6 @@ export default function ResponsiveLayout() {
                         );
                     })}
                 </nav>
-
-                <div className="p-4 border-t border-slate-100">
-                    <button
-                        onClick={logout}
-                        className="w-full flex items-center gap-4 px-4 py-3 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 font-medium"
-                    >
-                        <LogOut size={20} />
-                        <span className="text-sm">Log Out</span>
-                    </button>
-                </div>
             </aside>
 
             {/* MOBILE TOP BAR - Instagram Style */}

@@ -3,8 +3,8 @@ package com.ADP.peerConnect.service.Impl;
 import com.ADP.peerConnect.exception.BadRequestException;
 import com.ADP.peerConnect.exception.ConflictException;
 import com.ADP.peerConnect.exception.UnauthorizedException;
-import com.ADP.peerConnect.model.dto.request.Auth.LoginRequest;
-import com.ADP.peerConnect.model.dto.request.Auth.RegisterRequest;
+import com.ADP.peerConnect.model.dto.request.Auth.Login;
+import com.ADP.peerConnect.model.dto.request.Auth.Register;
 import com.ADP.peerConnect.model.dto.response.AuthResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.College;
@@ -52,7 +52,7 @@ public class AuthService implements iAuthService {
      */
 
 
-    public AuthResponse register(RegisterRequest registerRequest) {
+    public AuthResponse register(Register registerRequest) {
         // Validate input
         validateRegisterRequest(registerRequest);
 
@@ -98,7 +98,7 @@ public class AuthService implements iAuthService {
     /**
      * Authenticate user login
      */
-    public AuthResponse login(LoginRequest loginRequest) {
+    public AuthResponse login(Login loginRequest) {
         // Validate input
         validateLoginRequest(loginRequest);
 
@@ -144,7 +144,7 @@ public class AuthService implements iAuthService {
     /**
      * Validate register request
      */
-    private void validateRegisterRequest(RegisterRequest request) {
+    private void validateRegisterRequest(Register request) {
         if (!ValidationUtils.isValidEmail(request.getEmail())) {
             throw new BadRequestException("Invalid email format");
         }
@@ -181,7 +181,7 @@ public class AuthService implements iAuthService {
     /**
      * Validate login request
      */
-    private void validateLoginRequest(LoginRequest request) {
+    private void validateLoginRequest(Login request) {
         if (!ValidationUtils.isValidEmail(request.getEmail())) {
             throw new BadRequestException("Invalid email format");
         }

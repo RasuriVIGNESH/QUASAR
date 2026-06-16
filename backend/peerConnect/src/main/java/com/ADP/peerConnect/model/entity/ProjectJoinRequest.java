@@ -5,10 +5,18 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
+@NoArgsConstructor
+@AllArgsConstructor
+@Setter
+@Getter
 @Table(name = "project_join_requests", indexes = {
         @Index(name = "idx_join_request_project", columnList = "project_id"),
         @Index(name = "idx_join_request_user", columnList = "user_id"),
@@ -49,62 +57,5 @@ public class ProjectJoinRequest {
     @Column(name = "responded_at")
     private LocalDateTime respondedAt;
 
-    public ProjectJoinRequest() {
-    }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Project getProject() {
-        return project;
-    }
-
-    public void setProject(Project project) {
-        this.project = project;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public InvitationStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(InvitationStatus status) {
-        this.status = status;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getRespondedAt() {
-        return respondedAt;
-    }
-
-    public void setRespondedAt(LocalDateTime respondedAt) {
-        this.respondedAt = respondedAt;
-    }
 }
