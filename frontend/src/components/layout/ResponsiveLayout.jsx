@@ -70,9 +70,6 @@ export default function ResponsiveLayout() {
                     <h1 className="text-lg font-bold text-slate-900 tracking-tight">Quasar</h1>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/projects/create')} className="text-slate-900">
-                        <PlusSquare size={24} strokeWidth={2} />
-                    </button>
                     <button onClick={() => navigate('/messages')} className="text-slate-900 relative">
                         <Bell size={24} strokeWidth={2} />
                     </button>

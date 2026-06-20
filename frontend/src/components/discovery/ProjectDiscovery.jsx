@@ -12,15 +12,28 @@ import {
   Filter,
   ArrowRight,
   Plus,
-  Zap
+  Zap,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+
+/* ─── CONSTANTS ─────────────────────────────────────────────────────────── */
+const PAGE_SIZE = 9;
+
+// Matches backend ProjectStatus enum exactly (see controller doc comment).
+const STATUS_OPTIONS = [
+  { value: 'ALL', label: 'Any status' },
+  { value: 'RECRUITING', label: 'Recruiting' },
+  { value: 'IN_PROGRESS', label: 'In progress' },
+  { value: 'COMPLETED', label: 'Completed' },
+  { value: 'CANCELLED', label: 'Cancelled' },
+];
 
 /* ─── DEBOUNCE HOOK ─────────────────────────────────────────────────────── */
 function useDebounce(value, delay) {
@@ -53,13 +66,88 @@ const TeamMeter = ({ current, max }) => {
   );
 };
 
+/* ─── SUB-COMPONENT: PAGINATION ──────────────────────────────────────────
+   Shows a result-count summary plus prev/next + numbered controls.
+   Numbers are windowed with ellipses so this stays usable at 30+ pages. */
+const Pagination = ({ page, totalPages, totalElements, pageSize, onPageChange }) => {
+  if (totalPages <= 1) return null;
+
+  const rangeStart = page * pageSize + 1;
+  const rangeEnd = Math.min((page + 1) * pageSize, totalElements);
+
+  // Build a windowed list of page numbers: first, last, current ±1, with
+  // null standing in for an ellipsis gap.
+  const pageNumbers = useMemo(() => {
+    const window = 1;
+    const pages = [];
+    for (let i = 0; i < totalPages; i++) {
+      const isEdge = i === 0 || i === totalPages - 1;
+      const isNearCurrent = Math.abs(i - page) <= window;
+      if (isEdge || isNearCurrent) {
+        pages.push(i);
+      } else if (pages[pages.length - 1] !== null) {
+        pages.push(null);
+      }
+    }
+    return pages;
+  }, [page, totalPages]);
+
+  return (
+    <div className="mt-10 flex flex-col items-center gap-3">
+      <p className="text-[11px] font-semibold text-slate-400">
+        Showing <span className="text-slate-600">{rangeStart}–{rangeEnd}</span> of{' '}
+        <span className="text-slate-600">{totalElements}</span> projects
+      </p>
+      <div className="flex justify-center items-center gap-1.5">
+        <button
+          onClick={() => onPageChange(Math.max(0, page - 1))}
+          disabled={page === 0}
+          aria-label="Previous page"
+          className="w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-all"
+        >
+          <ChevronLeft size={14} />
+        </button>
+
+        {pageNumbers.map((i, idx) =>
+          i === null ? (
+            <span key={`gap-${idx}`} className="w-8 h-8 flex items-center justify-center text-xs text-slate-300 select-none">
+              …
+            </span>
+          ) : (
+            <button
+              key={i}
+              onClick={() => onPageChange(i)}
+              aria-current={page === i ? 'page' : undefined}
+              className={`w-8 h-8 rounded-lg text-xs font-bold transition-all border ${page === i
+                ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
+                : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                }`}
+            >
+              {i + 1}
+            </button>
+          )
+        )}
+
+        <button
+          onClick={() => onPageChange(Math.min(totalPages - 1, page + 1))}
+          disabled={page === totalPages - 1}
+          aria-label="Next page"
+          className="w-8 h-8 rounded-lg flex items-center justify-center border border-slate-200 bg-white text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white transition-all"
+        >
+          <ChevronRight size={14} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 export default function ProjectDiscovery() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
 
   const [searchInput, setSearchInput] = useState('');
-  const [availableOnly, setAvailableOnly] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [page, setPage] = useState(0);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,6 +155,7 @@ export default function ProjectDiscovery() {
   // ── Projects state ──
   const [projects, setProjects] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(false);
 
@@ -75,6 +164,16 @@ export default function ProjectDiscovery() {
 
   // 300ms debounce — prevents firing on every keystroke
   const debouncedSearch = useDebounce(searchInput, 300);
+
+  // The header search box doubles as a skills filter: a comma-separated
+  // term list (e.g. "react, figma") is parsed into the skills array,
+  // while the full raw string is still sent as the free-text query.
+  const searchSkills = useMemo(() => {
+    return debouncedSearch
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }, [debouncedSearch]);
 
   // ── Fetch projects whenever filters change ──
   useEffect(() => {
@@ -87,22 +186,31 @@ export default function ProjectDiscovery() {
         // Build params — only include defined, non-empty values
         const params = {
           page,
-          size: 9,
-          availableOnly,
+          size: PAGE_SIZE,
         };
         // Only add query if the user actually typed something
         if (debouncedSearch.trim()) {
           params.query = debouncedSearch.trim();
         }
+        // The same search box also feeds skills, so the backend can match
+        // on skills required even though the UI only shows one input.
+        if (searchSkills.length > 0) {
+          params.skills = searchSkills;
+        }
         // Only add category if it's not "All"
         if (selectedCategory !== 'All') {
           params.category = selectedCategory;
+        }
+        // Only add status if a specific one is selected
+        if (selectedStatus !== 'ALL') {
+          params.status = selectedStatus;
         }
 
         const res = await projectService.searchProjects(params);
         const content = res?.content || res?.data?.content || [];
         setProjects(content);
         setTotalPages(res?.totalPages || 1);
+        setTotalElements(res?.totalElements ?? content.length);
 
         // Derive category list from returned project data
         setCategories((prev) => {
@@ -122,7 +230,7 @@ export default function ProjectDiscovery() {
 
     fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, selectedCategory, availableOnly, page]);
+  }, [debouncedSearch, searchSkills, selectedCategory, selectedStatus, page]);
 
   // Reset to page 0 when filters change (but not on page change itself)
   const handleSearchChange = useCallback((e) => {
@@ -135,10 +243,29 @@ export default function ProjectDiscovery() {
     setPage(0);
   }, []);
 
-  const handleAvailableToggle = useCallback((v) => {
-    setAvailableOnly(v);
+  const handleStatusChange = useCallback((e) => {
+    setSelectedStatus(e.target.value);
     setPage(0);
   }, []);
+
+  const handlePageChange = useCallback((newPage) => {
+    setPage(newPage);
+    // Jumping pages should bring the feed back into view rather than
+    // leaving the user scrolled to wherever the old list ended.
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setSearchInput('');
+    setSelectedCategory('All');
+    setSelectedStatus('ALL');
+    setPage(0);
+  }, []);
+
+  const hasActiveFilters =
+    searchInput.trim() !== '' ||
+    selectedCategory !== 'All' ||
+    selectedStatus !== 'ALL';
 
   return (
     <div className="min-h-screen bg-slate-50/50 text-slate-900 font-sans">
@@ -148,39 +275,46 @@ export default function ProjectDiscovery() {
           <div className="flex-1 max-w-xl relative group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-600 transition-colors" size={16} />
             <input
-              placeholder="Search projects, skills..."
+              placeholder="Search projects or skills (comma separated)..."
               value={searchInput}
               onChange={handleSearchChange}
               className="w-full bg-slate-100 border-none rounded-lg py-2 pl-9 pr-3 text-xs focus:ring-2 focus:ring-indigo-500/20 transition-all outline-none"
             />
           </div>
-
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              onClick={() => navigate('/projects/create')}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white h-9 px-4 rounded-lg font-bold text-xs"
-            >
-              <Plus size={14} className="mr-1.5" /> Create
-            </Button>
-            <Avatar className="w-8 h-8 border border-slate-200">
-              <AvatarImage src={currentUser?.profilePictureUrl} />
-              <AvatarFallback className="bg-indigo-100 text-indigo-700 text-[9px] font-bold">U</AvatarFallback>
-            </Avatar>
-          </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* ── CATEGORIES BAR ── */}
+        {/* ── FILTERS BAR ── */}
         <div className="mb-8 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2">
+          <div className="flex items-center justify-between gap-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-500 flex items-center gap-2 whitespace-nowrap">
               <Filter size={12} /> Categories
               {isValidating && <Loader2 size={12} className="animate-spin text-indigo-600" />}
             </h2>
-            <div className="flex items-center gap-2 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
-              <Label htmlFor="recruitment" className="text-xs font-semibold text-slate-600 cursor-pointer">Available Only</Label>
-              <Switch id="recruitment" checked={availableOnly} onCheckedChange={handleAvailableToggle} />
+
+            <div className="flex items-center gap-3">
+              {hasActiveFilters && (
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-rose-600 transition-colors whitespace-nowrap"
+                >
+                  <X size={12} /> Clear filters
+                </button>
+              )}
+              <select
+                id="status-filter"
+                value={selectedStatus}
+                onChange={handleStatusChange}
+                aria-label="Filter by status"
+                className="h-8 rounded-lg border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-700 focus:ring-2 focus:ring-indigo-500/20 outline-none"
+              >
+                {STATUS_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -243,12 +377,22 @@ export default function ProjectDiscovery() {
             <Zap size={40} className="mx-auto text-slate-200 mb-4" />
             <p className="text-slate-500 font-bold text-sm">No projects found</p>
             <p className="text-slate-400 text-xs mt-1">Try adjusting your filters or search term.</p>
-            <Button
-              onClick={() => navigate('/projects/create')}
-              className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 h-9 rounded-lg font-bold text-xs"
-            >
-              <Plus size={14} className="mr-2" /> Create First Project
-            </Button>
+            {hasActiveFilters ? (
+              <Button
+                onClick={clearAllFilters}
+                variant="outline"
+                className="mt-4 border-slate-200 text-slate-600 px-6 h-9 rounded-lg font-bold text-xs"
+              >
+                <X size={14} className="mr-2" /> Clear filters
+              </Button>
+            ) : (
+              <Button
+                onClick={() => navigate('/projects/create')}
+                className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-6 h-9 rounded-lg font-bold text-xs"
+              >
+                <Plus size={14} className="mr-2" /> Create First Project
+              </Button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -324,22 +468,13 @@ export default function ProjectDiscovery() {
         )}
 
         {/* ── PAGINATION ── */}
-        {totalPages > 1 && (
-          <div className="mt-10 flex justify-center items-center gap-2">
-            {[...Array(totalPages)].map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setPage(i)}
-                className={`w-8 h-8 rounded-lg text-xs font-bold transition-all border ${page === i
-                  ? 'bg-indigo-600 border-indigo-600 text-white shadow-sm'
-                  : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
-                  }`}
-              >
-                {i + 1}
-              </button>
-            ))}
-          </div>
-        )}
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          totalElements={totalElements}
+          pageSize={PAGE_SIZE}
+          onPageChange={handlePageChange}
+        />
       </main>
 
       <ProjectDetailModal

@@ -45,8 +45,9 @@ public class EventService implements iEventService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Project> getProjects(Long eventId) {
-        return projectRepository.findByEventId(eventId);
+        return projectRepository.findByEventIdWithAssociations(eventId);
     }
 
     @Override

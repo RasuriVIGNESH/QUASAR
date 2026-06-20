@@ -20,11 +20,16 @@ public class ChatMessageResponse {
     private Long id;
     private String message;
     private MessageType messageType;
-    private String projectId;
-    private UserResponse sender;
+//    private String projectId;
+    private UserCardResponse sender;
 
     private LocalDateTime createdAt;
 
     public ChatMessageResponse(ChatMessage message) {
+        this.id=message.getId();
+        this.message=message.getMessage();
+        this.messageType=message.getMessageType();
+        this.createdAt=message.getCreatedAt();
+        this.sender=message.getUser();
     }
 }

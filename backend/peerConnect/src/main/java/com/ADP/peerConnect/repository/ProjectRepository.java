@@ -26,7 +26,11 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
     Optional<Project> findByIdWithAssociations(@Param("id") String id);
 
     // Find projects by Event ID
-    List<Project> findByEventId(Long eventId);
+    @Query("SELECT p FROM Project p " +
+            "LEFT JOIN FETCH p.lead " +
+            "LEFT JOIN FETCH p.category " +
+            "WHERE p.event = :eventId")
+    List<Project> findByEventIdWithAssociations(@Param("eventId") Long eventId);
 
     // Find projects owned by a user
     Page<Project> findByLeadIdOrderByCreatedAtDesc(String LeadId, Pageable pageable);

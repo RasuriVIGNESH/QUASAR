@@ -121,7 +121,6 @@ public class ChatService implements iChatService {
      * Get recent messages (last 24 hours)
      */
     public List<ChatMessage> getRecentMessages(String projectId, String userId) {
-        // Check if user is a member of the project
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new UnauthorizedException("You must be a project member to view messages");
         }

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle2, ArrowRight, ArrowLeft, Loader2, Sparkles } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ArrowLeft, Loader2, Github } from 'lucide-react';
 import { dataService } from '../../services/dataService.js';
 import { toast } from "sonner";
 
@@ -18,7 +18,7 @@ export default function Register() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [staticData, setStaticData] = useState({ branches: [], graduationYears: [], colleges: [] });
-  const { signup } = useAuth();
+  const { signup, loginWithGitHub } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -122,6 +122,7 @@ export default function Register() {
           {/* Right Side: Form Card */}
           <div className="lg:col-span-7">
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-8 md:p-10">
+
               <form onSubmit={step === 3 ? handleSubmit : nextStep} className="space-y-8">
                 <AnimatePresence mode="wait">
                   {step === 1 && (
@@ -158,6 +159,26 @@ export default function Register() {
                         <Label className="text-sm font-bold text-slate-900 block mb-1">University Email</Label>
                         <Input name="email" type="email" placeholder="alex@university.edu" onChange={handleInputChange} value={formData.email} className="h-11 border-slate-300 rounded-lg text-slate-900 bg-white" required />
                       </div>
+                      <div className="relative py-2">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-slate-200" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-white px-2 text-slate-400 font-medium">
+                            Or
+                          </span>
+                        </div>
+                      </div>
+
+                      <Button
+                        type="button"
+                        onClick={() => loginWithGitHub()}
+                        variant="outline"
+                        className="w-full h-11 border border-slate-300 bg-white rounded-lg font-bold flex items-center justify-center gap-3 hover:bg-slate-50 transition-colors text-slate-900"
+                      >
+                        <Github size={18} />
+                        <span>Continue with GitHub</span>
+                      </Button>
                     </motion.div>
                   )}
 
@@ -252,6 +273,7 @@ export default function Register() {
                   </Button>
                 </div>
               </form>
+
             </div>
             <p className="text-center mt-8 text-sm text-slate-500">
               Already have an account? <Link to="/login" className="text-slate-900 font-bold hover:underline">Sign In</Link>

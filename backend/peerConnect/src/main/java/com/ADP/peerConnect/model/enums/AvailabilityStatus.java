@@ -6,7 +6,7 @@ package com.ADP.peerConnect.model.enums;
 public enum AvailabilityStatus {
     AVAILABLE("Available for new projects"),
     BUSY("Currently busy with existing projects"),
-    NOT_AVAILABLE("Not available for projects");
+    OFFLINE("Not available for projects");
 
     private final String description;
 

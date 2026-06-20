@@ -1,5 +1,7 @@
 package com.ADP.peerConnect.model.entity;
 
+import com.ADP.peerConnect.model.dto.response.UserCardResponse;
+import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.enums.MessageType;
 
 import jakarta.persistence.*;
@@ -55,4 +57,10 @@ public class ChatMessage {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+
+    public UserCardResponse getUser(){
+        UserCardResponse user=new UserCardResponse(sender);
+        return user;
+    }
 }

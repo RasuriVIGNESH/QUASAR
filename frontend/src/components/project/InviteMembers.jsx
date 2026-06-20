@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Search, Users, UserPlus, Check, ArrowLeft,
-  Loader2, MapPin, Filter, X, ChevronDown
+  Loader2, MapPin, Filter, Github, Linkedin, Globe,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
@@ -18,12 +19,54 @@ import { toast } from 'sonner';
 import userService from '../../services/userService';
 import { projectService } from '../../services/projectService';
 
+// Matches the default page size used by GET /sort, kept smaller here for a clean 3-col grid.
+const PAGE_SIZE = 12;
+
+const AVAILABILITY_STYLES = {
+  AVAILABLE: 'bg-emerald-50 text-emerald-600 border-emerald-100',
+  OPEN_TO_WORK: 'bg-blue-50 text-blue-600 border-blue-100',
+  BUSY: 'bg-amber-50 text-amber-600 border-amber-100',
+  OFFLINE: 'bg-slate-50 text-slate-400 border-slate-100',
+};
+
+const formatAvailability = (status) => {
+  if (!status) return 'Unknown';
+  return status
+    .toLowerCase()
+    .split('_')
+    .map((w) => w[0].toUpperCase() + w.slice(1))
+    .join(' ');
+};
+
+// Builds a windowed list of 0-based page numbers with '...' gaps, e.g. [0, '...', 4, 5, 6, '...', 11]
+const getPageNumbers = (current, total) => {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i);
+  const pages = new Set([0, total - 1, current, current - 1, current + 1]);
+  const sorted = [...pages].filter((p) => p >= 0 && p < total).sort((a, b) => a - b);
+  const result = [];
+  sorted.forEach((p, idx) => {
+    if (idx > 0 && p - sorted[idx - 1] > 1) result.push('...');
+    result.push(p);
+  });
+  return result;
+};
+
+const emptyPageMeta = {
+  pageNumber: 0,
+  totalElements: 0,
+  totalPages: 0,
+  first: true,
+  last: true,
+  numberOfElements: 0,
+};
+
 export default function InviteMembers() {
   const { projectId } = useParams();
   const navigate = useNavigate();
   const { userProfile } = useAuth();
 
-  const [loading, setLoading] = useState(true);
+  const [initializing, setInitializing] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [students, setStudents] = useState([]);
   const [filteredStudents, setFilteredStudents] = useState([]);
@@ -32,6 +75,8 @@ export default function InviteMembers() {
   const [invitationsMap, setInvitationsMap] = useState({});
   const [showFilters, setShowFilters] = useState(false);
   const [applyLoading, setApplyLoading] = useState(false);
+  const [excludedIds, setExcludedIds] = useState(new Set()); // current members + lead
+  const [pageMeta, setPageMeta] = useState(emptyPageMeta);
 
   const [filters, setFilters] = useState({
     branch: '',
@@ -44,50 +89,73 @@ export default function InviteMembers() {
   const graduationYears = [2024, 2025, 2026, 2027, 2028];
   const availabilityStatuses = ['AVAILABLE', 'BUSY', 'OPEN_TO_WORK', 'OFFLINE'];
 
-  useEffect(() => { fetchStudents(); }, [projectId]);
-
+  // One-time load of project context: current members, lead, and pending invitations.
+  // These don't change as the user pages or filters through /sort, so they're kept separate.
   useEffect(() => {
-    const term = searchTerm.toLowerCase();
-    setFilteredStudents(students.filter(s =>
-      (s.displayName || '').toLowerCase().includes(term) ||
-      (s.studentSkills || []).some(sk => (sk.name || '').toLowerCase().includes(term))
-    ));
-  }, [searchTerm, students]);
+    const loadProjectContext = async () => {
+      try {
+        setInitializing(true);
+        setError(null);
+        const [membersRes, projectRes, invitesRes] = await Promise.all([
+          projectService.getProjectMembers(projectId),
+          projectService.getProject(projectId),
+          projectService.getProjectInvitations(projectId)
+        ]);
 
-  const fetchStudents = async (customFilters = filters) => {
+        const currentMembers = membersRes?.data || (Array.isArray(membersRes) ? membersRes : []);
+        const ids = new Set(currentMembers.map(m => m.user?.id || m.userId || m.id));
+
+        const projectData = projectRes?.data || projectRes || {};
+        const leadId = projectData.lead?.id || projectData.Lead?.id || projectData.leadId;
+        if (leadId) ids.add(leadId);
+
+        const invites = invitesRes?.data?.content || invitesRes?.data || (Array.isArray(invitesRes) ? invitesRes : []);
+        const newInvitesMap = {};
+        if (Array.isArray(invites)) {
+          invites.forEach(inv => {
+            if (inv.status === 'PENDING') {
+              const uId = inv.invitedUser?.id || inv.invitedUserId;
+              if (uId) newInvitesMap[uId] = inv.invitationId || inv.id;
+            }
+          });
+        }
+
+        setExcludedIds(ids);
+        setInvitationsMap(newInvitesMap);
+        setInvitedUserIds(Object.keys(newInvitesMap));
+      } catch (err) {
+        console.error('InviteMembers context error:', err);
+        setError('Failed to load project context.');
+      } finally {
+        setInitializing(false);
+      }
+    };
+    loadProjectContext();
+  }, [projectId]);
+
+  // Fetches a single page from GET /sort using the filters the controller supports
+  // (skills, branch, graduationYear, availabilityStatus) plus page/size for pagination.
+  const fetchUsers = useCallback(async (customFilters, pageNum, excluded) => {
     try {
-      setLoading(true);
-      setApplyLoading(true);
-      const apiParams = { size: 50 };
+      setUsersLoading(true);
+      setError(null);
+
+      const apiParams = { page: pageNum, size: PAGE_SIZE };
       if (customFilters.branch && customFilters.branch !== 'ALL') apiParams.branch = customFilters.branch;
       if (customFilters.graduationYear && customFilters.graduationYear !== 'ALL') apiParams.graduationYear = parseInt(customFilters.graduationYear);
       if (customFilters.availabilityStatus && customFilters.availabilityStatus !== 'ALL') apiParams.availabilityStatus = customFilters.availabilityStatus;
       if (customFilters.skills) apiParams.skills = customFilters.skills.split(',').map(s => s.trim()).filter(Boolean);
 
-      const [usersRes, membersRes, projectRes, invitesRes] = await Promise.all([
-        userService.discoverUsers(apiParams),
-        projectService.getProjectMembers(projectId),
-        projectService.getProject(projectId),
-        projectService.getProjectInvitations(projectId)
-      ]);
+      const usersRes = await userService.discoverUsers(apiParams);
+      const pageData = usersRes?.data || usersRes || {};
+      const rawContent = Array.isArray(pageData.content)
+        ? pageData.content
+        : (Array.isArray(pageData) ? pageData : []);
 
-      let allStudents = [];
-      if (usersRes?.data?.content) allStudents = usersRes.data.content;
-      else if (Array.isArray(usersRes?.data)) allStudents = usersRes.data;
-      else if (usersRes?.content) allStudents = usersRes.content;
-      else if (Array.isArray(usersRes)) allStudents = usersRes;
-
-      const currentMembers = membersRes?.data || (Array.isArray(membersRes) ? membersRes : []);
-      const memberIds = new Set(currentMembers.map(m => m.user?.id || m.userId || m.id));
-
-      const projectData = projectRes?.data || projectRes || {};
-      const leadId = projectData.lead?.id || projectData.Lead?.id || projectData.leadId;
-      if (leadId) memberIds.add(leadId);
-
-      const processed = allStudents
+      const processed = rawContent
         .filter(s => {
           const sid = s.id || s.userId || s._id;
-          return sid && !memberIds.has(sid);
+          return sid && !excluded.has(sid);
         })
         .map(s => ({
           ...s,
@@ -104,28 +172,57 @@ export default function InviteMembers() {
             (s.profilePhoto ? (s.profilePhoto.startsWith('data:') ? s.profilePhoto : `data:image/jpeg;base64,${s.profilePhoto}`) : null)
         }));
 
-      const invites = invitesRes?.data?.content || invitesRes?.data || (Array.isArray(invitesRes) ? invitesRes : []);
-      const newInvitesMap = {};
-      if (Array.isArray(invites)) {
-        invites.forEach(inv => {
-          if (inv.status === 'PENDING') {
-            const uId = inv.invitedUser?.id || inv.invitedUserId;
-            if (uId) newInvitesMap[uId] = inv.invitationId || inv.id;
-          }
-        });
-      }
-
-      setInvitationsMap(newInvitesMap);
-      setInvitedUserIds(Object.keys(newInvitesMap));
       setStudents(processed);
       setFilteredStudents(processed);
+      setPageMeta({
+        pageNumber: pageData.pageNumber ?? pageNum,
+        totalElements: pageData.totalElements ?? processed.length,
+        totalPages: pageData.totalPages ?? 1,
+        first: pageData.first ?? pageNum === 0,
+        last: pageData.last ?? true,
+        numberOfElements: pageData.numberOfElements ?? rawContent.length,
+      });
     } catch (err) {
       console.error('InviteMembers fetch error:', err);
       setError('Failed to fetch the talent pool.');
     } finally {
-      setLoading(false);
+      setUsersLoading(false);
       setApplyLoading(false);
     }
+  }, []);
+
+  // Load the first page of users once we know who to exclude (members + lead).
+  useEffect(() => {
+    if (!initializing) {
+      fetchUsers(filters, 0, excludedIds);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initializing]);
+
+  // Quick client-side narrowing of the currently loaded page by name/skill.
+  useEffect(() => {
+    const term = searchTerm.toLowerCase();
+    setFilteredStudents(students.filter(s =>
+      (s.displayName || '').toLowerCase().includes(term) ||
+      (s.studentSkills || []).some(sk => (sk.name || '').toLowerCase().includes(term))
+    ));
+  }, [searchTerm, students]);
+
+  const handleApplyFilters = () => {
+    setApplyLoading(true);
+    fetchUsers(filters, 0, excludedIds);
+  };
+
+  const resetFilters = () => {
+    const empty = { branch: '', graduationYear: '', availabilityStatus: '', skills: '' };
+    setFilters(empty);
+    setApplyLoading(true);
+    fetchUsers(empty, 0, excludedIds);
+  };
+
+  const goToPage = (pageNum) => {
+    if (pageNum < 0 || pageNum >= pageMeta.totalPages || pageNum === pageMeta.pageNumber || usersLoading) return;
+    fetchUsers(filters, pageNum, excludedIds);
   };
 
   const handleInvite = async (student) => {
@@ -157,11 +254,9 @@ export default function InviteMembers() {
     }
   };
 
-  const resetFilters = () => {
-    const empty = { branch: '', graduationYear: '', availabilityStatus: '', skills: '' };
-    setFilters(empty);
-    fetchStudents(empty);
-  };
+  const loading = initializing || usersLoading;
+  const pageRangeStart = pageMeta.totalElements === 0 ? 0 : pageMeta.pageNumber * PAGE_SIZE + 1;
+  const pageRangeEnd = pageMeta.pageNumber * PAGE_SIZE + pageMeta.numberOfElements;
 
   return (
     <div className="min-h-screen bg-slate-50/50">
@@ -177,7 +272,7 @@ export default function InviteMembers() {
           </Button>
           <div className="h-4 w-px bg-slate-200" />
           <h1 className="text-sm font-bold text-slate-900 tracking-tight">
-            Recruit Members
+            Find Talent
           </h1>
         </div>
         <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold px-3 py-1 text-[10px] rounded-full">
@@ -186,14 +281,6 @@ export default function InviteMembers() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 lg:px-6 py-8">
-        {/* HERO SECTION - Clean UI */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight">
-            Find Talent
-          </h2>
-          <p className="text-slate-500 text-sm font-medium mt-1">Connect with skilled peers to build your team.</p>
-        </div>
-
         {/* SEARCH & FILTER - Professional UI */}
         <div className="mb-6 space-y-3">
           <div className="flex gap-2">
@@ -273,7 +360,7 @@ export default function InviteMembers() {
                   Reset
                 </Button>
                 <Button
-                  onClick={() => fetchStudents(filters)}
+                  onClick={handleApplyFilters}
                   size="sm"
                   className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 h-9 rounded-lg font-bold text-xs"
                 >
@@ -323,31 +410,42 @@ export default function InviteMembers() {
           ) : (
             filteredStudents.map((student) => {
               const isInvited = invitedUserIds.includes(student.id.toString()) || invitedUserIds.includes(student.id);
+              const hasSocialLinks = student.githubUrl || student.linkedinUrl || student.portfolioUrl;
               return (
                 <Card key={student.id} className="border-slate-200 rounded-xl bg-white hover:border-indigo-200 hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden group">
                   <CardContent className="p-5 flex flex-col h-full">
-                    <div className="flex items-start gap-3 mb-4">
-                      <Avatar className="h-12 w-12 border border-slate-100 group-hover:border-indigo-100 transition-colors">
-                        <AvatarImage src={student.profilePictureUrl} />
-                        <AvatarFallback className="bg-indigo-50 text-indigo-700 text-sm font-bold">
-                          {student.displayName?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-indigo-600 transition-colors">
-                          {student.displayName}
-                        </h3>
-                        <p className="text-[11px] text-slate-500 font-medium truncate">
-                          {student.branch} • {student.graduationYear}
-                        </p>
-                        <div className="flex items-center gap-1 mt-1">
-                          <MapPin size={10} className="text-slate-300" />
-                          <span className="text-[10px] text-slate-400 font-medium truncate">{student.collegeName || 'Campus'}</span>
+                    <div className="flex items-start justify-between gap-2 mb-4">
+                      <div className="flex items-start gap-3 min-w-0">
+                        <Avatar className="h-12 w-12 border border-slate-100 group-hover:border-indigo-100 transition-colors">
+                          <AvatarImage src={student.profilePictureUrl} />
+                          <AvatarFallback className="bg-indigo-50 text-indigo-700 text-sm font-bold">
+                            {student.displayName?.[0]}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-indigo-600 transition-colors">
+                            {student.displayName}
+                          </h3>
+                          <p className="text-[11px] text-slate-500 font-medium truncate">
+                            {student.branch} • {student.graduationYear}
+                          </p>
+                          <div className="flex items-center gap-1 mt-1">
+                            <MapPin size={10} className="text-slate-300" />
+                            <span className="text-[10px] text-slate-400 font-medium truncate">{student.collegeName || 'Campus'}</span>
+                          </div>
                         </div>
                       </div>
+
+                      <span
+                        title={`Availability: ${formatAvailability(student.availabilityStatus)}`}
+                        className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold whitespace-nowrap ${AVAILABILITY_STYLES[student.availabilityStatus] || AVAILABILITY_STYLES.OFFLINE}`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                        {formatAvailability(student.availabilityStatus)}
+                      </span>
                     </div>
 
-                    <div className="flex flex-wrap gap-1 mb-5 min-h-[40px]">
+                    <div className="flex flex-wrap gap-1 mb-4 min-h-[20px]">
                       {student.studentSkills?.slice(0, 4).map((skill, idx) => (
                         <Badge key={idx} variant="secondary" className="bg-slate-50 text-slate-500 border-none font-bold text-[9px] px-1.5 py-0">
                           {skill.name}
@@ -357,6 +455,44 @@ export default function InviteMembers() {
                         <span className="text-[9px] font-bold text-slate-300">+{student.studentSkills.length - 4} more</span>
                       )}
                     </div>
+
+                    {hasSocialLinks && (
+                      <div className="flex items-center gap-2 mb-4">
+                        {student.githubUrl && (
+                          <a
+                            href={student.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="GitHub"
+                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
+                          >
+                            <Github size={13} />
+                          </a>
+                        )}
+                        {student.linkedinUrl && (
+                          <a
+                            href={student.linkedinUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="LinkedIn"
+                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
+                          >
+                            <Linkedin size={13} />
+                          </a>
+                        )}
+                        {student.portfolioUrl && (
+                          <a
+                            href={student.portfolioUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Portfolio"
+                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
+                          >
+                            <Globe size={13} />
+                          </a>
+                        )}
+                      </div>
+                    )}
 
                     <div className="mt-auto pt-4 border-t border-slate-50">
                       {isInvited ? (
@@ -382,6 +518,57 @@ export default function InviteMembers() {
             })
           )}
         </div>
+
+        {/* PAGINATION - server-driven via PagedResponse (pageNumber, totalPages, totalElements, first, last, numberOfElements) */}
+        {!loading && pageMeta.totalElements > 0 && (
+          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <p className="text-xs font-medium text-slate-400">
+              Showing {pageRangeStart}–{pageRangeEnd} of {pageMeta.totalElements} results
+            </p>
+
+            {pageMeta.totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pageMeta.first}
+                  onClick={() => goToPage(pageMeta.pageNumber - 1)}
+                  className="h-8 px-3 rounded-lg border-slate-200 text-xs font-bold text-slate-600 disabled:opacity-40"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Prev
+                </Button>
+
+                {getPageNumbers(pageMeta.pageNumber, pageMeta.totalPages).map((p, idx) =>
+                  p === '...' ? (
+                    <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-slate-300 font-bold">…</span>
+                  ) : (
+                    <Button
+                      key={p}
+                      size="sm"
+                      onClick={() => goToPage(p)}
+                      className={`h-8 w-8 rounded-lg text-xs font-bold ${p === pageMeta.pageNumber
+                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                        : 'bg-white border border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600'
+                        }`}
+                    >
+                      {p + 1}
+                    </Button>
+                  )
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={pageMeta.last}
+                  onClick={() => goToPage(pageMeta.pageNumber + 1)}
+                  className="h-8 px-3 rounded-lg border-slate-200 text-xs font-bold text-slate-600 disabled:opacity-40"
+                >
+                  Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </main>
     </div>
   );

@@ -19,10 +19,6 @@ public class UserResponse {
     private Integer graduationYear;
     private AvailabilityStatus availabilityStatus;
     private String profilePictureUrl;
-
-    // ❌ Removed skills (lazy problem)
-    // private List<UserSkillResponse> skills;
-
     private String githubUrl;
     private String linkedinUrl;
     private String portfolioUrl;

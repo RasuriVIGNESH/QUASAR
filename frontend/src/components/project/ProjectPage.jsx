@@ -24,7 +24,7 @@ import {
   LayoutDashboard, ClipboardList, Users, MessageSquare, Settings,
   Github, Globe, ArrowLeft, Plus, Send, CheckCircle2,
   Link as LinkIcon, Video, Flag, MoreHorizontal, Calendar,
-  Edit, Loader2, Cpu, MoreVertical, Zap, ChevronDown
+  Edit, Loader2, Cpu, MoreVertical, Zap, ChevronDown, Pencil, Trash2
 } from 'lucide-react';
 
 // Services
@@ -344,7 +344,7 @@ const OverviewTab = memo(({ project, members }) => (
   <div className="space-y-6">
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {[
-        { label: 'Team Size', value: `${members.length}/${project.maxTeamSize || '—'}` },
+        { label: 'Team Size', value: `${members.length + 1}/${project.maxTeamSize || '—'}` },
         { label: 'Status', value: project.status?.replace('_', ' ') || '—' },
         { label: 'Category', value: project.category?.name || project.categoryName || '—' },
         { label: 'Created', value: project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—' },
@@ -502,8 +502,8 @@ const TaskBoard = ({ projectId, isProjectLead }) => {
                       <Card key={task.id} className="p-4 bg-white border-slate-200 rounded-xl hover:border-indigo-200 hover:shadow-sm transition-all">
                         <div className="flex justify-between items-start mb-2">
                           <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${task.priority === 'HIGH' ? 'bg-red-50 text-red-600' :
-                              task.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-600' :
-                                'bg-slate-50 text-slate-500'
+                            task.priority === 'MEDIUM' ? 'bg-amber-50 text-amber-600' :
+                              'bg-slate-50 text-slate-500'
                             }`}>
                             {task.priority || 'LOW'}
                           </span>
@@ -588,11 +588,12 @@ const TaskBoard = ({ projectId, isProjectLead }) => {
   );
 };
 
-/* ─── CHAT SECTION ───────────────────────────────────────────────────────── */
 const ChatSection = ({ projectId, currentUserId }) => {
   const [messages, setMessages] = useState([]);
   const [msg, setMsg] = useState('');
   const [sending, setSending] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [editText, setEditText] = useState('');
   const scrollRef = useRef(null);
 
   const fetchMessages = useCallback(async () => {
@@ -628,6 +629,41 @@ const ChatSection = ({ projectId, currentUserId }) => {
     }
   };
 
+  const handleDelete = async (messageId) => {
+    const prev = messages;
+    setMessages(m => m.filter(x => x.id !== messageId));
+    try {
+      await chatService.deleteMessage(messageId);
+    } catch {
+      toast.error('Failed to delete message');
+      setMessages(prev);
+    }
+  };
+
+  const startEdit = (m) => {
+    setEditingId(m.id);
+    setEditText(m.message);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText('');
+  };
+
+  const saveEdit = async (messageId) => {
+    if (!editText.trim()) return;
+    const prev = messages;
+    setMessages(m => m.map(x => x.id === messageId ? { ...x, message: editText.trim() } : x));
+    setEditingId(null);
+    try {
+      await chatService.editMessage(messageId, editText.trim());
+      fetchMessages();
+    } catch {
+      toast.error('Failed to edit message');
+      setMessages(prev);
+    }
+  };
+
   return (
     <div
       className="flex flex-col bg-white border border-slate-200 rounded-2xl overflow-hidden"
@@ -645,8 +681,9 @@ const ChatSection = ({ projectId, currentUserId }) => {
         )}
         {messages.map(m => {
           const isMe = String(m.sender?.id) === String(currentUserId);
+          const isEditing = editingId === m.id;
           return (
-            <div key={m.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+            <div key={m.id} className={`flex flex-col group ${isMe ? 'items-end' : 'items-start'}`}>
               <div className="flex items-center gap-2 mb-1">
                 {!isMe && (
                   <Avatar className="w-5 h-5">
@@ -656,13 +693,42 @@ const ChatSection = ({ projectId, currentUserId }) => {
                 )}
                 <span className="text-[10px] font-bold text-slate-400">{m.sender?.firstName}</span>
                 <span className="text-[10px] text-slate-300">
-                  {new Date(m.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  {new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </span>
               </div>
-              <div className={`px-4 py-2.5 rounded-2xl text-sm max-w-sm leading-relaxed ${isMe ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800'
-                }`}>
-                {m.content}
-              </div>
+
+              {isEditing ? (
+                <div className="flex gap-2 items-center max-w-sm w-full">
+                  <input
+                    value={editText}
+                    onChange={e => setEditText(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') saveEdit(m.id);
+                      if (e.key === 'Escape') cancelEdit();
+                    }}
+                    autoFocus
+                    className="flex-1 text-sm px-3 py-2 rounded-xl border border-indigo-300 outline-none"
+                  />
+                  <button onClick={() => saveEdit(m.id)} className="text-indigo-600 text-xs font-bold">Save</button>
+                  <button onClick={cancelEdit} className="text-slate-400 text-xs">Cancel</button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  {isMe && (
+                    <div className="hidden group-hover:flex gap-1.5 text-slate-300">
+                      <button onClick={() => startEdit(m)} className="hover:text-indigo-500" title="Edit">
+                        <Pencil size={12} />
+                      </button>
+                      <button onClick={() => handleDelete(m.id)} className="hover:text-red-500" title="Delete">
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  )}
+                  <div className={`px-4 py-2.5 rounded-2xl text-sm max-w-sm leading-relaxed ${isMe ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800'}`}>
+                    {m.message}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
@@ -689,7 +755,6 @@ const ChatSection = ({ projectId, currentUserId }) => {
     </div>
   );
 };
-
 /* ─── TEAM SECTION ───────────────────────────────────────────────────────── */
 const TeamSection = memo(({ members, isProjectLead, projectId, onUpdate }) => {
   const [removingId, setRemovingId] = useState(null);
@@ -752,17 +817,55 @@ const TeamSection = memo(({ members, isProjectLead, projectId, onUpdate }) => {
 
 /* ─── SETTINGS TAB ───────────────────────────────────────────────────────── */
 const SettingsTab = ({ project, onPurge, onUpdate }) => {
-  const [formData, setFormData] = useState({ title: project.title || '', description: project.description || '' });
+  const [formData, setFormData] = useState({
+    title: project.title || '',
+    description: project.description || '',
+    categoryId: project.category?.id || '',
+    categoryName: project.category?.name || project.categoryName || '',
+    techStack: project.techStack || [],
+    skills: project.requiredSkills?.map(ps => ({
+      skillId: ps.skill?.id || ps.id || '',
+      skillName: ps.skill?.name || ps,
+      proficiencyLevel: ps.proficiencyLevel || 'BEGINNER',
+    })) || [],
+  });
+
   const [isUpdating, setIsUpdating] = useState(false);
+  const [categoryInput, setCategoryInput] = useState(
+    project.category?.name || project.categoryName || ''
+  );
+  const [techInput, setTechInput] = useState('');
+  const [skillInput, setSkillInput] = useState('');
+  const [skillLevel, setSkillLevel] = useState('BEGINNER');
+
+  const [projectCategories, setProjectCategories] = useState([]);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  useEffect(() => {
+    projectService.getProjectCategories()
+      .then(res => setProjectCategories(Array.isArray(res) ? res : (res?.data || [])))
+      .catch(() => { });
+  }, []);
 
   const handleUpdate = async () => {
-    if (!formData.title.trim()) {
-      toast.error('Title cannot be empty');
-      return;
-    }
+    if (!formData.title.trim()) { toast.error('Title cannot be empty'); return; }
     setIsUpdating(true);
     try {
-      await projectService.updateProject(project.id, formData);
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        techStack: formData.techStack,
+        skills: formData.skills.map(s => ({
+          skillId: s.skillId || undefined,
+          skillName: s.skillName,
+          proficiencyLevel: s.proficiencyLevel,
+        })),
+        ...(formData.categoryId
+          ? { categoryId: Number(formData.categoryId) }
+          : { categoryName: categoryInput.trim() }),
+      };
+      await projectService.updateProject(project.id, payload);
       toast.success('Project updated');
       onUpdate();
     } catch {
@@ -772,39 +875,209 @@ const SettingsTab = ({ project, onPurge, onUpdate }) => {
     }
   };
 
+  const addTech = () => {
+    const val = techInput.trim();
+    if (!val || formData.techStack.includes(val)) return;
+    setFormData(prev => ({ ...prev, techStack: [...prev.techStack, val] }));
+    setTechInput('');
+  };
+
+  const removeTech = (tech) =>
+    setFormData(prev => ({ ...prev, techStack: prev.techStack.filter(t => t !== tech) }));
+
+  const addSkill = () => {
+    const val = skillInput.trim();
+    if (!val || formData.skills.some(s => s.skillName.toLowerCase() === val.toLowerCase())) return;
+    setFormData(prev => ({
+      ...prev,
+      skills: [...prev.skills, { skillId: '', skillName: val, proficiencyLevel: skillLevel }],
+    }));
+    setSkillInput('');
+    setSkillLevel('BEGINNER');
+  };
+
+  const removeSkill = (name) =>
+    setFormData(prev => ({ ...prev, skills: prev.skills.filter(s => s.skillName !== name) }));
+
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-3xl space-y-6">
       <h2 className="text-xl font-black text-slate-900">Project Settings</h2>
 
-      <Card className="p-6 bg-white border-slate-200 rounded-2xl space-y-4">
-        <div className="space-y-2">
-          <Label className="text-xs font-bold text-slate-500">Project Title</Label>
-          <Input
-            value={formData.title}
-            onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
-            className="rounded-xl border-slate-200 text-slate-900 h-11"
-          />
-        </div>
-        <div className="space-y-2">
-          <Label className="text-xs font-bold text-slate-500">Description</Label>
-          <Textarea
-            value={formData.description}
-            onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
-            className="rounded-xl border-slate-200 text-slate-900 min-h-[100px]"
-          />
-        </div>
-        <div className="flex justify-end pt-2">
-          <Button
-            onClick={handleUpdate}
-            disabled={isUpdating}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-6"
-          >
-            {isUpdating ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
-            {isUpdating ? 'Saving...' : 'Save Changes'}
-          </Button>
+      <Card className="p-6 bg-white border-slate-200 rounded-2xl">
+        <div className="grid grid-cols-2 gap-5">
+
+          {/* Title */}
+          <div className="col-span-2 space-y-2">
+            <Label className="text-xs font-bold text-slate-500">Project Title</Label>
+            <Input
+              value={formData.title}
+              onChange={e => setFormData(prev => ({ ...prev, title: e.target.value }))}
+              className="h-11 rounded-xl border-slate-200 text-slate-900"
+            />
+          </div>
+
+          {/* Description */}
+          <div className="col-span-2 space-y-2">
+            <Label className="text-xs font-bold text-slate-500">Description</Label>
+            <Textarea
+              value={formData.description}
+              onChange={e => setFormData(prev => ({ ...prev, description: e.target.value }))}
+              className="rounded-xl border-slate-200 text-slate-900 min-h-[90px] resize-none"
+            />
+          </div>
+
+          {/* Category */}
+          <div className="col-span-2 space-y-2">
+            <Label className="text-xs font-bold text-slate-500">Category</Label>
+            <div className="flex gap-2">
+              <select
+                value={formData.categoryId || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  if (val === 'create_new') {
+                    setShowCategoryDialog(true);
+                    return;
+                  }
+                  const selected = projectCategories.find(c => String(c.id) === val);
+                  setFormData(prev => ({ ...prev, categoryId: val, categoryName: selected?.name || '' }));
+                  setCategoryInput(selected?.name || '');
+                }}
+                className="flex-1 h-11 px-3 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+              >
+                <option value="">Select category…</option>
+                {projectCategories.map(cat => (
+                  <option key={cat.id} value={String(cat.id)}>{cat.name}</option>
+                ))}
+                <option value="create_new">+ Add New Category</option>
+              </select>
+              {formData.categoryId && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({ ...prev, categoryId: '', categoryName: '' }));
+                    setCategoryInput('');
+                  }}
+                  className="px-3 text-slate-400 hover:text-slate-600 border border-slate-200 rounded-xl text-sm"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            {/* Fallback: show current category name if not in list */}
+            {!formData.categoryId && categoryInput && (
+              <p className="text-[11px] text-slate-400">
+                Current: <span className="font-semibold text-slate-600">{categoryInput}</span> — select from list to update
+              </p>
+            )}
+          </div>
+
+          {/* Tech Stack — left col */}
+          <div className="space-y-2">
+            <Label className="text-xs font-bold text-slate-500">Tech Stack</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g. React, Kafka…"
+                value={techInput}
+                onChange={e => setTechInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addTech())}
+                className="h-10 rounded-xl border-slate-200 text-slate-900 text-sm flex-1"
+              />
+              <button
+                type="button"
+                onClick={addTech}
+                className="h-10 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+            <div className="min-h-[60px] flex flex-wrap gap-1.5 p-3 bg-slate-50 rounded-xl border border-slate-100">
+              {formData.techStack.length === 0 && (
+                <span className="text-xs text-slate-400 self-center">No tech added yet</span>
+              )}
+              {formData.techStack.map(tech => (
+                <span
+                  key={tech}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-100"
+                >
+                  {tech}
+                  <button
+                    type="button"
+                    onClick={() => removeTech(tech)}
+                    className="text-indigo-400 hover:text-indigo-700 leading-none ml-0.5"
+                  >×</button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Required Skills — right col */}
+          <div className="space-y-2">
+            <Label className="text-xs font-bold text-slate-500">Required Skills</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="e.g. Docker, JWT…"
+                value={skillInput}
+                onChange={e => setSkillInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                className="h-10 rounded-xl border-slate-200 text-slate-900 text-sm flex-1"
+              />
+              <select
+                value={skillLevel}
+                onChange={e => setSkillLevel(e.target.value)}
+                className="h-10 px-2 rounded-xl border border-slate-200 text-slate-900 text-xs bg-white outline-none focus:ring-2 focus:ring-indigo-500/20"
+              >
+                <option value="BEGINNER">Beginner</option>
+                <option value="INTERMEDIATE">Intermediate</option>
+                <option value="ADVANCED">Advanced</option>
+                <option value="VIBE_CODING">VIBE_CODING</option>
+              </select>
+              <button
+                type="button"
+                onClick={addSkill}
+                className="h-10 px-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl transition-colors"
+              >
+                <Plus size={14} />
+              </button>
+            </div>
+            <div className="min-h-[60px] flex flex-wrap gap-1.5 p-3 bg-slate-50 rounded-xl border border-slate-100">
+              {formData.skills.length === 0 && (
+                <span className="text-xs text-slate-400 self-center">No skills added yet</span>
+              )}
+              {formData.skills.map(s => (
+                <span
+                  key={s.skillName}
+                  className="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-100"
+                >
+                  {s.skillName}
+                  <span className="text-emerald-400 font-normal">
+                    · {s.proficiencyLevel.charAt(0) + s.proficiencyLevel.slice(1).toLowerCase()}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeSkill(s.skillName)}
+                    className="text-emerald-400 hover:text-emerald-700 leading-none ml-0.5"
+                  >×</button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Save Button */}
+          <div className="col-span-2 flex justify-end pt-2">
+            <Button
+              onClick={handleUpdate}
+              disabled={isUpdating}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-8"
+            >
+              {isUpdating ? <Loader2 className="animate-spin mr-2" size={16} /> : null}
+              {isUpdating ? 'Saving…' : 'Save Changes'}
+            </Button>
+          </div>
+
         </div>
       </Card>
 
+      {/* Danger Zone */}
       <div className="p-5 border border-red-200 bg-red-50 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h4 className="text-red-700 font-bold text-sm">Danger Zone</h4>
@@ -818,6 +1091,49 @@ const SettingsTab = ({ project, onPurge, onUpdate }) => {
           Delete Project
         </Button>
       </div>
+
+      {/* Add Category Dialog */}
+      <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+        <DialogContent className="bg-white border-slate-200 text-slate-900 rounded-2xl max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-bold">New Category</DialogTitle>
+          </DialogHeader>
+          <div className="py-3">
+            <Input
+              placeholder="e.g. AI/ML, Fintech…"
+              value={newCategoryName}
+              onChange={e => setNewCategoryName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && e.preventDefault()}
+              className="rounded-xl border-slate-200 text-slate-900 h-11"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCategoryDialog(false)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!newCategoryName.trim()) return;
+                try {
+                  const newCat = await projectService.createProjectCategory({ name: newCategoryName.trim() });
+                  const cat = newCat?.data || newCat;
+                  setProjectCategories(prev => [...prev, cat]);
+                  setFormData(prev => ({ ...prev, categoryId: String(cat.id), categoryName: cat.name }));
+                  setCategoryInput(cat.name);
+                  setShowCategoryDialog(false);
+                  setNewCategoryName('');
+                  toast.success('Category created');
+                } catch {
+                  toast.error('Failed to create category');
+                }
+              }}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl"
+            >
+              Create
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

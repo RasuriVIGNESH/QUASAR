@@ -1,9 +1,11 @@
 package com.ADP.peerConnect.controller;
 
+import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
 import com.ADP.peerConnect.model.dto.response.event.EventsResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.Event;
 import com.ADP.peerConnect.model.entity.EventRegistration;
+import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.security.UserPrincipal;
 import com.ADP.peerConnect.service.Impl.EventRegistrationService;
@@ -97,11 +99,11 @@ public class EventController {
     }
 
     @GetMapping("/{eventId}/projects")
-    public ResponseEntity<List<com.ADP.peerConnect.model.dto.response.Project.ProjectResponse>> getEventProjects(
+    public ResponseEntity<List<ProjectResponse>> getEventProjects(
             @PathVariable Long eventId) {
-        List<com.ADP.peerConnect.model.entity.Project> projects = eventService.getProjects(eventId);
-        List<com.ADP.peerConnect.model.dto.response.Project.ProjectResponse> projectDTOs = projects.stream()
-                .map(com.ADP.peerConnect.model.dto.response.Project.ProjectResponse::new)
+        List<Project> projects = eventService.getProjects(eventId);
+        List<ProjectResponse> projectDTOs = projects.stream()
+                .map(ProjectResponse::new)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(projectDTOs);
     }

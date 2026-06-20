@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
     Mail, GraduationCap, Github, Linkedin, Globe,
     Camera, Save, Edit3, Loader2,
-    MapPin, Briefcase, Link as LinkIcon, Building2, Calendar, LogOut
+    MapPin, Briefcase, Link as LinkIcon, Building2, Calendar, LogOut, Trash2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,6 +21,8 @@ export default function ProfilePage() {
     const { userProfile, fetchUserProfile, logout } = useAuth();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [photoUploading, setPhotoUploading] = useState(false);
+    const [photoDeleting, setPhotoDeleting] = useState(false);
     const fileInputRef = useRef(null);
 
     const [formData, setFormData] = useState({
@@ -78,11 +80,30 @@ export default function ProfilePage() {
         const file = e.target.files?.[0];
         if (!file) return;
         try {
+            setPhotoUploading(true);
             await userService.uploadProfilePicture(file);
             toast.success('Profile photo updated');
             if (fetchUserProfile) await fetchUserProfile();
         } catch (err) {
-            toast.error('Photo upload failed');
+            toast.error(err.message || 'Photo upload failed');
+        } finally {
+            setPhotoUploading(false);
+            // Reset the input value so selecting the same file again still fires onChange
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const handlePhotoDelete = async () => {
+        if (!userProfile?.profilePictureUrl) return;
+        try {
+            setPhotoDeleting(true);
+            await userService.deleteProfilePhoto();
+            toast.success('Profile photo removed');
+            if (fetchUserProfile) await fetchUserProfile();
+        } catch (err) {
+            toast.error(err.message || 'Failed to remove photo');
+        } finally {
+            setPhotoDeleting(false);
         }
     };
 
@@ -91,6 +112,8 @@ export default function ProfilePage() {
         BUSY: 'bg-amber-500',
         OFFLINE: 'bg-slate-400'
     };
+
+    const photoBusy = photoUploading || photoDeleting;
 
     return (
         <div className="min-h-screen bg-slate-50/50 pb-20 font-sans">
@@ -122,30 +145,60 @@ export default function ProfilePage() {
                             <div className="h-24 bg-gradient-to-r from-indigo-50 to-slate-50 border-b border-slate-100" />
                             <CardContent className="px-6 pb-6">
                                 <div className="relative -mt-12 flex flex-col sm:flex-row items-end gap-4 mb-6">
-                                    {/* this code when backend is ready to accept images */}
-                                    {/* <div className="relative group">
+                                    {/* Avatar with upload/remove controls, only interactive while editing */}
+                                    <div className="relative group">
                                         <Avatar className="w-24 h-24 border-4 border-white shadow-md rounded-lg">
                                             <AvatarImage src={userProfile?.profilePictureUrl} className="object-cover" />
                                             <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xl font-bold">
                                                 {userProfile?.firstName?.[0]}{userProfile?.lastName?.[0]}
                                             </AvatarFallback>
                                         </Avatar>
-                                        {isEditing && (
-                                            <button onClick={() => fileInputRef.current?.click()} className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Camera size={20} />
-                                            </button>
-                                        )}
-                                        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} />
-                                    </div> */}
 
-                                    {/* alternative code to not to show the feature of changing profile picture */}
-                                    <div className="relative">
-                                        <Avatar className="w-24 h-24 border-4 border-white shadow-md rounded-lg">
-                                            <AvatarImage src={userProfile?.profilePictureUrl} className="object-cover" />
-                                            <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xl font-bold">
-                                                {userProfile?.firstName?.[0]}{userProfile?.lastName?.[0]}
-                                            </AvatarFallback>
-                                        </Avatar>
+                                        {isEditing && (
+                                            <>
+                                                {/* Hover overlay: click anywhere on the avatar to upload */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                    disabled={photoBusy}
+                                                    aria-label="Change profile photo"
+                                                    className="absolute inset-0 bg-black/40 rounded-lg flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity disabled:cursor-not-allowed"
+                                                >
+                                                    {photoUploading ? (
+                                                        <Loader2 size={20} className="animate-spin" />
+                                                    ) : (
+                                                        <Camera size={20} />
+                                                    )}
+                                                </button>
+
+                                                {/* Delete button, only shown when a photo actually exists */}
+                                                {userProfile?.profilePictureUrl && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={handlePhotoDelete}
+                                                        disabled={photoBusy}
+                                                        aria-label="Remove profile photo"
+                                                        title="Remove photo"
+                                                        className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-500 hover:text-red-600 hover:border-red-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                    >
+                                                        {photoDeleting ? (
+                                                            <Loader2 size={12} className="animate-spin" />
+                                                        ) : (
+                                                            <Trash2 size={12} />
+                                                        )}
+                                                    </button>
+                                                )}
+                                            </>
+                                        )}
+
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handlePhotoUpload}
+                                            disabled={photoBusy}
+                                        />
                                     </div>
 
                                     <div className="flex-1 pb-1">
