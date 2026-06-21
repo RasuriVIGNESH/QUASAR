@@ -67,6 +67,14 @@ export default function MyProjects() {
           <h1 className="text-lg font-bold text-slate-900 tracking-tight">My Projects</h1>
           <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Manage & Track</p>
         </div>
+        <div>
+          <Button
+            onClick={() => navigate("/projects/create")}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 h-8 rounded-lg font-bold text-xs"
+          >
+            <Plus size={14} className="mr-1" /> Create Project
+          </Button>
+        </div>
       </header>
 
       <main className="max-w-7xl mx-auto px-4 lg:px-6 py-8">
@@ -184,9 +192,6 @@ export default function MyProjects() {
                           {project.lead?.firstName} {project.lead?.lastName}
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
-                          <p className="text-[8px] text-slate-400">
-                            {project.currentTeamSize || 0} / {project.maxTeamSize || 4}
-                          </p>
                           {project.lead?.graduationYear && (
                             <p className="text-[8px] text-slate-400 flex items-center gap-0.5">
                               <GraduationCap size={9} /> {project.lead.graduationYear}

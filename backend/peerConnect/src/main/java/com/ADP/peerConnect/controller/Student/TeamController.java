@@ -5,6 +5,7 @@ import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectInvitationResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectMemberResponse;
+import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.ProjectInvitation;
 import com.ADP.peerConnect.model.entity.ProjectMember;
 import com.ADP.peerConnect.model.enums.InvitationStatus;
@@ -28,6 +29,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+
+import static com.ADP.peerConnect.model.enums.ProjectRole.LEAD;
 
 /**
  * REST controller for team management operations
@@ -163,6 +166,13 @@ public class TeamController {
                 List<ProjectMemberResponse> memberResponses = teamService.getProjectMembers(projectId,
                                 currentUser.getId());
 
+                //add lead
+                UserResponse leadResponse =new UserResponse(
+                        currentUser.getId(),currentUser.getEmail(),currentUser.getFirstName(),currentUser.getLastName()
+                );
+                ProjectMemberResponse lead=new ProjectMemberResponse(
+                        null,null,LEAD,leadResponse);
+                memberResponses.add(lead);
                 ApiResponse<List<ProjectMemberResponse>> response = ApiResponse.success(
                                 "Members retrieved successfully", memberResponses);
 

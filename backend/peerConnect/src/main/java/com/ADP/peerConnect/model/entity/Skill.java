@@ -31,6 +31,7 @@ public class Skill {
 
     @Id
     @Column(name = "id", updatable = false, nullable = false)
+
     private Long id; // NO @GeneratedValue - we set it manually from hash!
 
     @Column(name = "name", unique = true, nullable = false, length = 100)

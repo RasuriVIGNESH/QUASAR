@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
   X, ArrowLeft, ArrowRight, Check, Briefcase,
-  Target, Wrench, PlusCircle, Sparkles, Rocket, Lightbulb, Compass, Cpu, Search
+  Target, Wrench, PlusCircle, Sparkles, Rocket, Lightbulb, Compass, Cpu, Search, Calendar
 } from 'lucide-react';
 
 // Services
@@ -65,10 +65,20 @@ export default function CreateProject() {
 
   // Form State
   const [formData, setFormData] = useState({
-    title: '', description: '', problemStatement: '', category: '',
-    goals: '', objectives: '', skillsRequired: [],
-    maxTeamSize: '', techStack: [], githubRepo: '', demoUrl: '',
-    expectedStartDate: '', expectedEndDate: '',
+    title: '',
+    description: '',
+    problemStatement: '',
+    category: '', // This will hold categoryName for display/selection
+    categoryId: null, // This will hold the actual category ID for submission
+    goals: '',
+    objectives: '',
+    skillsRequired: [],
+    maxTeamSize: '',
+    techStack: [],
+    githubRepo: '',
+    demoUrl: '',
+    expectedStartDate: '',
+    expectedEndDate: '',
   });
 
   // UI States
@@ -95,21 +105,41 @@ export default function CreateProject() {
     init();
   }, []);
 
-  const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field, value) => {
+    if (field === 'category') {
+      const selectedCategory = projectCategories.find(cat => cat.name === value);
+      setFormData(prev => ({ ...prev, category: value, categoryId: selectedCategory ? selectedCategory.id : null }));
+    } else {
+      setFormData(prev => ({ ...prev, [field]: value }));
+    }
+  };
 
   const validateStep = (step) => {
     if (step === 1) {
-      if (formData.title.length < 5) return setError('Title is too short (min 5 chars)'), false;
-      if (!formData.description) return setError('Description is required'), false;
-      if (!formData.category) return setError('Please select a category'), false;
+      if (!formData.title) return setError('Project title is required'), false;
+      if (formData.title.length < 5 || formData.title.length > 100) return setError('Project title must be between 5 and 100 characters'), false;
+
+      if (!formData.description) return setError('Project description is required'), false;
+      if (formData.description.length < 10 || formData.description.length > 1000) return setError('Project description must be between 10 and 1000 characters'), false;
+
+      if (!formData.category) return setError('Project category is required'), false;
     }
     if (step === 2) {
       if (!formData.goals) return setError('Please provide project goals'), false;
+      if (formData.goals.length > 1000) return setError('Goals are too long (max 1000 characters)'), false;
+
+      if (!formData.objectives) return setError('Please provide project objectives'), false;
+      if (formData.objectives.length > 1000) return setError('Objectives are too long (max 1000 characters)'), false;
+
       if (formData.skillsRequired.length === 0) return setError('Add at least one technology requirement'), false;
     }
     if (step === 3) {
       const size = parseInt(formData.maxTeamSize);
-      if (isNaN(size) || size < 2) return setError('Team size must be at least 2'), false;
+      if (isNaN(size) || size < 1) return setError('Maximum team size is required and must be at least 1'), false; // Changed min to 1 based on backend @Min(1)
+      if (size > 20) return setError('Team size must not exceed 20'), false;
+
+      // Optional: Add validation for techStack if it's considered mandatory
+      // if (formData.techStack.length === 0) return setError('Add at least one tech stack item'), false;
     }
     setError('');
     return true;
@@ -124,6 +154,17 @@ export default function CreateProject() {
         return { ...prev, skillsRequired: [...prev.skillsRequired, skillName] };
       }
     });
+  };
+
+  const addTechStack = () => {
+    if (techStackInput.trim() && !formData.techStack.includes(techStackInput.trim())) {
+      setFormData(prev => ({ ...prev, techStack: [...prev.techStack, techStackInput.trim()] }));
+      setTechStackInput('');
+    }
+  };
+
+  const removeTechStack = (itemToRemove) => {
+    setFormData(prev => ({ ...prev, techStack: prev.techStack.filter(item => item !== itemToRemove) }));
   };
 
   const handleNext = () => {
@@ -144,10 +185,20 @@ export default function CreateProject() {
     setLoading(true);
     try {
       const payload = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        problemStatement: formData.problemStatement,
+        categoryId: formData.categoryId, // Use categoryId for submission
+        categoryName: formData.category, // Keep categoryName for display/backend if needed
+        goals: formData.goals,
+        objectives: formData.objectives,
+        skills: formData.skillsRequired, // Backend expects 'skills'
         maxTeamSize: parseInt(formData.maxTeamSize),
-        categoryName: formData.category,
-        skills: formData.skillsRequired
+        techStack: formData.techStack,
+        githubRepo: formData.githubRepo,
+        demoUrl: formData.demoUrl,
+        expectedStartDate: formData.expectedStartDate || null,
+        expectedEndDate: formData.expectedEndDate || null,
       };
 
       if (eventId) payload.eventId = parseInt(eventId);
@@ -218,6 +269,10 @@ export default function CreateProject() {
                       <Input placeholder="Enter title" value={formData.title} onChange={e => handleInputChange('title', e.target.value)} className="h-14 rounded-2xl border-slate-200 bg-white text-slate-900" />
                     </div>
                     <div className="grid gap-2">
+                      <Label className="text-slate-900 font-bold">Description *</Label>
+                      <Textarea placeholder="Provide a detailed description of your project" value={formData.description} onChange={e => handleInputChange('description', e.target.value)} className="min-h-[120px] rounded-2xl border-slate-200 bg-white text-slate-900" />
+                    </div>
+                    <div className="grid gap-2">
                       <Label className="text-slate-900 font-bold">Problem Statement *</Label>
                       <Textarea placeholder="What are you solving?" value={formData.problemStatement} onChange={e => handleInputChange('problemStatement', e.target.value)} className="min-h-[120px] rounded-2xl border-slate-200 bg-white text-slate-900" />
                     </div>
@@ -228,8 +283,8 @@ export default function CreateProject() {
                           <SelectValue placeholder="Select Domain" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-slate-200 shadow-xl">
-                          {projectCategories.map((cat, index) => (
-                            <SelectItem key={cat.id || index} value={cat.name} className="text-slate-900 hover:bg-slate-50">{cat.name}</SelectItem>
+                          {projectCategories.map((cat) => (
+                            <SelectItem key={cat.id} value={cat.name} className="text-slate-900 hover:bg-slate-50">{cat.name}</SelectItem>
                           ))}
                           <SelectItem value="create_new" className="text-indigo-600 font-bold border-t border-slate-50">+ Add New Category</SelectItem>
                         </SelectContent>
@@ -243,6 +298,10 @@ export default function CreateProject() {
                     <div className="grid gap-2">
                       <Label className="text-slate-900 font-bold">Goals *</Label>
                       <Textarea placeholder="e.g. Build MVP, Design System..." value={formData.goals} onChange={e => handleInputChange('goals', e.target.value)} className="min-h-[120px] rounded-2xl border-slate-200 bg-white text-slate-900" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-slate-900 font-bold">Objectives *</Label>
+                      <Textarea placeholder="What specific outcomes do you aim to achieve?" value={formData.objectives} onChange={e => handleInputChange('objectives', e.target.value)} className="min-h-[120px] rounded-2xl border-slate-200 bg-white text-slate-900" />
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-slate-900 font-bold">Required Technologies *</Label>
@@ -260,8 +319,8 @@ export default function CreateProject() {
                               type="button"
                               onClick={() => toggleSkill(skill.name)}
                               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${formData.skillsRequired.includes(skill.name)
-                                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
-                                  : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
+                                ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300'
                                 }`}
                             >
                               {skill.name}
@@ -280,18 +339,60 @@ export default function CreateProject() {
                         <Input type="number" value={formData.maxTeamSize} onChange={e => handleInputChange('maxTeamSize', e.target.value)} className="h-14 rounded-2xl bg-white text-slate-900" />
                       </div>
                       <div className="grid gap-2">
-                        <Label className="text-slate-900 font-bold">Expected Start</Label>
+                        <Label className="text-slate-900 font-bold">Expected Start Date</Label>
+                        <div className="relative">
+                          <Input
+                            type="date"
+                            value={formData.expectedStartDate}
+                            onChange={e => handleInputChange('expectedStartDate', e.target.value)}
+                            className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900 block appearance-none pr-10"
+                          />
+                          <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-black pointer-events-none" />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-slate-900 font-bold">Expected End Date</Label>
+                      <div className="relative">
                         <Input
                           type="date"
-                          value={formData.expectedStartDate}
-                          onChange={e => handleInputChange('expectedStartDate', e.target.value)}
-                          className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900 block appearance-none"
+                          value={formData.expectedEndDate}
+                          onChange={e => handleInputChange('expectedEndDate', e.target.value)}
+                          className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900 block appearance-none pr-10"
                         />
+                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-black pointer-events-none" />
+                      </div>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-slate-900 font-bold">Tech Stack</Label>
+                      <div className="flex space-x-2">
+                        <Input
+                          placeholder="Add a technology (e.g., React, Node.js)"
+                          value={techStackInput}
+                          onChange={e => setTechStackInput(e.target.value)}
+                          onKeyPress={e => { if (e.key === 'Enter') { e.preventDefault(); addTechStack(); } }}
+                          className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900 flex-grow"
+                        />
+                        <Button type="button" onClick={addTechStack} className="h-14 px-6 rounded-2xl font-bold bg-indigo-600 text-white hover:bg-indigo-700">
+                          <PlusCircle className="mr-2" size={20} /> Add
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {formData.techStack.map((tech, index) => (
+                          <Badge key={index} variant="secondary" className="bg-slate-100 text-slate-700 border-slate-200 font-medium text-sm px-3 py-1 rounded-full flex items-center">
+                            {tech}
+                            <X className="ml-2 h-3 w-3 cursor-pointer" onClick={() => removeTechStack(tech)} />
+                          </Badge>
+                        ))}
                       </div>
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-slate-900 font-bold">GitHub Repo</Label>
-                      <Input placeholder="https://github.com/..." value={formData.githubRepo} onChange={e => handleInputChange('githubRepo', e.target.value)} className="h-14 rounded-2xl bg-white text-slate-900" />
+                      <Input placeholder="https://github.com/..." value={formData.githubRepo} onChange={e => handleInputChange('githubRepo', e.target.value)} className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900" />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label className="text-slate-900 font-bold">Demo URL</Label>
+                      <Input placeholder="https://your-demo.com" value={formData.demoUrl} onChange={e => handleInputChange('demoUrl', e.target.value)} className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900" />
                     </div>
                   </div>
                 )}

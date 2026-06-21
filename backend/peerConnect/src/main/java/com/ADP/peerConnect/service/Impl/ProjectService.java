@@ -55,20 +55,13 @@ public class ProjectService implements iProjectService {
 
     @Autowired
     private ProjectSkillRepository projectSkillRepository;
-
+    @Autowired
+    private EventRepository eventRepository;
     @Autowired
     private SkillService skillService;
 
-    @Autowired
-    private EventRepository eventRepository;
 
-    @Autowired
-    private CollegeService collegeService;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    // Create a new project
+    @Override
     public Project createProject(CreateProjectRequest request, String LeadId) {
         if (request.getSkills() == null || request.getSkills().isEmpty()) {
             throw new BadRequestException("Project must have at least one skill");
@@ -481,18 +474,10 @@ public class ProjectService implements iProjectService {
                 .filter(id -> id != null)
                 .toList();
 
-        List<String> skillNames = dedup.values().stream()
-                .filter(r -> r.getSkillId() == null)
-                .map(r -> r.getSkillName().trim().toLowerCase())
-                .toList();
-
+        // Existing skills referenced by id
         Map<Long, Skill> skillMap = skillRepository.findAllById(skillIds)
                 .stream()
                 .collect(Collectors.toMap(Skill::getId, s -> s));
-
-        Map<String, Skill> skillNameMap = skillRepository.findByNameIn(skillNames)
-                .stream()
-                .collect(Collectors.toMap(s -> s.getName().toLowerCase(), s -> s));
 
         List<ProjectSkill> newProjectSkills = new ArrayList<>();
 
@@ -501,14 +486,11 @@ public class ProjectService implements iProjectService {
 
             if (req.getSkillId() != null) {
                 skill = skillMap.get(req.getSkillId());
-            } else {
-                String name = req.getSkillName().trim().toLowerCase();
-                skill = skillNameMap.get(name);
                 if (skill == null) {
-                    skill = new Skill();
-                    skill.setName(name);
-                    skill = skillRepository.save(skill);
+                    throw new ResourceNotFoundException("Skill not found: id=" + req.getSkillId());
                 }
+            } else {
+                skill = skillService.findOrCreateSkill(req.getSkillName().trim());
             }
 
             boolean requiredFlag = (req.getRequired() == null) || req.getRequired();

@@ -6,7 +6,7 @@ import React, { useState, Suspense } from 'react';
 
 import {
     Briefcase, Zap, User, LogOut, Menu, X,
-    Home, Bell, PlusSquare, Search, Compass
+    Home, Bell, PlusSquare, Search, Compass, UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -21,7 +21,7 @@ export default function ResponsiveLayout() {
         { id: 'discover', label: 'Explore', icon: Compass, route: '/discover/projects' },
         { id: 'my-projects', label: 'Projects', icon: Briefcase, route: '/projects/my-projects' },
         { id: 'skills', label: 'Skills', icon: Zap, route: '/skills' },
-        { id: 'profile', label: 'Profile', icon: User, route: '/profile' },
+        { id: 'profile', label: 'Profile', icon: User, route: '/profile' }
     ];
 
     const handleNavigate = (route) => {

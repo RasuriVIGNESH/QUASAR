@@ -344,7 +344,7 @@ const OverviewTab = memo(({ project, members }) => (
   <div className="space-y-6">
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
       {[
-        { label: 'Team Size', value: `${members.length + 1}/${project.maxTeamSize || '—'}` },
+        { label: 'Team Size', value: `${members.length}/${project.maxTeamSize || '—'}` },
         { label: 'Status', value: project.status?.replace('_', ' ') || '—' },
         { label: 'Category', value: project.category?.name || project.categoryName || '—' },
         { label: 'Created', value: project.createdAt ? new Date(project.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—' },

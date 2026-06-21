@@ -29,15 +29,14 @@ public class SkillService implements iSkillService {
      * Create a new skill
      */
     public Skill createSkill(String name, String category) {
-        // Check if skill already exists
-        if (skillRepository.existsByNameIgnoreCase(name)) {
+        String normalized = Skill.normalizeName(name);
+
+        if (skillRepository.existsByNormalizedName(normalized)) {
             throw new ConflictException("Skill with this name already exists");
         }
 
-        Skill skill = new Skill();
-        skill.setName(name.trim());
-        skill.setCategory(category != null ? category.trim() : null);
-        skill.setIsPredefined(false); // User-created skills are not predefined
+        String trimmedCategory = category != null ? category.trim() : null;
+        Skill skill = new Skill(name.trim(), trimmedCategory, false);
 
         return skillRepository.save(skill);
     }
@@ -56,7 +55,9 @@ public class SkillService implements iSkillService {
      * Find or create skill by name with category
      */
     public Skill findOrCreateSkill(String name, String category) {
-        Optional<Skill> existingSkill = skillRepository.findByNameIgnoreCase(name);
+        String normalized = Skill.normalizeName(name);
+
+        Optional<Skill> existingSkill = skillRepository.findByNormalizedName(normalized);
 
         if (existingSkill.isPresent()) {
             Skill skill = existingSkill.get();
@@ -71,26 +72,31 @@ public class SkillService implements iSkillService {
             return skill;
         }
 
-        // Create new skill if it doesn't exist
-        Skill skill = new Skill();
-        skill.setName(name.trim());
-        skill.setCategory((category != null && !category.trim().isEmpty()) ? category.trim() : "General");
-        skill.setIsPredefined(false);
+        // Create new skill if it doesn't exist.
+        // MUST use this constructor — see createSkill() above for why new Skill()
+        // + setName() breaks persistence (id is never generated).
+        String resolvedCategory = (category != null && !category.trim().isEmpty())
+                ? category.trim()
+                : "General";
+        Skill skill = new Skill(name.trim(), resolvedCategory, false);
 
-        return skillRepository.save(skill);
+        try {
+            return skillRepository.save(skill);
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            // Skill.id is a deterministic hash of normalizedName, so two concurrent
+            // requests creating the same brand-new skill name race on insert. Recover
+            // by re-reading the row the other transaction just committed, rather than
+            // surfacing a 500 for what is really a duplicate-create, not an error.
+            return skillRepository.findByNormalizedName(normalized)
+                    .orElseThrow(() -> e);
+        }
     }
 
-    /**
-     * Find skill by ID
-     */
     public Skill findById(Long id) {
         return skillRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Skill not found"));
     }
 
-    /**
-     * Find skill by name (case insensitive)
-     */
     public List<Skill> findByName(String name) {
 
         Optional<Skill> skills = skillRepository.findByNameIgnoreCase(name);
@@ -100,51 +106,28 @@ public class SkillService implements iSkillService {
         return null;
     }
 
-    /**
-     * Get all skills with pagination
-     */
     public Page<Skill> findAll(Pageable pageable) {
         return skillRepository.findAll(pageable);
     }
 
-    /**
-     * Get predefined skills
-     */
-//    public List<Skill> getPredefinedSkills() {
-//        return skillRepository.findByIsPredefinedTrueOrderByNameAsc();
-//    }
-
-    /**
-     * Search skills by name
-     */
     public Page<Skill> searchByName(String name, Pageable pageable) {
         return skillRepository.findByNameContainingIgnoreCase(name, pageable);
     }
 
-    /**
-     * Find skills by category
-     */
     public Page<Skill> findByCategory(String category, Pageable pageable) {
         return skillRepository.findByCategoryIgnoreCase(category, pageable);
     }
 
-    /**
-     * Get all categories
-     */
+
     public List<String> getAllCategories() {
         return skillRepository.findAllCategories();
     }
 
-    /**
-     * Get popular skills
-     */
+
     public Page<Skill> getPopularSkills(Pageable pageable) {
         return skillRepository.findPopularSkills(pageable);
     }
 
-    /**
-     * Increment the users count for a skill (safely handles nulls)
-     */
     public Skill incrementUsers(Skill skill) {
         if (skill == null)
             throw new IllegalArgumentException("Skill cannot be null");
@@ -153,9 +136,6 @@ public class SkillService implements iSkillService {
         return skillRepository.save(skill);
     }
 
-    /**
-     * Decrement the users count for a skill (never goes below 0)
-     */
     public Skill decrementUsers(Skill skill) {
         if (skill == null)
             throw new IllegalArgumentException("Skill cannot be null");
@@ -164,10 +144,6 @@ public class SkillService implements iSkillService {
 
         return skillRepository.save(skill);
     }
-
-    /**
-     * Update skill
-     */
     public Skill updateSkill(Long id, String name, String category) {
         Skill skill = findById(id);
 
@@ -186,9 +162,6 @@ public class SkillService implements iSkillService {
         return skillRepository.save(skill);
     }
 
-    /**
-     * Delete skill
-     */
     public void deleteSkill(Long id) {
         Skill skill = findById(id);
 
@@ -200,9 +173,6 @@ public class SkillService implements iSkillService {
         skillRepository.delete(skill);
     }
 
-    /**
-     * Check if skill exists by name
-     */
     public boolean existsByName(String name) {
         return skillRepository.existsByNameIgnoreCase(name);
     }
@@ -242,7 +212,7 @@ public class SkillService implements iSkillService {
 
     // exact usage match
     public List<Skill> findByUsersAndProjectsCount(Integer users,
-            Integer projects) {
+                                                   Integer projects) {
         return skillRepository.findByUsersCountAndProjectsCount(users, projects);
     }
 
@@ -255,18 +225,18 @@ public class SkillService implements iSkillService {
 
     // recommendations
     public List<Skill> getRecommendedSkillsForUser(List<Long> skillIds,
-            Pageable pageable) {
+                                                   Pageable pageable) {
         return skillRepository.findRecommendedSkillsForUser(skillIds, pageable);
     }
 
     public List<Skill> getComplementarySkillsForProject(List<Long> skillIds,
-            Pageable pageable) {
+                                                        Pageable pageable) {
         return skillRepository.findComplementarySkillsForProject(skillIds, pageable);
     }
 
     // popular by category + threshold
     public List<Skill> getPopularSkillsByCategory(String category,
-            Integer minUsers) {
+                                                  Integer minUsers) {
         return skillRepository.findPopularSkillsByCategory(category, minUsers);
     }
 

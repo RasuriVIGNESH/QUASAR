@@ -54,7 +54,7 @@ public class Project {
 
     @Column(name = "max_team_size", nullable = false)
     @NotNull(message = "Maximum team size is required")
-    @Min(value = 2, message = "Team size must be at least 2")
+    @Min(value = 1, message = "Team size must be at least 2")
     @Max(value = 20, message = "Team size must not exceed 20")
     private Integer maxTeamSize;
 
@@ -189,8 +189,19 @@ public class Project {
             this.techStack = null;
         }
     }
+    @PrePersist
+    private void ensureId() {
+        // Safety net: guarantees id is set before INSERT no matter which constructor
+        // or code path created this entity (e.g. new Project() + setters), since
+        // id has no @GeneratedValue and Hibernate will reject persist() with a null id.
+        if (this.id == null) {
+            this.id = UUID.randomUUID().toString();
+        }
+    }
+
     public Project(String title, String description, String category, Integer maxTeamSize, User lead) {
         this();
+        this.id = UUID.randomUUID().toString();
         this.title = title;
         this.description = description;
         this.category = null;

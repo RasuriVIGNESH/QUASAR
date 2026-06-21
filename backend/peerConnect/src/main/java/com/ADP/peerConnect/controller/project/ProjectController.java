@@ -139,9 +139,6 @@ public class ProjectController {
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size);
-
-        // FIX: service now returns Page<ProjectResponse> — mapping of lead/category
-        // happens inside @Transactional, so no LazyInitializationException.
         Page<ProjectResponse> projects =
                 projectService.findProjectsByUser(currentUser.getId(), pageable);
 
