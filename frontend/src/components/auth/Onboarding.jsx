@@ -19,7 +19,7 @@ export default function Onboarding() {
 
     useEffect(() => {
         const fetch = async () => {
-            const [s, u] = await Promise.all([skillsService.getStaticPredefinedSkills(), skillsService.getUserSkillsByUserId(currentUser?.id)]);
+            const [s, u] = await Promise.all([skillsService.getPredefinedSkills(), skillsService.getUserSkillsByUserId(currentUser?.id)]);
             setPredefinedSkills(s?.data || s || []);
             setUserSkills(u?.data || u || []);
             setLoading(false);

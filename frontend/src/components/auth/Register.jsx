@@ -29,7 +29,11 @@ export default function Register() {
           dataService.getGraduationYears(),
           dataService.getColleges()
         ]);
-        setStaticData({ branches: b.data || [], graduationYears: y.data || [], colleges: c.data || [] });
+        setStaticData({
+          branches: b.data || [],
+          graduationYears: y.data || [],
+          colleges: c.data || []
+        });
       } catch (err) {
         console.error("Data fetch failed");
       }
@@ -133,7 +137,7 @@ export default function Register() {
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label className="text-sm font-bold text-slate-900 block mb-1.5">First Name</Label>
+                          <Label className="text-sm font-bold text-black text-slate-900 block mb-1.5">First Name</Label>
                           <Input
                             name="firstName"
                             placeholder="Alex"

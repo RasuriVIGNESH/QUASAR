@@ -7,7 +7,7 @@ import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.AuthResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.security.UserPrincipal;
-import com.ADP.peerConnect.service.Interface.iAuthService;
+import com.ADP.peerConnect.service.AuthService;
 import com.ADP.peerConnect.util.Constants;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     @Autowired
-    private iAuthService authService;
+    private AuthService authService;
 
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody Register registerRequest) {
@@ -57,11 +57,7 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    /**
-     * GitHub OAuth initiation endpoint (optional helper)
-     * The frontend can redirect the browser to /oauth2/authorization/github directly,
-     * or call this endpoint if you want a JSON response.
-     */
+
     @GetMapping("/github")
     public ResponseEntity<ApiResponse<String>> githubAuth() {
         ApiResponse<String> response = ApiResponse.success("Redirecting to GitHub", "/oauth2/authorization/github");

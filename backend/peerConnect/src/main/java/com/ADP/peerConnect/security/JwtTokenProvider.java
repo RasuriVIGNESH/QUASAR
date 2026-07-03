@@ -1,6 +1,7 @@
 package com.ADP.peerConnect.security;
 
 import com.ADP.peerConnect.config.JwtConfig;
+import com.ADP.peerConnect.exception.UnauthorizedException;
 import com.ADP.peerConnect.util.Constants;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -29,10 +30,7 @@ public class JwtTokenProvider {
         this.jwtConfig = jwtConfig;
         this.secretKey = Keys.hmacShaKeyFor(jwtConfig.getSecret().getBytes());
     }
-    
-    /**
-     * Generate JWT token from authentication
-     */
+
     public String generateToken(Authentication authentication) {
         UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
         
@@ -49,9 +47,7 @@ public class JwtTokenProvider {
                 .compact();
     }
     
-    /**
-     * Generate JWT token from user ID
-     */
+
     public String generateTokenFromUserId(String userId, String email, String firstName, String lastName) {
         Date expiryDate = new Date(System.currentTimeMillis() + jwtConfig.getExpiration());
         
@@ -65,10 +61,7 @@ public class JwtTokenProvider {
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
-    
-    /**
-     * Get user ID from JWT token
-     */
+
     public String getUserIdFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey)
@@ -78,10 +71,27 @@ public class JwtTokenProvider {
         
         return claims.getSubject();
     }
-    
-    /**
-     * Get email from JWT token
-     */
+
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (ExpiredJwtException ex) {
+            throw new UnauthorizedException("Session expired. Please login again.", ex);
+        } catch (SecurityException | MalformedJwtException ex) {
+            throw new UnauthorizedException("Invalid token. Please login again.", ex);
+        } catch (UnsupportedJwtException ex) {
+            throw new UnauthorizedException("Unsupported token. Please login again.", ex);
+        } catch (IllegalArgumentException ex) {
+            throw new UnauthorizedException("Token is missing or invalid. Please login again.", ex);
+        }
+    }
+
+
     public String getEmailFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey)
@@ -91,10 +101,6 @@ public class JwtTokenProvider {
         
         return claims.get("email", String.class);
     }
-    
-    /**
-     * Get first name from JWT token
-     */
     public String getFirstNameFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey)
@@ -104,10 +110,6 @@ public class JwtTokenProvider {
         
         return claims.get("firstName", String.class);
     }
-    
-    /**
-     * Get last name from JWT token
-     */
     public String getLastNameFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(secretKey)
@@ -117,34 +119,6 @@ public class JwtTokenProvider {
         
         return claims.get("lastName", String.class);
     }
-    
-    /**
-     * Validate JWT token
-     */
-    public boolean validateToken(String token) {
-        try {
-            Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token);
-            return true;
-        } catch (SecurityException ex) {
-            logger.error("Invalid JWT signature: {}", ex.getMessage());
-        } catch (MalformedJwtException ex) {
-            logger.error("Invalid JWT token: {}", ex.getMessage());
-        } catch (ExpiredJwtException ex) {
-            logger.error("Expired JWT token: {}", ex.getMessage());
-        } catch (UnsupportedJwtException ex) {
-            logger.error("Unsupported JWT token: {}", ex.getMessage());
-        } catch (IllegalArgumentException ex) {
-            logger.error("JWT claims string is empty: {}", ex.getMessage());
-        }
-        return false;
-    }
-    
-    /**
-     * Extract JWT token from Authorization header
-     */
     public String getTokenFromRequest(String authorizationHeader) {
         if (authorizationHeader != null && authorizationHeader.startsWith(Constants.JWT_TOKEN_PREFIX)) {
             return authorizationHeader.substring(Constants.JWT_TOKEN_PREFIX.length());

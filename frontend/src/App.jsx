@@ -21,6 +21,7 @@ const MyProjects = lazy(() => import('./components/projects/MyProjects'));
 const CreateProject = lazy(() => import('./components/projects/CreateProject'));
 const ProfilePage = lazy(() => import('./components/profile/ProfilePage'));
 const ProjectPage = lazy(() => import('./components/project/ProjectPage'));
+const joinRequestPage=lazy(()=>import('./components/project/Joinrequestspage.jsx'))
 const InviteMembers = lazy(() => import('./components/project/InviteMembers'));
 const StudentDiscovery = lazy(() => import('./components/discovery/StudentDiscovery'));
 const ProjectDiscovery = lazy(() => import('./components/discovery/ProjectDiscovery'));
@@ -70,9 +71,11 @@ export default function App() {
 
               {/* Protected Routes */}
               <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
+              <Route path="Project/:projectId/requests" element={<ProtectedRoute><joinRequestPage /></ProtectedRoute>}/>
               <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
               <Route path="/projects/create" element={<ProtectedRoute><CreateProject /></ProtectedRoute>} />
               <Route path="/projects/:projectId/invite" element={<ProtectedRoute><InviteMembers /></ProtectedRoute>} />
+              <Route path="/events" element={<EventsPage />} />
 
               <Route element={<ProtectedRoute><ResponsiveLayout /></ProtectedRoute>}>
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -82,7 +85,7 @@ export default function App() {
                 <Route path="/messages" element={<RequestsPage />} />
                 <Route path="/discover/projects" element={<ProjectDiscovery />} />
                 <Route path="/discover/students" element={<StudentDiscovery />} />
-                <Route path="/events" element={<EventsPage />} />
+
               </Route>
 
               <Route path="*" element={<Navigate to="/" replace />} />

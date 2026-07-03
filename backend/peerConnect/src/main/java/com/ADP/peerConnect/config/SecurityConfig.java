@@ -5,7 +5,7 @@ import com.ADP.peerConnect.security.JwtAuthenticationFilter;
 import com.ADP.peerConnect.security.oauth2.CustomOAuth2UserService;
 import com.ADP.peerConnect.security.oauth2.OAuth2AuthenticationFailureHandler;
 import com.ADP.peerConnect.security.oauth2.OAuth2AuthenticationSuccessHandler;
-import com.ADP.peerConnect.service.Impl.UserService;
+import com.ADP.peerConnect.service.UserService;
 import com.ADP.peerConnect.util.Constants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;

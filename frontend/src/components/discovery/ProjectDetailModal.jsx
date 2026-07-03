@@ -25,18 +25,17 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
     useEffect(() => {
         const checkApplicationStatus = async () => {
             if (!project?.id || !open || !currentUser) return;
-
             setCheckingStatus(true);
             try {
-                const response = await joinRequestService.getMyJoinRequests();
-                const hasJoined = response.some(req => req.project?.id === project.id);
-                setHasApplied(hasJoined);
+                const response = await joinRequestService.getMyJoinRequests(0, 50);
+                const requests = response?.content || response?.data?.content || [];
+                setHasApplied(requests.some(req => req.project?.id === project.id));
             } catch (error) {
                 console.error("Failed to check join status", error);
             } finally {
                 setCheckingStatus(false);
             }
-        };
+            };
 
         checkApplicationStatus();
         if (open) {

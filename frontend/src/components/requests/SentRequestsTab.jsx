@@ -15,14 +15,14 @@ import { motion } from 'framer-motion';
 export default function SentRequestsTab() {
   const { sentJoinRequests, loading, error, refresh } = useRequests();
 
-  const handleCancel = async (requestId) => {
-    try {
-      await joinRequestService.cancelJoinRequest(requestId);
-      refresh();
-    } catch (err) {
-      alert(`Error: ${err.message}`);
-    }
-  };
+ const handleCancel = async (requestId) => {
+  try {
+    await joinRequestService.cancelJoinRequest(requestId);
+    refresh();
+  } catch (err) {
+    alert(`Error: ${err.message}`);
+  }
+};
 
 
 

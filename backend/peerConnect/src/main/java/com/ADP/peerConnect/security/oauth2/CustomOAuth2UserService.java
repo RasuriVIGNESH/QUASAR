@@ -166,7 +166,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         user.setGithubId(userInfo.getId());
         user.setGithubUrl(userInfo.getHtmlUrl());
         user.setProfilePictureUrl(userInfo.getAvatarUrl());
-        user.setIsVerified(true);
         user.setBio(userInfo.getBio());
         user.setAvailabilityStatus(AvailabilityStatus.AVAILABLE);
         user.setRole(Role.STUDENT);

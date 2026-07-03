@@ -18,6 +18,7 @@ import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import userService from '../../services/userService';
 import { projectService } from '../../services/projectService';
+import { teamService } from '../../services/TeamService';
 
 // Matches the default page size used by GET /sort, kept smaller here for a clean 3-col grid.
 const PAGE_SIZE = 12;
@@ -97,10 +98,10 @@ export default function InviteMembers() {
         setInitializing(true);
         setError(null);
         const [membersRes, projectRes, invitesRes] = await Promise.all([
-          projectService.getProjectMembers(projectId),
-          projectService.getProject(projectId),
-          projectService.getProjectInvitations(projectId)
-        ]);
+  teamService.getProjectMembers(projectId),
+  projectService.getProject(projectId),
+  teamService.getProjectInvitations(projectId)
+]);
 
         const currentMembers = membersRes?.data || (Array.isArray(membersRes) ? membersRes : []);
         const ids = new Set(currentMembers.map(m => m.user?.id || m.userId || m.id));
@@ -225,27 +226,29 @@ export default function InviteMembers() {
     fetchUsers(filters, pageNum, excludedIds);
   };
 
-  const handleInvite = async (student) => {
-    try {
-      const resp = await projectService.sendInvitation(projectId, {
-        invitedUserId: student.id,
-        role: 'MEMBER',
-        message: 'Join our team for this project!'
-      });
-      const invId = resp?.data?.id || resp?.id;
-      if (invId) setInvitationsMap(prev => ({ ...prev, [student.id]: invId }));
-      setInvitedUserIds(prev => [...prev, student.id]);
-      toast.success(`Invitation sent to ${student.displayName}`);
-    } catch {
-      toast.error('Failed to send invitation.');
-    }
-  };
+
+const handleInvite = async (student) => {
+  try {
+    const resp = await teamService.inviteUserToProject(
+      projectId,
+      student.id,
+      'Join our team for this project!'
+    );
+    const invId = resp?.data?.id || resp?.id;
+    if (invId) setInvitationsMap(prev => ({ ...prev, [student.id]: invId }));
+    setInvitedUserIds(prev => [...prev, student.id]);
+    toast.success(`Invitation sent to ${student.displayName}`);
+  } catch {
+    toast.error('Failed to send invitation.');
+  }
+};
 
   const handleCancelInvite = async (studentId) => {
     const invId = invitationsMap[studentId];
     if (!invId) return;
     try {
-      await projectService.cancelInvitation(invId);
+      await 
+      await teamService.cancelInvitation(invId);
       setInvitedUserIds(prev => prev.filter(id => id !== studentId.toString() && id !== studentId));
       setInvitationsMap(prev => { const next = { ...prev }; delete next[studentId]; return next; });
       toast.success('Invitation cancelled');

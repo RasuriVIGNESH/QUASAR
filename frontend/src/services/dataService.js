@@ -17,43 +17,28 @@ class DataService {
     this.recommendationCacheTTL = 60000;
   }
 
-  /**
-   * Get available branches
-   * @returns {Promise} List of branches
-   */
-  async getBranches() {
-    try {
-      const response = await apiService.get(
-        '/branches',
-        {},
-        { cacheTTL: this.staticDataCacheTTL }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('DataService: Error getting branches:', error);
-      throw error;
+    async getBranches() {
+      try {
+        const response = await apiService.get('/branches', {}, { cacheTTL: this.staticDataCacheTTL });
+        return response?.data || response;
+      } catch (error) {
+        console.error('DataService: Error getting branches:', error);
+        throw error;
+      }
     }
-  }
-
   /**
    * Get graduation years
    * @returns {Promise} List of graduation years
    */
-  async getGraduationYears() {
-    try {
-      const response = await apiService.get(
-        '/graduation-years',
-        {},
-        { cacheTTL: this.staticDataCacheTTL }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('DataService: Error getting graduation years:', error);
-      throw error;
+    async getGraduationYears() {
+      try {
+        const response = await apiService.get('/graduation-years', {}, { cacheTTL: this.staticDataCacheTTL });
+        return response?.data || response;
+      } catch (error) {
+        console.error('DataService: Error getting graduation years:', error);
+        throw error;
+      }
     }
-  }
 
   /**
    * Get all colleges
@@ -75,50 +60,6 @@ class DataService {
       return response;
     } catch (error) {
       console.error('DataService: Error getting colleges:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get single college by ID
-   * @param {string|number} id - College ID
-   * @returns {Promise} College details
-   */
-  async getCollegeById(id) {
-    try {
-      if (!id) throw new Error('College ID is required');
-
-      const response = await apiService.get(
-        `/colleges/${id}`,
-        {},
-        { cacheTTL: this.staticDataCacheTTL }
-      );
-
-      return response;
-    } catch (error) {
-      console.error(`DataService: Error getting college ${id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get college by name
-   * @param {string} name - College name
-   * @returns {Promise} College details
-   */
-  async getCollegeByName(name) {
-    try {
-      if (!name) throw new Error('College name is required');
-
-      const response = await apiService.get(
-        `/colleges/name/${encodeURIComponent(name)}`,
-        {},
-        { cacheTTL: this.staticDataCacheTTL }
-      );
-
-      return response;
-    } catch (error) {
-      console.error(`DataService: Error getting college by name ${name}:`, error);
       throw error;
     }
   }
@@ -163,25 +104,6 @@ class DataService {
       return response;
     } catch (error) {
       console.error(`DataService: Error deleting college ${id}:`, error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get project categories
-   * @returns {Promise} List of project categories
-   */
-  async getProjectCategories() {
-    try {
-      const response = await apiService.get(
-        '/projects/categories',
-        {},
-        { cacheTTL: this.staticDataCacheTTL }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('DataService: Error getting project categories:', error);
       throw error;
     }
   }
@@ -236,20 +158,19 @@ class DataService {
    * Get system-wide counts (users, projects, etc.)
    * @returns {Promise} System counts
    */
-  async getSystemCounts() {
-    try {
-      const response = await apiService.get(
-        '/count',
-        {},
-        { preventRedirect: true, cacheTTL: this.staticDataCacheTTL }
-      );
-
-      return response;
-    } catch (error) {
-      console.error('DataService: Error getting system counts:', error);
-      throw error;
+    async getSystemCounts() {
+      try {
+        const response = await apiService.get('/count', {}, { preventRedirect: true, cacheTTL: this.staticDataCacheTTL });
+        // response is [userCount, projectCount]
+        return {
+          totalUsers: response[0] || 0,
+          totalProjects: response[1] || 0
+        };
+      } catch (error) {
+        console.error('DataService: Error getting system counts:', error);
+        throw error;
+      }
     }
-  }
 
   /**
    * Create event (admin only)

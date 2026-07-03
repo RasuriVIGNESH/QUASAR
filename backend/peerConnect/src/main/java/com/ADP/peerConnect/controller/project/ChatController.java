@@ -1,12 +1,12 @@
 package com.ADP.peerConnect.controller.project;
 
-import com.ADP.peerConnect.model.dto.request.SendMessageRequest;
+
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.ChatMessageResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
 import com.ADP.peerConnect.model.entity.ChatMessage;
 import com.ADP.peerConnect.security.UserPrincipal;
-import com.ADP.peerConnect.service.Interface.iChatService;
+import com.ADP.peerConnect.service.ChatService;
 import com.ADP.peerConnect.util.Constants;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,19 +32,19 @@ import java.util.stream.Collectors;
 public class ChatController {
 
     @Autowired
-    private iChatService chatService;
+    private ChatService chatService;
 
 
     @PostMapping("/projects/{projectId}/messages")
     public ResponseEntity<ApiResponse<ChatMessageResponse>> sendMessage(
             @PathVariable String projectId,
-            @Valid @RequestBody SendMessageRequest messageRequest,
+            @Valid @RequestBody String messageRequest,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
         ChatMessage message = chatService.sendMessage(
                 projectId,
                 currentUser.getId(),
-                messageRequest.getContent()
+                messageRequest
         );
 
         ChatMessageResponse messageResponse = new ChatMessageResponse(message);
@@ -124,13 +124,13 @@ public class ChatController {
     @PutMapping("/messages/{messageId}")
     public ResponseEntity<ApiResponse<ChatMessageResponse>> editMessage(
             @PathVariable Long messageId,
-            @Valid @RequestBody SendMessageRequest messageRequest,
+            @Valid @RequestBody String messageRequest,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
         ChatMessage message = chatService.editMessage(
                 messageId,
                 currentUser.getId(),
-                messageRequest.getContent()
+                messageRequest
         );
         ChatMessageResponse messageResponse = new ChatMessageResponse(message);
 

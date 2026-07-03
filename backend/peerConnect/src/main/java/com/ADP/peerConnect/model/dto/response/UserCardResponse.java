@@ -1,7 +1,9 @@
 package com.ADP.peerConnect.model.dto.response;
 
 import com.ADP.peerConnect.model.entity.User;
+import lombok.Data;
 
+@Data
 public class UserCardResponse {
 
     private String id;
@@ -16,24 +18,5 @@ public class UserCardResponse {
         this.lastName = user.getLastName();
         this.profilePictureUrl = user.getProfilePictureUrl();
         this.branch = user.getBranch();
-    }
-    public String getId() {
-        return id;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public String getProfilePictureUrl() {
-        return profilePictureUrl;
-    }
-
-    public String getBranch() {
-        return branch;
     }
 }

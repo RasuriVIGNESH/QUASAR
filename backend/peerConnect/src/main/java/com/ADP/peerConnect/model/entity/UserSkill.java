@@ -56,9 +56,6 @@ public class UserSkill {
     @Size(max = 500, message = "Experience description must not exceed 500 characters")
     private String experience;
 
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
 
     public UserSkill(User user, Skill skill, SkillLevel level) {
         this.user = user;

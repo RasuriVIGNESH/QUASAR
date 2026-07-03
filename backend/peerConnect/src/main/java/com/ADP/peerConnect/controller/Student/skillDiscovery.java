@@ -4,7 +4,7 @@ import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
 import com.ADP.peerConnect.model.dto.response.SkillResponse;
 import com.ADP.peerConnect.model.entity.Skill;
-import com.ADP.peerConnect.service.Interface.iSkillService;
+import com.ADP.peerConnect.service.SkillService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 public class skillDiscovery {
 
     @Autowired
-    private iSkillService skillService;
+    private SkillService skillService;
 
     @Autowired
     private ModelMapper modelMapper;

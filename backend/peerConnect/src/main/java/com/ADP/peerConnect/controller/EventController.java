@@ -1,21 +1,16 @@
 package com.ADP.peerConnect.controller;
 
+import com.ADP.peerConnect.model.dto.response.Project.ProjectCardResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
-import com.ADP.peerConnect.model.dto.response.event.EventsResponse;
+import com.ADP.peerConnect.model.dto.response.EventsResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.Event;
-import com.ADP.peerConnect.model.entity.EventRegistration;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.User;
-import com.ADP.peerConnect.security.UserPrincipal;
-import com.ADP.peerConnect.service.Impl.EventRegistrationService;
-import com.ADP.peerConnect.service.Impl.EventService;
-import io.swagger.v3.oas.annotations.Parameter;
+import com.ADP.peerConnect.service.EventService;
 import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,10 +21,19 @@ import java.util.stream.Collectors;
 public class EventController {
 
     @Autowired
-    private EventService eventService;
+    private final EventService eventService;
 
-    @Autowired
-    private EventRegistrationService registrationService;
+    public EventController(EventService eventService) {
+        this.eventService = eventService;
+    }
+
+
+//    @PostMapping("/register")
+//    public ResponseEntity<Project> registerForEvent(@RequestBody CreateProjectRequest project,
+//                                              @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
+//        Project reg = eventService.register(currentUser.getId(), project);
+//        return ResponseEntity.ok(reg);
+//    }
 
     @GetMapping("/{eventId}")
     public ResponseEntity<EventsResponse> getEventById(@PathVariable Long eventId) {
@@ -41,17 +45,6 @@ public class EventController {
     @GetMapping("/upcoming")
     public ResponseEntity<List<Event>> getUpcomingEvents() {
         return ResponseEntity.ok(eventService.getUpcomingEvents());
-    }
-
-    /**
-     * Student registers for an event
-     */
-    @PostMapping("/{eventId}/register")
-    @PreAuthorize("hasRole('STUDENT')")
-    public ResponseEntity<?> registerForEvent(@PathVariable Long eventId,
-            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        EventRegistration reg = registrationService.register(eventId, currentUser.getId());
-        return ResponseEntity.ok(new EventsResponse(reg.getEvent()));
     }
 
     @GetMapping("/{eventId}/students")
@@ -87,9 +80,7 @@ public class EventController {
         return ResponseEntity.ok(responses);
     }
 
-    /**
-     * Get recent events (default 10). Optional query param `limit` can override.
-     */
+
     @GetMapping("/recent")
     public ResponseEntity<List<EventsResponse>> getRecentEvents(
             @RequestParam(required = false, defaultValue = "10") int limit) {
@@ -99,17 +90,13 @@ public class EventController {
     }
 
     @GetMapping("/{eventId}/projects")
-    public ResponseEntity<List<ProjectResponse>> getEventProjects(
+    public ResponseEntity<List<ProjectCardResponse>> getEventProjects(
             @PathVariable Long eventId) {
-        List<Project> projects = eventService.getProjects(eventId);
-        List<ProjectResponse> projectDTOs = projects.stream()
-                .map(ProjectResponse::new)
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(projectDTOs);
+        List<ProjectCardResponse> projects = eventService.getProjects(eventId);
+        return ResponseEntity.ok(projects);
     }
 
     private UserResponse convertToDTO(User user) {
-        // Use ModelMapper or manual mapping
         return new UserResponse(user.getId(), user.getEmail(), user.getFirstName(), user.getLastName());
     }
 

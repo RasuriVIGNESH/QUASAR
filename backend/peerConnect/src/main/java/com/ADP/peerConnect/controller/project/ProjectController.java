@@ -1,20 +1,20 @@
 package com.ADP.peerConnect.controller.project;
 
+import com.ADP.peerConnect.exception.UnauthorizedException;
 import com.ADP.peerConnect.model.dto.request.Project.*;
 import com.ADP.peerConnect.model.dto.response.*;
 import com.ADP.peerConnect.model.dto.response.Project.*;
 import com.ADP.peerConnect.model.entity.*;
 import com.ADP.peerConnect.model.entity.Project;
+import com.ADP.peerConnect.model.enums.ProjectStatus;
 import com.ADP.peerConnect.security.UserPrincipal;
-import com.ADP.peerConnect.service.Interface.iProjectCategoryService;
-import com.ADP.peerConnect.service.Interface.iProjectInvitationService;
-import com.ADP.peerConnect.service.Interface.iProjectService;
-import com.ADP.peerConnect.service.Interface.iTaskService;
+import com.ADP.peerConnect.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,6 +24,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.PrivateKey;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,16 +34,16 @@ import java.util.stream.Collectors;
 public class ProjectController {
 
     @Autowired
-    private iProjectService projectService;
+    private ProjectService projectService;
 
     @Autowired
-    private iProjectInvitationService projectInvitationService;
+    private TaskService taskService;
 
     @Autowired
-    private iTaskService taskService;
+    private TeamService teamService;
 
     @Autowired
-    private iProjectCategoryService projectCategoryService;
+    private ProjectCategoryService projectCategoryService;
 
     public static final String DEFAULT_SIZE_STR = "20";
     public static final String DEFAULT_PAGE_NUMBER_STR = "0";
@@ -52,7 +53,7 @@ public class ProjectController {
     @Operation(summary = "Create project")
     @PostMapping("/Create")
     public ResponseEntity<ApiResponse> createProject(
-            @Valid @RequestBody CreateProjectRequest request,
+            @Valid @RequestBody CreateProject request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Project project = projectService.createProject(request, currentUser.getId());
@@ -66,24 +67,19 @@ public class ProjectController {
 
     @Operation(summary = "Get project by ID")
     @GetMapping("/{projectId}")
-    public ResponseEntity<ApiResponse> getProject(
+    public ResponseEntity<ProjectResponse> getProject(
             @PathVariable String projectId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
+        if(!teamService.isProjectMember(projectId,currentUser.getId()))throw new UnauthorizedException("only project members can access");
             Project project = projectService.findById(projectId);
-            return ResponseEntity.ok(
-                    new ApiResponse(true, "Project retrieved successfully", new ProjectResponse(project))
-            );
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+            return new ResponseEntity<>(new ProjectResponse(project),HttpStatus.OK );
     }
 
     @Operation(summary = "Update project")
     @PutMapping("/{projectId}")
     public ResponseEntity<ApiResponse> updateProject(
             @PathVariable String projectId,
-            @Valid @RequestBody UpdateProjectRequest request,
+            @Valid @RequestBody UpdateProject request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Project project = projectService.updateProject(projectId, request, currentUser.getId());
@@ -108,70 +104,29 @@ public class ProjectController {
         }
     }
 
-    @Operation(summary = "Add project member", description = "Add a user to a project. (Project Lead only)")
-    @PostMapping("/{projectId}/members")
-    public ResponseEntity<ApiResponse> addMember(
-            @PathVariable String projectId,
-            @Valid @RequestBody AddMemberRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            ProjectMember member = projectService.addMember(
-                    projectId, request.getUserId(), request.getRole(), currentUser.getId());
-            ProjectMemberResponse response = new ProjectMemberResponse(
-                    member.getId(),
-                    member.getCreatedAt(),
-                    member.getProjectRole(),
-                    new UserResponse(member.getUser())
-            );
-            return ResponseEntity.ok(new ApiResponse(true, "Member added successfully", response));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
-    }
+
 
     // ===== ADDITIONAL DISCOVERY ENDPOINTS =====
 
     @Operation(summary = "Get my projects")
     @GetMapping("/my-projects")
-    public ResponseEntity<PagedResponse<ProjectResponse>> getMyProjects(
+    public ResponseEntity<PagedResponse<ProjectCardResponse>> getMyProjects(
             @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<ProjectResponse> projects =
+        Page<ProjectCardResponse> projects =
                 projectService.findProjectsByUser(currentUser.getId(), pageable);
 
-        PagedResponse<ProjectResponse> response = new PagedResponse<>(
-                projects.getContent(),
-                projects.getNumber(),
-                projects.getSize(),
-                projects.getTotalElements(),
-                projects.getTotalPages()
+        PagedResponse<ProjectCardResponse> response = new PagedResponse<>(
+                projects.getContent(), projects.getNumber(), projects.getSize(),
+                projects.getTotalElements(),projects.getTotalPages()
         );
         response.setFirst(projects.isFirst());
         response.setLast(projects.isLast());
         response.setNumberOfElements(projects.getNumberOfElements());
-
         return ResponseEntity.ok(response);
-    }
-
-    // ===== PROJECT INVITATION ENDPOINTS =====
-
-    @Operation(summary = "Send project invitation")
-    @PostMapping("/{projectId}/invitations")
-    public ResponseEntity<ApiResponse> sendInvitation(
-            @PathVariable String projectId,
-            @Valid @RequestBody SendInvitationRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            ProjectInvitationResponse invitationResponse = new ProjectInvitationResponse(projectInvitationService.sendInvitation(
-                    projectId, request.getInvitedUserId(), request.getMessage(),
-                    request.getRole(), currentUser.getId()));
-            return ResponseEntity.ok(new ApiResponse(true, "Invitation sent successfully", invitationResponse));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
     }
 
     // ===== TASK MANAGEMENT ENDPOINTS =====
@@ -180,7 +135,7 @@ public class ProjectController {
     @PostMapping("/{projectId}/tasks")
     public ResponseEntity<ApiResponse> createTask(
             @PathVariable String projectId,
-            @Valid @RequestBody CreateTaskRequest request,
+            @Valid @RequestBody CreateTask request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Task task = taskService.createTask(projectId, request, currentUser.getId());
@@ -215,9 +170,8 @@ public class ProjectController {
     @Operation(summary = "Update task")
     @PutMapping("/{projectId}/tasks/{taskId}")
     public ResponseEntity<ApiResponse> updateTask(
-            @PathVariable String projectId,
             @PathVariable Long taskId,
-            @Valid @RequestBody UpdateTaskRequest request,
+            @Valid @RequestBody UpdateTask request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             TaskResponse taskResponse = new TaskResponse(taskService.updateTask(taskId, request, currentUser.getId()));
@@ -241,41 +195,48 @@ public class ProjectController {
         }
     }
 
-    @Operation(summary = "Toggle task completion")
-    @PutMapping("/{projectId}/tasks/{taskId}/complete")
-    public ResponseEntity<ApiResponse> toggleTaskCompletion(
-            @PathVariable String projectId,
-            @PathVariable Long taskId,
-            @RequestBody ToggleTaskRequest request,
-            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            TaskResponse taskResponse = new TaskResponse(taskService.toggleTaskCompletion(taskId, request.isCompleted(), currentUser.getId()));
-            return ResponseEntity.ok(new ApiResponse(true, "Task completion updated", taskResponse));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
-    }
+
 
     @Operation(summary = "List all project categories")
     @GetMapping("/categories")
-    public ResponseEntity<ApiResponse<List<ProjectCategoryResponse>>> listAll() {
+    public ResponseEntity<List<getCategory>> listAll() {
         List<ProjectCategory> cats = projectCategoryService.listAll();
-        List<ProjectCategoryResponse> responses = cats.stream()
-                .map(ProjectCategoryResponse::new)
-                .collect(Collectors.toList());
-        ApiResponse<List<ProjectCategoryResponse>> resp =
-                ApiResponse.success("Categories retrieved successfully", responses);
-        return ResponseEntity.ok(resp);
+        List<getCategory>res=cats.stream().map(getCategory::new).collect(Collectors.toList());
+        return new ResponseEntity<>(res,HttpStatus.OK);
     }
 
     @Operation(summary = "Create a project category")
     @PostMapping("/categories")
-    public ResponseEntity<ApiResponse<ProjectCategoryResponse>> create(
-            @Valid @RequestBody CreateProjectCategoryRequest request) {
-        ProjectCategory category = new ProjectCategory(request.getName());
-        ProjectCategory created = projectCategoryService.create(category);
-        ApiResponse<ProjectCategoryResponse> resp =
-                ApiResponse.success("Category created successfully", new ProjectCategoryResponse(created));
-        return new ResponseEntity<>(resp, HttpStatus.CREATED);
+    public ResponseEntity<String> create(
+            @RequestParam @NotBlank(message = "Category name is required") String name) {
+        ProjectCategory created = projectCategoryService.create(name);
+        return new ResponseEntity<>(created.getName(), HttpStatus.CREATED);
+    }
+    @Operation(summary = "Search projects",
+            description = "use project status only RECRUITING, IN_PROGRESS, COMPLETED, CANCELLED")
+    @GetMapping("/searchProjects")
+    public ResponseEntity<PagedResponse<ProjectCardResponse>> searchProjects(
+            @Parameter(description = "Search query") @RequestParam(required = false) String query,
+            @Parameter(description = "Category filter") @RequestParam(required = false) String category,
+            @Parameter(description = "Status filter") @RequestParam(required = false) ProjectStatus status,
+            @Parameter(description = "Skills filter") @RequestParam(required = false) List<String> skills,
+            @Parameter(description = "Available only") @RequestParam(defaultValue = "false") boolean availableOnly,
+            @Parameter(description = "Page number") @RequestParam(defaultValue = DEFAULT_PAGE_NUMBER_STR) int page,
+            @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        String currentUserId = currentUser != null ? currentUser.getId() : null;
+        Page<ProjectCardResponse> projects =
+                projectService.searchProjects(query, category, status, skills, availableOnly, pageable, currentUserId);
+
+        PagedResponse<ProjectCardResponse> response = new PagedResponse<>(
+                projects.getContent(),
+                projects.getNumber(),
+                projects.getSize(),
+                projects.getTotalElements(),
+                projects.getTotalPages()
+        );
+        return ResponseEntity.ok(response);
     }
 }

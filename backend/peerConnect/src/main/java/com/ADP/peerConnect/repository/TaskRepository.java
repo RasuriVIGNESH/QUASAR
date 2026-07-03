@@ -19,7 +19,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +
@@ -34,7 +35,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // Step 2: fetch full entities by IDs
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +
@@ -44,7 +46,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     List<Task> findByIdsWithAssociations(@Param("ids") List<String> ids);
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +
@@ -54,7 +57,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +
@@ -64,7 +68,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +
@@ -75,7 +80,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +
@@ -85,7 +91,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +
@@ -95,7 +102,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +
@@ -106,7 +114,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +
@@ -118,7 +127,8 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
-            "JOIN FETCH p.lead " +
+            "JOIN FETCH p.team pt " +
+            "JOIN FETCH pt.lead " +
             "LEFT JOIN FETCH t.assignedTo " +
             "JOIN FETCH t.createdBy " +
             "LEFT JOIN FETCH t.completedBy " +

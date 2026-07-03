@@ -2,9 +2,11 @@ package com.ADP.peerConnect.model.dto.response.Project;
 
 import com.ADP.peerConnect.model.dto.response.UserCardResponse;
 import com.ADP.peerConnect.model.entity.Project;
+import lombok.Data;
 
 import java.util.List;
 
+@Data
 public class ProjectCardResponse {
 
     private String id;
@@ -14,7 +16,8 @@ public class ProjectCardResponse {
     private Integer currentTeamSize;
     private List<String> skillsRequired;
     private String status;
-    private UserCardResponse creator;
+    private UserCardResponse Lead;
+    private List<String> memberProfileImageUrls;
 
     public ProjectCardResponse(Project p) {
         this.id = p.getId();
@@ -23,44 +26,11 @@ public class ProjectCardResponse {
         this.maxTeamSize = p.getMaxTeamSize();
         this.currentTeamSize = p.getCurrentTeamSize();
         this.categoryName = p.getCategory() != null ? p.getCategory().getName() : null;
-        this.creator = p.getLead() != null ? new UserCardResponse(p.getLead()) : null;
+        this.Lead=new UserCardResponse(p.getTeam().getLead());
         this.skillsRequired = p.getProjectSkills() != null
                 ? p.getProjectSkills().stream()
                 .map(ps -> ps.getSkill().getName())
                 .collect(java.util.stream.Collectors.toList())
                 : new java.util.ArrayList<>();
-    }
-
-    public String getCategoryName() {
-        return categoryName;
-    }
-    public UserCardResponse getCreator() {
-        return creator;
-    }
-    public void setCreator(UserCardResponse creator) {
-        this.creator = creator;
-    }
-
-    public Integer getCurrentTeamSize() {
-        return currentTeamSize;
-    }
-    public List<String> getSkillsRequired() {
-        return skillsRequired;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public Integer getMaxTeamSize() {
-        return maxTeamSize;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public String getTitle() {
-        return title;
     }
 }

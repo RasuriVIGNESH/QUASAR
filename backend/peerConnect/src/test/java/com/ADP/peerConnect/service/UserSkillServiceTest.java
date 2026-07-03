@@ -1,15 +1,12 @@
 package com.ADP.peerConnect.service;
 
 import com.ADP.peerConnect.exception.BadRequestException;
-import com.ADP.peerConnect.model.dto.request.User.AddUserSkillRequest;
+import com.ADP.peerConnect.model.dto.request.User.AddUserSkill;
 import com.ADP.peerConnect.model.entity.Skill;
 import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.model.entity.UserSkill;
 import com.ADP.peerConnect.model.enums.SkillLevel;
 import com.ADP.peerConnect.repository.UserSkillRepository;
-import com.ADP.peerConnect.service.Impl.UserSkillService;
-import com.ADP.peerConnect.service.Impl.UserService;
-import com.ADP.peerConnect.service.Impl.SkillService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,11 +60,11 @@ public class UserSkillServiceTest {
         user.setId("user1");
         when(userService.findById("user1")).thenReturn(user);
 
-        AddUserSkillRequest r1 = new AddUserSkillRequest();
+        AddUserSkill r1 = new AddUserSkill();
         r1.setSkillName("Java");
         r1.setLevel(SkillLevel.ADVANCED);
 
-        AddUserSkillRequest r2 = new AddUserSkillRequest();
+        AddUserSkill r2 = new AddUserSkill();
         r2.setSkillName("Python");
         r2.setLevel(SkillLevel.INTERMEDIATE);
 

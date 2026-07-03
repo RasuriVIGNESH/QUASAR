@@ -3,7 +3,7 @@ package com.ADP.peerConnect.controller;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.security.UserPrincipal;
-import com.ADP.peerConnect.service.Impl.FileStorageService;
+import com.ADP.peerConnect.service.FileStorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

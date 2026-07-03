@@ -1,8 +1,7 @@
 package com.ADP.peerConnect.controller.Student;
 
-import com.ADP.peerConnect.model.dto.request.User.AddUserSkillRequest;
-import com.ADP.peerConnect.model.dto.request.User.AddUserSkillsRequest;
-import com.ADP.peerConnect.model.dto.request.User.UpdateUserSkillRequest;
+import com.ADP.peerConnect.model.dto.request.User.AddUserSkill;
+import com.ADP.peerConnect.model.dto.request.User.UpdateUserSkill;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
 import com.ADP.peerConnect.model.dto.response.SkillResponse;
@@ -10,8 +9,8 @@ import com.ADP.peerConnect.model.dto.response.UserSkillResponse;
 import com.ADP.peerConnect.model.entity.Skill;
 import com.ADP.peerConnect.model.entity.UserSkill;
 import com.ADP.peerConnect.security.UserPrincipal;
-import com.ADP.peerConnect.service.Interface.iSkillService;
-import com.ADP.peerConnect.service.Interface.iUserSkillService;
+import com.ADP.peerConnect.service.SkillService;
+import com.ADP.peerConnect.service.UserSkillService;
 import com.ADP.peerConnect.util.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,10 +42,10 @@ import java.util.stream.Collectors;
 public class SkillController {
 
     @Autowired
-    private iSkillService skillService;
+    private SkillService skillService;
 
     @Autowired
-    private iUserSkillService userSkillService;
+    private UserSkillService userSkillService;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -169,7 +168,7 @@ public class SkillController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Skill already exists for user")
     })
     public ResponseEntity<ApiResponse<UserSkillResponse>> addUserSkill(
-            @Valid @RequestBody AddUserSkillRequest skillRequest,
+            @Valid @RequestBody AddUserSkill skillRequest,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
         UserSkill userSkill = userSkillService.addUserSkill(
@@ -194,10 +193,10 @@ public class SkillController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid input")
     })
     public ResponseEntity<ApiResponse<List<UserSkillResponse>>> addUserSkillsBatch(
-            @Valid @RequestBody AddUserSkillsRequest request,
+            @Valid @RequestBody List<AddUserSkill> request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        List<UserSkill> added = userSkillService.addUserSkills(currentUser.getId(), request.getSkills());
+        List<UserSkill> added = userSkillService.addUserSkills(currentUser.getId(), request);
 
         List<UserSkillResponse> responses = added.stream()
                 .map(UserSkillResponse::new)
@@ -237,7 +236,7 @@ public class SkillController {
     })
     public ResponseEntity<ApiResponse<UserSkillResponse>> updateUserSkill(
             @PathVariable Long skillId,
-            @Valid @RequestBody UpdateUserSkillRequest request,
+            @Valid @RequestBody UpdateUserSkill request,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
         UserSkill updated = userSkillService.updateUserSkill(

@@ -28,6 +28,7 @@ import java.util.Objects;
 public class UserRecommendedProject implements Serializable {
 
     @EmbeddedId
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private UserRecommendedProjectId id;
 
     @ManyToOne(fetch = FetchType.LAZY)

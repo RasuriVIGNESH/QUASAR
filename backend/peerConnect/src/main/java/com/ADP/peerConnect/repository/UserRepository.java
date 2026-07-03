@@ -17,13 +17,11 @@ public interface UserRepository extends JpaRepository<User, String> {
 
        Optional<User> findByEmail(String email);
 
-       Optional<User> findByLinkedinId(String linkedinId);
-
        Optional<User> findByGithubId(String githubId);
 
        boolean existsByEmail(String email);
 
-       boolean existsByLinkedinId(String linkedinId);
+
 
        Page<User> findByAvailabilityStatus(AvailabilityStatus status, Pageable pageable);
 

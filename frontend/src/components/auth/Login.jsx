@@ -87,7 +87,7 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label className="text-xs font-semibold text-slate-700">University Email</Label>
+              <Label className="text-xs text-black font-semibold text-slate-700">University Email</Label>
               <Input
                 type="email"
                 placeholder="name@university.edu"
@@ -101,7 +101,12 @@ export default function Login() {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <Label className="text-xs font-semibold text-slate-700">Password</Label>
-                <Link to="/forgot-password" px-4 py-2 className="text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors">Forgot password?</Link>
+                <Link
+                    to="/forgot-password"
+                    className="px-4 py-2 text-xs font-medium text-slate-500 hover:text-slate-900 transition-colors"
+                >
+                  Forgot password?
+                </Link>
               </div>
               <Input
                 type="password"

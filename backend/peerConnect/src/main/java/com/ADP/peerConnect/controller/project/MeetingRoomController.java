@@ -1,14 +1,13 @@
 package com.ADP.peerConnect.controller.project;
 
-import com.ADP.peerConnect.model.dto.request.Project.CreateMeetingRoomRequest;
-import com.ADP.peerConnect.model.dto.request.Project.CreateNoteRequest;
-import com.ADP.peerConnect.model.dto.request.Project.UpdateNoteRequest;
+import com.ADP.peerConnect.model.dto.request.Project.CreateMeetingRoom;
+import com.ADP.peerConnect.model.dto.request.Project.CreateNote;
+import com.ADP.peerConnect.model.dto.request.Project.UpdateNote;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.entity.MeetingRoom;
 import com.ADP.peerConnect.model.entity.Note;
 import com.ADP.peerConnect.security.UserPrincipal;
-import com.ADP.peerConnect.service.Impl.MeetingRoomService;
-import com.ADP.peerConnect.service.Interface.iMeetingRoomService;
+import com.ADP.peerConnect.service.MeetingRoomService;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -26,7 +25,7 @@ import java.util.List;
 public class MeetingRoomController {
 
     @Autowired
-    private final iMeetingRoomService meetingRoomService;
+    private final MeetingRoomService meetingRoomService;
 
     @Autowired
     public MeetingRoomController(MeetingRoomService meetingRoomService) {
@@ -38,7 +37,7 @@ public class MeetingRoomController {
     @PostMapping("/projects/{projectId}/rooms")
     public ResponseEntity<ApiResponse> createMeetingRoom(
             @PathVariable String projectId,
-            @Valid @RequestBody CreateMeetingRoomRequest request,
+            @Valid @RequestBody CreateMeetingRoom request,
             @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             MeetingRoom room = meetingRoomService.createMeetingRoom(projectId, request, currentUser.getId());
@@ -77,7 +76,7 @@ public class MeetingRoomController {
     @PostMapping("/rooms/{roomId}/notes")
     public ResponseEntity<ApiResponse> createNote(
             @PathVariable Long roomId,
-            @Valid @RequestBody CreateNoteRequest request,
+            @Valid @RequestBody CreateNote request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Note note = meetingRoomService.createNote(roomId, request, currentUser.getId());
@@ -102,7 +101,7 @@ public class MeetingRoomController {
     @PutMapping("/notes/{noteId}")
     public ResponseEntity<ApiResponse> updateNote(
             @PathVariable Long noteId,
-            @Valid @RequestBody UpdateNoteRequest request,
+            @Valid @RequestBody UpdateNote request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             Note note = meetingRoomService.updateNote(noteId, request, currentUser.getId());

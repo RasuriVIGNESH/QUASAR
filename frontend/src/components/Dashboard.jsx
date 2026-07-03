@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { projectService } from '@/services/projectService';
 import { joinRequestService } from '@/services/JoinRequestService';
 import { dataService } from '@/services/dataService';
-
+import { teamService } from '@/services/TeamService';
 // --- HELPER COMPONENTS ---
 
 // Empty State Illustration Component
@@ -120,16 +120,16 @@ export default function Dashboard() {
       try {
         setLoading(true);
         const [projectsRes, invitesRes, requestsRes, eventsRes] = await Promise.all([
-          projectService.getMyProjects(0, 6),
-          projectService.getReceivedInvitations(),
-          joinRequestService.getMyJoinRequests(),
-          dataService.getUpcomingEvents()
-        ]);
+  projectService.getMyProjects(0, 6),
+  teamService.getPendingInvitations(0, 3),
+  joinRequestService.getMyJoinRequests(0, 3),
+  dataService.getUpcomingEvents()
+]);
 
         setMyProjects(projectsRes?.data?.content || projectsRes?.content || []);
-        setInvitations(Array.isArray(invitesRes) ? invitesRes : (invitesRes?.data || []));
-        setMyRequests(Array.isArray(requestsRes) ? requestsRes : (requestsRes?.data || []));
-        setUpcomingEvents(Array.isArray(eventsRes) ? eventsRes : (eventsRes?.data || []));
+        setInvitations(invitesRes?.content || invitesRes?.data?.content || []);
+        setMyRequests(requestsRes?.content || requestsRes?.data?.content || []);
+        setMyProjects(projectsRes?.content || projectsRes?.data?.content || []);
       } catch (err) {
         console.error('Dashboard Data Fetch Error:', err);
         setError("Unable to sync with logic core.");

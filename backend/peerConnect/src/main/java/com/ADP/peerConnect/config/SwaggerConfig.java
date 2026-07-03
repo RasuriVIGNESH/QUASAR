@@ -8,24 +8,17 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
-import org.springdoc.core.customizers.OperationCustomizer;
-import org.springdoc.core.customizers.ParameterCustomizer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.method.HandlerMethod;
 
-import java.util.Arrays;
 import java.util.List;
 
 @Configuration
 public class SwaggerConfig {
 
-    @Value("${frontendURL}")
-    private String origin;
-    @Value("${server.port:8080}")
-    private String serverPort;
+    @Value("${backendURL}")
+    private String serverURL;
 
     @Bean
     public OpenAPI customOpenAPI() {
@@ -33,8 +26,11 @@ public class SwaggerConfig {
                 .info(apiInfo())
                 .servers(List.of(
                         new Server()
-                                .url(origin)
-                                .description("Development server")
+                                .url("http://localhost:8080")
+                                .description("Local server"),
+                        new Server()
+                                .url(serverURL)
+                                .description("Deployed server")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .components(new Components()
@@ -62,10 +58,4 @@ public class SwaggerConfig {
                 .bearerFormat("JWT")
                 .description("Enter JWT token only (without 'Bearer ' prefix)");
     }
-
-    /**
-     * 🔥 GLOBAL FIX:
-     * Hides @AuthenticationPrincipal from Swagger request body
-     */
-
 }

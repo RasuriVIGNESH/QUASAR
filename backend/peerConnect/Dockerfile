@@ -1,12 +1,41 @@
-# ===========================================================================
-# MODE 1 — GraalVM Native Image (ACTIVE)
-# Build : docker build -t peer-connect .
-# Result: ~80–150 MB image, ~100ms startup
-# ===========================================================================
+#====================================================
+#   AWS Lambda Container Image Support -> GaalVM Native Image
+#====================================================
 
-# ===============================
-# Build Stage — Native
-# ===============================
+#FROM ghcr.io/graalvm/native-image-community:25 AS build
+#
+#WORKDIR /app
+#
+#RUN microdnf install -y maven && microdnf clean all
+#
+#COPY pom.xml .
+#RUN mvn dependency:go-offline -B
+#
+#COPY src ./src
+#RUN mvn -Pnative package -DskipTests
+#
+#FROM debian:bookworm-slim
+#
+## Lambda Web Adapter — lets a normal HTTP app run on Lambda unchanged
+#COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.8.4 /lambda-adapter /opt/extensions/lambda-adapter
+#
+#RUN useradd -ms /bin/bash springuser
+#
+#WORKDIR /app
+#COPY --from=build /app/target/peer-connect .
+#RUN chown -R springuser:springuser /app
+#USER springuser
+#
+## Required by the adapter to know which port your app listens on
+#ENV PORT=8080
+#ENV AWS_LWA_PORT=8080
+#
+#EXPOSE 8080
+#ENTRYPOINT ["./peer-connect"]
+
+# =======================
+#  GraalVM Native Image
+# =======================
 FROM ghcr.io/graalvm/native-image-community:25 AS build
 
 WORKDIR /app
@@ -23,24 +52,13 @@ COPY src ./src
 RUN mvn -Pnative package -DskipTests
 
 FROM debian:bookworm-slim
-
-# Create non-root user (SECURITY BEST PRACTICE)
 RUN useradd -ms /bin/bash springuser
 
 WORKDIR /app
-
-# Copy native binary
 COPY --from=build /app/target/peer-connect .
-
-# Change ownership
 RUN chown -R springuser:springuser /app
-
-# Switch to non-root user
 USER springuser
-
 EXPOSE 8080
-
-# Native binary runs directly — no JVM flags needed
 ENTRYPOINT ["./peer-connect"]
 
 

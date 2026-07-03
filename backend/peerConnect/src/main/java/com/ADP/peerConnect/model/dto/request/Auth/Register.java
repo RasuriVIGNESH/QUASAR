@@ -2,10 +2,12 @@ package com.ADP.peerConnect.model.dto.request.Auth;
 
 
 import jakarta.validation.constraints.*;
+import lombok.Data;
 
 /**
  * Registration request DTO
  */
+@Data
 public class Register {
 
     @NotBlank(message = "Email is required")
@@ -26,7 +28,7 @@ public class Register {
 
     // --- FIELD UPDATED ---
     @NotNull(message = "College ID is required")
-    private Long collegeId; // Changed from String collage
+    private Long collegeId;
 
     @NotBlank(message = "Branch is required")
     private String branch;
@@ -38,72 +40,4 @@ public class Register {
 
     @Size(max = 500, message = "Bio must not exceed 500 characters")
     private String bio;
-
-    public Register() {}
-
-    // Getters and Setters
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    // --- GETTER AND SETTER UPDATED ---
-    public Long getCollegeId() {
-        return collegeId;
-    }
-
-    public void setCollegeId(Long collegeId) {
-        this.collegeId = collegeId;
-    }
-
-    public String getBranch() {
-        return branch;
-    }
-
-    public void setBranch(String branch) {
-        this.branch = branch;
-    }
-
-    public Integer getGraduationYear() {
-        return graduationYear;
-    }
-
-    public void setGraduationYear(Integer graduationYear) {
-        this.graduationYear = graduationYear;
-    }
-
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
 }

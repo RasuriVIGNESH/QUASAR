@@ -25,10 +25,7 @@ import java.util.Map;
 public class GlobalExceptionHandler {
     
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-    
-    /**
-     * Handle validation errors
-     */
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest request) {
@@ -45,13 +42,10 @@ public class GlobalExceptionHandler {
         
         errorResponse.put("validationErrors", validationErrors);
         
-        logger.warn("Validation error: {}", validationErrors);
+//        logger.warn("Validation error: {}", validationErrors);
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-    
-    /**
-     * Handle resource not found exceptions
-     */
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(
             ResourceNotFoundException ex, WebRequest request) {
@@ -59,13 +53,11 @@ public class GlobalExceptionHandler {
         Map<String, Object> errorResponse = createErrorResponse(
             HttpStatus.NOT_FOUND, ex.getMessage(), request);
         
-        logger.warn("Resource not found: {}", ex.getMessage());
+//        logger.warn("Resource not found: {}", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
     
-    /**
-     * Handle bad request exceptions
-     */
+
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequestException(
             BadRequestException ex, WebRequest request) {
@@ -73,35 +65,27 @@ public class GlobalExceptionHandler {
         Map<String, Object> errorResponse = createErrorResponse(
             HttpStatus.BAD_REQUEST, ex.getMessage(), request);
         
-        logger.warn("Bad request: {}", ex.getMessage());
+//        logger.warn("Bad request: {}", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
-    
-    /**
-     * Handle unauthorized exceptions
-     */
+
     @ExceptionHandler({UnauthorizedException.class, AuthenticationException.class, BadCredentialsException.class})
     public ResponseEntity<Map<String, Object>> handleUnauthorizedException(
             Exception ex, WebRequest request) {
         
         Map<String, Object> errorResponse = createErrorResponse(
             HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
-        
-        logger.warn("Unauthorized access: {}", ex.getMessage());
+
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
-    
-    /**
-     * Handle access denied exceptions
-     */
+
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
         
         Map<String, Object> errorResponse = createErrorResponse(
             HttpStatus.FORBIDDEN, "Access denied", request);
-        
-        logger.warn("Access denied: {}", ex.getMessage());
+
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
     
@@ -118,10 +102,7 @@ public class GlobalExceptionHandler {
         logger.warn("Conflict: {}", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
-    
-    /**
-     * Handle all other exceptions
-     */
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGlobalException(
             Exception ex, WebRequest request) {
@@ -132,10 +113,7 @@ public class GlobalExceptionHandler {
         logger.error("Unexpected error: ", ex);
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    
-    /**
-     * Create standardized error response
-     */
+
     private Map<String, Object> createErrorResponse(HttpStatus status, String message, WebRequest request) {
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("timestamp", LocalDateTime.now().toString());

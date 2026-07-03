@@ -14,29 +14,18 @@ import java.util.Optional;
  */
 @Repository
 public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
-    
-    /**
-     * Find user skills by user ID
-     */
-    @Query("SELECT us FROM UserSkill us JOIN FETCH us.skill JOIN FETCH us.user WHERE us.user.id = :userId ORDER BY us.createdAt DESC")
+
+    @Query("SELECT us FROM UserSkill us JOIN FETCH us.skill JOIN FETCH us.user WHERE us.user.id = :userId ")
     List<UserSkill> findByUserIdWithSkill(@Param("userId") String userId);
-    /**
-     * Find user skill by user ID and skill ID
-     */
+
     Optional<UserSkill> findByUserIdAndSkillId(String userId, Long skillId);
 
-    // For operations that need user + skill loaded
     @Query("SELECT us FROM UserSkill us JOIN FETCH us.user JOIN FETCH us.skill WHERE us.id = :id")
     Optional<UserSkill> findByIdWithAssociations(@Param("id") Long id);
-    /**
-     * Find user skill by user ID and skill name (case insensitive)
-     */
+
     @Query("SELECT us FROM UserSkill us JOIN us.skill s WHERE us.user.id = :userId AND LOWER(s.name) = LOWER(:skillName)")
     Optional<UserSkill> findByUserIdAndSkillNameIgnoreCase(@Param("userId") String userId, @Param("skillName") String skillName);
-    
-    /**
-     * Check if user has a specific skill
-     */
+
     @Query("SELECT COUNT(us) > 0 FROM UserSkill us JOIN us.skill s WHERE us.user.id = :userId AND LOWER(s.name) = LOWER(:skillName)")
     boolean existsByUserIdAndSkillNameIgnoreCase(@Param("userId") String userId, @Param("skillName") String skillName);
 

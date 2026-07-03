@@ -6,12 +6,11 @@ import com.ADP.peerConnect.model.dto.response.PagedResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
 import com.ADP.peerConnect.model.dto.response.SkillResponse;
 import com.ADP.peerConnect.model.entity.College;
-import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.Skill;
-import com.ADP.peerConnect.service.Impl.CollegeService;
-import com.ADP.peerConnect.service.Impl.UserService;
-import com.ADP.peerConnect.service.Interface.iProjectService;
-import com.ADP.peerConnect.service.Interface.iSkillService;
+import com.ADP.peerConnect.service.CollegeService;
+import com.ADP.peerConnect.service.ProjectService;
+import com.ADP.peerConnect.service.SkillService;
+import com.ADP.peerConnect.service.UserService;
 import com.ADP.peerConnect.util.Constants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -37,13 +36,13 @@ import java.util.stream.IntStream;
 public class publicEndpoints {
 
     @Autowired
-    private iProjectService projectService;
+    private ProjectService projectService;
 
     @Autowired
     private CollegeService collegeService;
 
     @Autowired
-    private iSkillService skillService;
+    private SkillService skillService;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -165,8 +164,6 @@ public class publicEndpoints {
         int projects=projectService.countAllProjects();
         int users=userService.getUserCount();
         return List.of(users,projects);
-
-
     }
 
 
@@ -175,20 +172,15 @@ public class publicEndpoints {
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Predefined skills retrieved successfully")
     })
-    public ResponseEntity< ApiResponse<List<SkillResponse>>> getPredefinedSkills() {
-        // Build list of SkillResponse from the PREDEFINED_SKILLS_MAP (preserves order)
+    public ResponseEntity<List<SkillResponse>> getPredefinedSkills() {
         List<SkillResponse> skills = new ArrayList<>();
         for (Map.Entry<String, String> entry : Constants.PREDEFINED_SKILLS_MAP.entrySet()) {
             SkillResponse sr = new SkillResponse();
             sr.setName(entry.getKey());
             sr.setCategory(entry.getValue());
-            sr.setIsPredefined(Boolean.TRUE);
             skills.add(sr);
         }
-
-        ApiResponse<List<SkillResponse>> response = ApiResponse.success(
-                "Predefined skills retrieved successfully", skills);
-
+        List<SkillResponse> response = skills;
         return ResponseEntity.ok(response);
     }
 

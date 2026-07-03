@@ -3,15 +3,17 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Calendar as CalendarPicker } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import {
-  X, ArrowLeft, ArrowRight, Check, Briefcase,
-  Target, Wrench, PlusCircle, Sparkles, Rocket, Lightbulb, Compass, Cpu, Search, Calendar
+  X, ArrowLeft, ArrowRight, Check, PlusCircle, Lightbulb, Compass, Cpu, Search, Calendar
 } from 'lucide-react';
 
 // Services
@@ -73,7 +75,7 @@ export default function CreateProject() {
     goals: '',
     objectives: '',
     skillsRequired: [],
-    maxTeamSize: '',
+    maxTeamSize: '1',
     techStack: [],
     githubRepo: '',
     demoUrl: '',
@@ -107,9 +109,9 @@ export default function CreateProject() {
 
   const handleInputChange = (field, value) => {
     if (field === 'category') {
-      const selectedCategory = projectCategories.find(cat => cat.name === value);
-      setFormData(prev => ({ ...prev, category: value, categoryId: selectedCategory ? selectedCategory.id : null }));
-    } else {
+        setFormData(prev => ({ ...prev, category: value, categoryId: null }));
+      }
+      else {
       setFormData(prev => ({ ...prev, [field]: value }));
     }
   };
@@ -192,7 +194,7 @@ export default function CreateProject() {
         categoryName: formData.category, // Keep categoryName for display/backend if needed
         goals: formData.goals,
         objectives: formData.objectives,
-        skills: formData.skillsRequired, // Backend expects 'skills'
+        skills: formData.skillsRequired.map(name => ({ name })),// Backend expects 'skills'
         maxTeamSize: parseInt(formData.maxTeamSize),
         techStack: formData.techStack,
         githubRepo: formData.githubRepo,
@@ -278,16 +280,40 @@ export default function CreateProject() {
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-slate-900 font-bold">Category *</Label>
-                      <Select value={formData.category} onValueChange={(v) => v === 'create_new' ? setShowCategoryDialog(true) : handleInputChange('category', v)}>
+                      <Select value={formData.categoryId ? String(formData.categoryId) : ""} onValueChange={(value) => {
+                                if (value === "create_new") {
+                                    setShowCategoryDialog(true);
+                                    return;
+                                }
+
+                                const selected = projectCategories.find(
+                                    c => String(c.id) === value
+                                );
+
+                                if (!selected) return;
+
+                                setFormData(prev => ({
+                                    ...prev,
+                                    category: selected.name,
+                                    categoryId: selected.id
+                                }));
+                            }}>
                         <SelectTrigger className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900">
                           <SelectValue placeholder="Select Domain" />
                         </SelectTrigger>
                         <SelectContent className="bg-white border-slate-200 shadow-xl">
-                          {projectCategories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.name} className="text-slate-900 hover:bg-slate-50">{cat.name}</SelectItem>
-                          ))}
-                          <SelectItem value="create_new" className="text-indigo-600 font-bold border-t border-slate-50">+ Add New Category</SelectItem>
-                        </SelectContent>
+                              {projectCategories.map((cat) => (
+                                <SelectItem
+                                  key={cat.id}
+                                  value={String(cat.id)}>
+                                  {cat.name.replace(/^in\s+/i, '')}
+                              </SelectItem>
+                              ))}
+
+                              <SelectItem value="create_new">
+                                + Add New Category
+                              </SelectItem>
+                            </SelectContent>
                       </Select>
                     </div>
                   </div>
@@ -334,34 +360,80 @@ export default function CreateProject() {
                 {currentStep === 3 && (
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="grid gap-2">
+                       <div className="grid gap-2">
                         <Label className="text-slate-900 font-bold">Team Size *</Label>
-                        <Input type="number" value={formData.maxTeamSize} onChange={e => handleInputChange('maxTeamSize', e.target.value)} className="h-14 rounded-2xl bg-white text-slate-900" />
+                        <Input
+                          type="number"
+                          min="1"
+                          value={formData.maxTeamSize}
+                          onChange={e => {
+                            const val = e.target.value;
+                            if (val !== '' && parseInt(val) < 1) {
+                              handleInputChange('maxTeamSize', '1');
+                            } else {
+                              handleInputChange('maxTeamSize', val);
+                            }
+                          }}
+                          className="h-14 rounded-2xl bg-white text-slate-900"
+                        />
                       </div>
                       <div className="grid gap-2">
                         <Label className="text-slate-900 font-bold">Expected Start Date</Label>
-                        <div className="relative">
-                          <Input
-                            type="date"
-                            value={formData.expectedStartDate}
-                            onChange={e => handleInputChange('expectedStartDate', e.target.value)}
-                            className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900 block appearance-none pr-10"
-                          />
-                          <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-black pointer-events-none" />
-                        </div>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className={cn(
+                                    "h-14 rounded-2xl bg-white border-slate-200 text-slate-900 w-full justify-start text-left font-normal",
+                                    !formData.expectedStartDate && "text-slate-400"
+                                )}
+                            >
+                              <Calendar className="mr-2 h-5 w-5 text-slate-500" />
+                              {formData.expectedStartDate
+                                  ? format(new Date(formData.expectedStartDate), "PPP")
+                                  : "Pick a start date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0 bg-white border-slate-200" align="start">
+                            <CalendarPicker
+                                mode="single"
+                                selected={formData.expectedStartDate ? new Date(formData.expectedStartDate) : undefined}
+                                onSelect={(date) => handleInputChange('expectedStartDate', date ? format(date, 'yyyy-MM-dd') : '')}
+                                initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-slate-900 font-bold">Expected End Date</Label>
-                      <div className="relative">
-                        <Input
-                          type="date"
-                          value={formData.expectedEndDate}
-                          onChange={e => handleInputChange('expectedEndDate', e.target.value)}
-                          className="h-14 rounded-2xl bg-white border-slate-200 text-slate-900 block appearance-none pr-10"
-                        />
-                        <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-black pointer-events-none" />
-                      </div>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                              type="button"
+                              variant="outline"
+                              className={cn(
+                                  "h-14 rounded-2xl bg-white border-slate-200 text-slate-900 w-full justify-start text-left font-normal",
+                                  !formData.expectedEndDate && "text-slate-400"
+                              )}
+                          >
+                            <Calendar className="mr-2 h-5 w-5 text-slate-500" />
+                            {formData.expectedEndDate
+                                ? format(new Date(formData.expectedEndDate), "PPP")
+                                : "Pick an end date"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0 bg-white border-slate-200" align="start">
+                          <CalendarPicker
+                              mode="single"
+                              selected={formData.expectedEndDate ? new Date(formData.expectedEndDate) : undefined}
+                              onSelect={(date) => handleInputChange('expectedEndDate', date ? format(date, 'yyyy-MM-dd') : '')}
+                              disabled={(date) => formData.expectedStartDate && date < new Date(formData.expectedStartDate)}
+                              initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                     </div>
                     <div className="grid gap-2">
                       <Label className="text-slate-900 font-bold">Tech Stack</Label>
@@ -381,7 +453,17 @@ export default function CreateProject() {
                         {formData.techStack.map((tech, index) => (
                           <Badge key={index} variant="secondary" className="bg-slate-100 text-slate-700 border-slate-200 font-medium text-sm px-3 py-1 rounded-full flex items-center">
                             {tech}
-                            <X className="ml-2 h-3 w-3 cursor-pointer" onClick={() => removeTechStack(tech)} />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                removeTechStack(tech);
+                              }}
+                              className="ml-2 hover:text-rose-600 transition-colors p-0.5 rounded-full hover:bg-slate-200 flex items-center justify-center outline-none"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
                           </Badge>
                         ))}
                       </div>
@@ -426,15 +508,29 @@ export default function CreateProject() {
           <DialogFooter>
             <Button variant="ghost" onClick={() => setShowCategoryDialog(false)}>Cancel</Button>
             <Button onClick={async () => {
-              if (!newCategoryName.trim()) return;
-              try {
-                const newCat = await projectService.createProjectCategory({ name: newCategoryName });
-                setProjectCategories(prev => [...prev, newCat]);
-                handleInputChange('category', newCat.name);
-                setShowCategoryDialog(false);
-                setNewCategoryName('');
-              } catch (err) { toast.error("Creation failed"); }
-            }} className="bg-indigo-600 text-white rounded-xl h-12 px-8">Create</Button>
+                    if (!newCategoryName.trim()) return;
+                    try {
+                      await projectService.createProjectCategory({ name: newCategoryName.trim() });
+
+                      const cats = await projectService.getProjectCategories();
+                      const categoriesList = Array.isArray(cats) ? cats : (cats?.data || []);
+                      setProjectCategories(categoriesList);
+                      
+                      const createdCat = categoriesList.find(c => c.name.toLowerCase() === newCategoryName.trim().toLowerCase());
+                      if (createdCat) {
+                        setFormData(prev => ({
+                          ...prev,
+                          category: createdCat.name,
+                          categoryId: createdCat.id
+                        }));
+                      }
+                      setShowCategoryDialog(false);
+                      setNewCategoryName('');
+                      toast.success('Category created');
+                    } catch {
+                      toast.error('Failed to create category');
+                    }
+                  }} className="bg-indigo-600 text-white rounded-xl h-12 px-8">Create</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

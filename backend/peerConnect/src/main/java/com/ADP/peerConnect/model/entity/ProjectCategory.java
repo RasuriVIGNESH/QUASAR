@@ -50,5 +50,4 @@ public class ProjectCategory {
     public ProjectCategory(String name) {
         this.name = name;
     }
-
 }

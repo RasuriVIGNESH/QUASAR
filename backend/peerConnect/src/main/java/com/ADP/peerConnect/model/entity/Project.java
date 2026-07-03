@@ -1,18 +1,14 @@
 package com.ADP.peerConnect.model.entity;
-
+import com.ADP.peerConnect.model.dto.request.Project.CreateProject;
 import com.ADP.peerConnect.model.enums.ProjectStatus;
-
-
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -24,7 +20,6 @@ import java.util.UUID;
 @AllArgsConstructor
 @Setter @Getter
 @Table(name = "projects", indexes = {
-        @Index(name = "idx_project_lead", columnList = "lead_id"),
         @Index(name = "idx_project_status", columnList = "status"),
         @Index(name = "idx_project_category", columnList = "category_id"),
         @Index(name = "idx_project_created", columnList = "created_at"),
@@ -35,6 +30,7 @@ public class Project {
 
     @Id
     @Column(name = "id", updatable = false, nullable = false)
+    @UuidGenerator
     private String id;
 
     @Column(name = "title", nullable = false, length = 100)
@@ -61,11 +57,6 @@ public class Project {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private ProjectStatus status = ProjectStatus.RECRUITING;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "lead_id", nullable = false)
-    @NotNull(message = "Project Lead is required")
-    private User lead;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -116,25 +107,14 @@ public class Project {
     @JsonManagedReference
     private List<ProjectSkill> projectSkills = new ArrayList<>();
 
-    @BatchSize(size = 25)
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<ProjectMember> projectMembers = new ArrayList<>();
-
-    @BatchSize(size = 25)
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<ProjectInvitation> projectInvitations = new ArrayList<>();
+    @OneToOne(mappedBy = "project",cascade = CascadeType.ALL, orphanRemoval = true)
+    private Team team;
 
     @BatchSize(size = 25)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<Task> tasks = new ArrayList<>();
 
-    @BatchSize(size = 25)
-    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonManagedReference
-    private List<ProjectJoinRequest> projectJoinRequests = new ArrayList<>();
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
@@ -145,22 +125,14 @@ public class Project {
     @JoinColumn(name = "event_id")
     private Event event;
 
+
+
     public boolean isFull() {
         return getCurrentTeamSize() >= maxTeamSize;
     }
 
     public boolean canAcceptNewMembers() {
         return status.canAcceptMembers() && !isFull();
-    }
-
-    public boolean isLead(String userId) {
-        return lead != null && lead.getId().equals(userId);
-    }
-
-    public boolean isMember(String userId) {
-        if (isLead(userId)) return true;
-        return projectMembers.stream()
-                .anyMatch(member -> member.getUser().getId().equals(userId));
     }
 
     public boolean canDelete() {
@@ -189,23 +161,30 @@ public class Project {
             this.techStack = null;
         }
     }
-    @PrePersist
-    private void ensureId() {
-        // Safety net: guarantees id is set before INSERT no matter which constructor
-        // or code path created this entity (e.g. new Project() + setters), since
-        // id has no @GeneratedValue and Hibernate will reject persist() with a null id.
-        if (this.id == null) {
-            this.id = UUID.randomUUID().toString();
-        }
-    }
 
-    public Project(String title, String description, String category, Integer maxTeamSize, User lead) {
+    public Project(String title, String description, String category, Integer maxTeamSize) {
         this();
         this.id = UUID.randomUUID().toString();
         this.title = title;
         this.description = description;
         this.category = null;
         this.maxTeamSize = maxTeamSize;
-        this.lead = lead;
+    }
+    public Project(CreateProject request, ProjectCategory category, Event event) {
+        this.title = request.getTitle();
+        this.description = request.getDescription();
+        this.maxTeamSize = request.getMaxTeamSize();
+        this.expectedStartDate = request.getExpectedStartDate();
+        this.expectedEndDate = request.getExpectedEndDate();
+        this.goals = request.getGoals();
+        this.problemStatement = request.getProblemStatement();
+        this.objectives = request.getObjectives();
+        this.techStack = request.getTechStack() != null
+                ? String.join(",", request.getTechStack())
+                : null;
+        this.githubRepo = request.getGithubRepo();
+        this.demoUrl = request.getDemoUrl();
+        this.category = category;
+        this.event = event;
     }
 }

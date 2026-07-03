@@ -40,7 +40,7 @@ export const RequestProvider = ({ children }) => {
     try {
       const [joinRequestsRes, invitationsRes, myProjectsResponse] = await Promise.all([
         joinRequestService.getMyJoinRequests(),
-        projectService.getReceivedInvitations(0, 10),
+        joinRequestService.getUserInvitationsAndRequests(0, 10),
         projectService.getMyProjects()
       ]);
 

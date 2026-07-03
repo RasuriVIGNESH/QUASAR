@@ -5,10 +5,7 @@ import com.ADP.peerConnect.model.entity.Event;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.enums.ProjectStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,9 +16,7 @@ import java.util.stream.Collectors;
  * Project response DTO
  */
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Setter @Getter
+@Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ProjectResponse {
     
@@ -43,7 +38,6 @@ public class ProjectResponse {
     private String demoUrl;
     private String notepadContent;
     private String objectives;
-    private UserResponse Lead;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private String categoryName;
@@ -72,10 +66,6 @@ public class ProjectResponse {
         this.objectives = project.getObjectives();
         if (project.getTechStack() != null) {
             this.techStack = project.getTechStackList();
-        }
-
-        if (project.getLead() != null) {
-            this.Lead = new UserResponse(project.getLead());
         }
     }
 }

@@ -1,8 +1,6 @@
 package com.ADP.peerConnect.model.entity;
 
 import com.ADP.peerConnect.model.dto.response.UserCardResponse;
-import com.ADP.peerConnect.model.dto.response.UserResponse;
-import com.ADP.peerConnect.model.enums.MessageType;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -23,7 +21,6 @@ import java.time.LocalDateTime;
 @Table(name = "chat_messages", indexes = {
         @Index(name = "idx_chat_message_project", columnList = "project_id"),
         @Index(name = "idx_chat_message_sender", columnList = "sender_id"),
-        @Index(name = "idx_chat_message_type", columnList = "message_type"),
         @Index(name = "idx_chat_message_created", columnList = "created_at"),
         @Index(name = "idx_chat_project_created", columnList = "project_id, created_at")
 })
@@ -49,10 +46,6 @@ public class ChatMessage {
     @NotBlank(message = "Message content is required")
     @Size(max = 1000, message = "Message must not exceed 1000 characters")
     private String message;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "message_type", nullable = false)
-    private MessageType messageType = MessageType.TEXT;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

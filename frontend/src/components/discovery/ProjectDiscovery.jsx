@@ -337,7 +337,7 @@ export default function ProjectDiscovery() {
                   : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300'
                   }`}
               >
-                {cat}
+                {cat.replace(/^in\s+/i, '')}
               </button>
             ))}
           </div>
@@ -404,7 +404,7 @@ export default function ProjectDiscovery() {
               >
                 <div className="flex justify-between items-start mb-3">
                   <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold text-[9px] px-2 py-0 rounded-lg">
-                    {p.categoryName || p.category?.name || 'Uncategorized'}
+                    {(p.categoryName || p.category?.name || 'Uncategorized').replace(/^in\s+/i, '')}
                   </Badge>
                   {p.status === 'RECRUITING' && (
                     <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">

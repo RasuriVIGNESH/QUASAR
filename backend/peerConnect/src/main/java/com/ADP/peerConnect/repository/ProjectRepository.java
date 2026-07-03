@@ -18,160 +18,144 @@ import java.util.Optional;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, String>, JpaSpecificationExecutor<Project> {
 
-    @Query("SELECT p FROM Project p " +
-            "JOIN FETCH p.lead " +
-            "LEFT JOIN FETCH p.category " +
-            "LEFT JOIN FETCH p.event " +
-            "WHERE p.id = :id")
-    Optional<Project> findByIdWithAssociations(@Param("id") String id);
-
-    // Find projects by Event ID
-    @Query("SELECT p FROM Project p " +
-            "LEFT JOIN FETCH p.lead " +
-            "LEFT JOIN FETCH p.category " +
-            "WHERE p.event = :eventId")
-    List<Project> findByEventIdWithAssociations(@Param("eventId") Long eventId);
-
-    // Find projects owned by a user
-    Page<Project> findByLeadIdOrderByCreatedAtDesc(String LeadId, Pageable pageable);
-
-    @Query(
-            value = "SELECT p FROM Project p " +
-                    "JOIN FETCH p.lead " +
-                    "LEFT JOIN FETCH p.category " +
-                    "LEFT JOIN FETCH p.event",
-            countQuery = "SELECT count(p) FROM Project p"
-    )
-    Page<Project> findAllWithCategory(Pageable pageable);
-
-    @Query("SELECT COUNT(DISTINCT p) FROM Project p WHERE p.lead.id = :userId OR EXISTS (SELECT 1 FROM ProjectMember pm WHERE pm.project.id = p.id AND pm.user.id = :userId)")
-    long countProjectsByLeadOrMember(@Param("userId") String userId);
-
-    @Query("SELECT pm.project FROM ProjectMember pm WHERE pm.user.id = :userId")
-    Page<Project> findByMemberId(@Param("userId") String userId, Pageable pageable);
+    // ── Single project ────────────────────────────────────────────────────────
 
     @Query("""
         SELECT p FROM Project p
-        WHERE p.status = 'RECRUITING'
-        AND (SELECT COUNT(pm) FROM ProjectMember pm WHERE pm.project.id = p.id) < p.maxTeamSize
-        """)
-    Page<Project> findProjectsWithAvailableSpots(Pageable pageable);
-
-    // Generic search supporting multiple filters via Specification
-    Page<Project> findAll(Specification<Project> spec, Pageable pageable);
-
-    /**
-     * Finds all projects a user is associated with (as Lead OR member).
-     * FIX: Added LEFT JOIN FETCH p.projectSkills and LEFT JOIN FETCH ps.skill
-     *      so ProjectCardResponse can access skillsRequired without LazyInitializationException.
-     */
-    @Query(
-            value = "SELECT DISTINCT p FROM Project p " +
-                    "JOIN FETCH p.lead " +
-                    "LEFT JOIN FETCH p.category " +
-                    "LEFT JOIN FETCH p.event " +
-//                    "LEFT JOIN FETCH p.projectSkills ps " +
-//                    "LEFT JOIN FETCH ps.skill " +
-                    "WHERE p.lead.id = :userId " +
-                    "OR EXISTS (SELECT 1 FROM ProjectMember pm WHERE pm.project.id = p.id AND pm.user.id = :userId) " +
-                    "ORDER BY p.updatedAt DESC",
-            countQuery = "SELECT count(DISTINCT p) FROM Project p " +
-                    "WHERE p.lead.id = :userId " +
-                    "OR EXISTS (SELECT 1 FROM ProjectMember pm WHERE pm.project.id = p.id AND pm.user.id = :userId)"
-    )
-    Page<Project> findProjectsByLeadOrMember(@Param("userId") String userId, Pageable pageable);
-
-    /**
-     * Finds projects for the "Discover" feature.
-     * FIX: Added LEFT JOIN FETCH p.projectSkills and LEFT JOIN FETCH ps.skill.
-     */
-    @Query(
-            value = """
-        SELECT DISTINCT p FROM Project p
-        JOIN FETCH p.lead
+        JOIN FETCH p.team t
+        JOIN FETCH t.lead
         LEFT JOIN FETCH p.category
         LEFT JOIN FETCH p.event
-        WHERE p.status = :status
-        AND (SELECT COUNT(pm) FROM ProjectMember pm WHERE pm.project.id = p.id) < p.maxTeamSize
-        AND p.lead.id != :userId
-        AND NOT EXISTS (
-            SELECT 1 FROM ProjectMember pm
-            WHERE pm.project.id = p.id
-            AND pm.user.id = :userId
-        )
-        ORDER BY p.createdAt DESC
-        """,
+        WHERE p.id = :id
+        """)
+    Optional<Project> findByIdWithAssociations(@Param("id") String id);
+
+    // ── List / page queries ───────────────────────────────────────────────────
+
+    @Query(
+            value = """
+            SELECT p FROM Project p
+            JOIN FETCH p.team t
+            JOIN FETCH t.lead
+            LEFT JOIN FETCH p.category
+            LEFT JOIN FETCH p.event
+            """,
+            countQuery = "SELECT COUNT(p) FROM Project p"
+    )
+    Page<Project> findAllWithCategory(Pageable pageable);
+
+    @Query(
+            value = """
+            SELECT DISTINCT p FROM Project p
+            JOIN FETCH p.team t
+            JOIN FETCH t.lead
+            LEFT JOIN FETCH p.category
+            LEFT JOIN FETCH p.event
+            WHERE t.lead.id = :userId
+               OR EXISTS (
+                   SELECT 1 FROM Team tm JOIN tm.members u
+                   WHERE tm.project.id = p.id AND u.id = :userId
+               )
+            ORDER BY p.updatedAt DESC
+            """,
             countQuery = """
-        SELECT COUNT(DISTINCT p) FROM Project p
-        WHERE p.status = :status
-        AND (SELECT COUNT(pm) FROM ProjectMember pm WHERE pm.project.id = p.id) < p.maxTeamSize
-        AND p.lead.id != :userId
-        AND NOT EXISTS (
-            SELECT 1 FROM ProjectMember pm
-            WHERE pm.project.id = p.id
-            AND pm.user.id = :userId
-        )
-        """
+            SELECT COUNT(DISTINCT p) FROM Project p
+            JOIN p.team t
+            WHERE t.lead.id = :userId
+               OR EXISTS (
+                   SELECT 1 FROM Team tm JOIN tm.members u
+                   WHERE tm.project.id = p.id AND u.id = :userId
+               )
+            """
+    )
+    Page<Project> findProjectsByLeadOrMember(
+            @Param("userId") String userId,
+            Pageable pageable);
+
+    @Query(
+            value = """
+            SELECT DISTINCT p FROM Project p
+            JOIN FETCH p.team t
+            JOIN FETCH t.lead
+            LEFT JOIN FETCH p.category
+            LEFT JOIN FETCH p.event
+            WHERE p.status = :status
+              AND p.currentTeamSize < p.maxTeamSize
+              AND t.lead.id != :userId
+              AND NOT EXISTS (
+                  SELECT 1 FROM Team tm JOIN tm.members u
+                  WHERE tm.project.id = p.id AND u.id = :userId
+              )
+            ORDER BY p.createdAt DESC
+            """,
+            countQuery = """
+            SELECT COUNT(DISTINCT p) FROM Project p
+            JOIN p.team t
+            WHERE p.status = :status
+              AND p.currentTeamSize < p.maxTeamSize
+              AND t.lead.id != :userId
+              AND NOT EXISTS (
+                  SELECT 1 FROM Team tm JOIN tm.members u
+                  WHERE tm.project.id = p.id AND u.id = :userId
+              )
+            """
     )
     Page<Project> findDiscoverProjectsForUser(
             @Param("userId") String userId,
             @Param("status") ProjectStatus status,
-            Pageable pageable
-    );
+            Pageable pageable);
 
-    /**
-     * Full-text search query.
-     * FIX: Added LEFT JOIN FETCH p.projectSkills / ps.skill so the returned
-     *      Project objects can be safely mapped to ProjectCardResponse.
-     */
     @Query(
             value = """
-        SELECT DISTINCT p
-        FROM Project p
-        JOIN FETCH p.lead
-        LEFT JOIN FETCH p.category
-        LEFT JOIN FETCH p.event
-        WHERE
-            (:query IS NULL OR
-             LOWER(p.title) LIKE LOWER(CONCAT('%', :query, '%'))
-             OR LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%')))
-        ORDER BY p.createdAt DESC
-        """,
+            SELECT DISTINCT p FROM Project p
+            JOIN FETCH p.team t
+            JOIN FETCH t.lead u
+            LEFT JOIN FETCH p.category
+            LEFT JOIN FETCH p.event
+            WHERE u.college.id = :collegeId
+            """,
             countQuery = """
-        SELECT COUNT(DISTINCT p)
-        FROM Project p
-        WHERE
-            (:query IS NULL OR
-             LOWER(p.title) LIKE LOWER(CONCAT('%', :query, '%'))
-             OR LOWER(p.description) LIKE LOWER(CONCAT('%', :query, '%')))
-        """
+            SELECT COUNT(DISTINCT p) FROM Project p
+            JOIN p.team t JOIN t.lead u
+            WHERE u.college.id = :collegeId
+            """
     )
-    Page<Project> searchProjects(
-            @Param("query") String query,
-            Pageable pageable
-    );
+    Page<Project> findByLeadCollegeId(
+            @Param("collegeId") Long collegeId,
+            Pageable pageable);
+
     @Query("""
-    SELECT ps
-    FROM ProjectSkill ps
-    JOIN FETCH ps.skill
-    WHERE ps.project.id IN :projectIds
-""")
+        SELECT p FROM Project p
+        WHERE p.status = 'RECRUITING'
+          AND p.currentTeamSize < p.maxTeamSize
+        """)
+    Page<Project> findProjectsWithAvailableSpots(Pageable pageable);
+
+    // ── Skills (hydration) ────────────────────────────────────────────────────
+
+    @Query("""
+        SELECT ps FROM ProjectSkill ps
+        JOIN FETCH ps.skill
+        WHERE ps.project.id IN :projectIds
+        """)
     List<ProjectSkill> findSkillsByProjectIds(
-            @Param("projectIds") List<String> projectIds
-    );
-    /**
-     * Find projects by college.
-     * FIX: Added JOIN FETCH so lead/category/projectSkills are loaded eagerly,
-     *      preventing LazyInitializationException in ProjectCardResponse.
-     */
-    @Query(
-            value = "SELECT DISTINCT p FROM Project p " +
-                    "JOIN FETCH p.lead u " +
-                    "LEFT JOIN FETCH p.category " +
-                    "LEFT JOIN FETCH p.event " +
-                    "WHERE u.college.id = :collegeId",
-            countQuery = "SELECT COUNT(DISTINCT p) FROM Project p " +
-                    "JOIN p.lead u WHERE u.college.id = :collegeId"
-    )
-    Page<Project> findByLeadCollegeId(@Param("collegeId") Long collegeId, Pageable pageable);
+            @Param("projectIds") List<String> projectIds);
+
+    // ── Counts ────────────────────────────────────────────────────────────────
+
+    @Query("""
+        SELECT COUNT(DISTINCT p) FROM Project p
+        JOIN p.team t
+        WHERE t.lead.id = :userId
+           OR EXISTS (
+               SELECT 1 FROM Team tm JOIN tm.members u
+               WHERE tm.project.id = p.id AND u.id = :userId
+           )
+        """)
+    long countProjectsByLeadOrMember(@Param("userId") String userId);
+
+    // ── Specification (search) ────────────────────────────────────────────────
+
+    Page<Project> findAll(Specification<Project> spec, Pageable pageable);
+    List<Project> findByEventId(Long eventId);
 }

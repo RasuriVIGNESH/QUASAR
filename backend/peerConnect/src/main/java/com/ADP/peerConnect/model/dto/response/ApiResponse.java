@@ -1,18 +1,9 @@
 package com.ADP.peerConnect.model.dto.response;
-
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
-/**
- * Generic API response wrapper
- */
-@NoArgsConstructor
-@AllArgsConstructor
-@Setter
-@Getter
+
+@Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
     

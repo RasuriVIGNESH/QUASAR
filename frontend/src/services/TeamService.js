@@ -3,60 +3,35 @@ import apiService from './api.js';
 class TeamService {
   // ===== INVITATION MANAGEMENT =====
 
-  // Invite user to project - matches TeamController endpoint  
-  async inviteUserToProject(projectId, invitationData) {
-    try {
-      if (!projectId) {
-        throw new Error('Project ID is required');
-      }
-      if (!invitationData.userId) {
-        throw new Error('User ID is required for invitation');
-      }
 
-      console.log('TeamService: Inviting user to project:', projectId, invitationData);
+async inviteUserToProject(projectId, invitedId, message = '') {
+  try {
+    if (!projectId) throw new Error('Project ID is required');
+    if (!invitedId) throw new Error('User ID is required');
 
-      // Map to backend request format
-      const requestData = {
-        userId: invitationData.userId,
-        role: invitationData.role || 'MEMBER',
-        message: invitationData.message || ''
-      };
-
-      // Note: TeamController uses /projects/projects/{projectId}/invitations
-      // Note: TeamController uses /projects/projects/{projectId}/invitations
-      const response = await apiService.post(`/teams/${projectId}/invitations`, requestData);
-      console.log('TeamService: Invitation sent:', response);
-
-      return response;
-    } catch (error) {
-      console.error('TeamService: Error inviting user:', error);
-      throw new Error(error.message || 'Failed to invite user to project');
-    }
+    return await apiService.post(`/${projectId}/Invite`, {
+      InvitedId: invitedId,
+      message
+    });
+  } catch (error) {
+    console.error('TeamService: Error inviting user:', error);
+    throw new Error(error.message || 'Failed to invite user to project');
   }
+}
 
   // Respond to invitation (accept/REJECTED) - matches TeamController endpoint
   async respondToInvitation(invitationId, response) {
-    try {
-      if (!invitationId) {
-        throw new Error('Invitation ID is required');
-      }
-      if (!['ACCEPTED', 'REJECTED'].includes(response)) {
-        throw new Error('Response must be ACCEPTED or REJECTED');
-      }
+  try {
+    if (!invitationId) throw new Error('Invitation ID is required');
+    if (!['ACCEPTED', 'REJECTED'].includes(response))
+      throw new Error('Response must be ACCEPTED or REJECTED');
 
-      console.log('TeamService: Responding to invitation:', invitationId, response);
-
-      // TeamController uses query parameter for response
-      const result = await apiService.put(`/projects/invitations/${invitationId}/respond`, null, {
-        response: response
-      });
-      console.log('TeamService: Invitation response recorded:', result);
-      return result;
-    } catch (error) {
-      console.error('TeamService: Error responding to invitation:', error);
-      throw new Error(error.message || 'Failed to respond to invitation');
-    }
+    return await apiService.put(`/${invitationId}/respond`, null, { response });
+  } catch (error) {
+    console.error('TeamService: Error responding to invitation:', error);
+    throw new Error(error.message || 'Failed to respond to invitation');
   }
+}
 
   // Cancel invitation - matches TeamController endpoint
   async cancelInvitation(invitationId) {
@@ -76,58 +51,43 @@ class TeamService {
   }
 
   // Get project invitations with pagination - matches TeamController endpoint
-  async getProjectInvitations(projectId, page = 0, size = 10) {
-    try {
-      if (!projectId) {
-        throw new Error('Project ID is required');
-      }
-
-      console.log('TeamService: Getting project invitations for:', projectId);
-      const params = { page, size };
-
-      // Note: TeamController uses /projects/projects/{projectId}/invitations
-      const response = await apiService.get(`/projects/${projectId}/invitations`, params);
-      console.log('TeamService: Project invitations retrieved:', response);
-      return response;
-    } catch (error) {
-      console.error('TeamService: Error getting project invitations:', error);
-      throw new Error(error.message || 'Failed to get project invitations');
-    }
+async getProjectInvitations(projectId, page = 0, size = 10) {
+  try {
+    if (!projectId) throw new Error('Project ID is required');
+    return await apiService.get(
+      `/projects/${projectId}/invitations-requests`,
+      { page, size }
+    );
+  } catch (error) {
+    console.error('TeamService: Error getting project invitations:', error);
+    throw new Error(error.message || 'Failed to get project invitations');
   }
+}
 
   // Get user invitations with optional status filter - matches TeamController endpoint
-  async getUserInvitations(status = null, page = 0, size = 10) {
-    try {
-      console.log('TeamService: Getting user invitations with status:', status);
-      const params = { page, size };
-      if (status) {
-        params.status = status;
-      }
-
-      const response = await apiService.get('/projects/invitations/received', params);
-
-      console.log('TeamService: User invitations retrieved:', response);
-      return response;
-    } catch (error) {
-      console.error('TeamService: Error getting user invitations:', error);
-      throw new Error(error.message || 'Failed to get user invitations');
-    }
+async getUserInvitations(status = 'PENDING', page = 0, size = 10) {
+  try {
+    return await apiService.get(
+      '/User/invitations-requests',
+      { page, size, status }
+    );
+  } catch (error) {
+    console.error('TeamService: Error getting user invitations:', error);
+    throw new Error(error.message || 'Failed to get user invitations');
   }
+}
   // Get pending invitations for current user - matches TeamController endpoint
-  async getPendingInvitations(page = 0, size = 10) {
-    try {
-      console.log('TeamService: Getting pending invitations...');
-      const params = { page, size };
-
-      const response = await apiService.get('/projects/invitations/received', params);
-
-      console.log('TeamService: Pending invitations retrieved:', response);
-      return response;
-    } catch (error) {
-      console.error('TeamService: Error getting pending invitations:', error);
-      throw new Error(error.message || 'Failed to get pending invitations');
-    }
+async getPendingInvitations(page = 0, size = 10) {
+  try {
+    return await apiService.get(
+      '/User/invitations-requests',
+      { page, size, status: 'PENDING' }
+    );
+  } catch (error) {
+    console.error('TeamService: Error getting pending invitations:', error);
+    throw new Error(error.message || 'Failed to get pending invitations');
   }
+}
 
   // ===== MEMBER MANAGEMENT =====
 
@@ -185,31 +145,6 @@ class TeamService {
     } catch (error) {
       console.error('TeamService: Error leaving project:', error);
       throw new Error(error.message || 'Failed to leave project');
-    }
-  }
-
-  // Update member role - matches TeamController endpoint
-  async updateMemberRole(projectId, memberId, role) {
-    try {
-      if (!projectId || !memberId) {
-        throw new Error('Project ID and Member ID are required');
-      }
-      if (!role) {
-        throw new Error('Role is required');
-      }
-
-      console.log('TeamService: Updating member role:', projectId, memberId, role);
-
-      // TeamController uses query parameter for role
-      const params = { role };
-
-      // Note: TeamController uses /projects/projects/{projectId}/members/{memberId}/role
-      const response = await apiService.put(`/projects/${projectId}/members/${memberId}/role`, null, params);
-      console.log('TeamService: Member role updated:', response);
-      return response;
-    } catch (error) {
-      console.error('TeamService: Error updating member role:', error);
-      throw new Error(error.message || 'Failed to update member role');
     }
   }
 

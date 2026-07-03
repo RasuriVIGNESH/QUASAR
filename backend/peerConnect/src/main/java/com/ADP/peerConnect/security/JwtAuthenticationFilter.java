@@ -1,6 +1,6 @@
 package com.ADP.peerConnect.security;
 
-import com.ADP.peerConnect.service.Impl.UserService;
+import com.ADP.peerConnect.service.UserService;
 import com.ADP.peerConnect.util.Constants;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

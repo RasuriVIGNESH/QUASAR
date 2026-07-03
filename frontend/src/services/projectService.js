@@ -1,5 +1,38 @@
 import apiService from './api.js';
 
+// Normalizes any backend list response into a plain array.
+// The backend is inconsistent about how lists come back:
+//  - a plain array (e.g. /projects/{id}/tasks)
+//  - a Spring Data Page/Slice, which serializes as { content: [...], pageable: {...}, ... }
+//  - occasionally the raw axios response if a caller forgot to unwrap it ({ data: [...] } or { data: { content: [...] } })
+// Without this, code like `members.some(...)` blows up with
+// "TypeError: members.some is not a function" whenever the backend switches
+// an endpoint to a paginated response.
+export function toArray(response) {
+  if (Array.isArray(response)) return response;
+  if (Array.isArray(response?.content)) return response.content;
+  if (Array.isArray(response?.data)) return response.data;
+  if (Array.isArray(response?.data?.content)) return response.data.content;
+  return [];
+}
+
+// Normalizes a Spring Data Page response into a plain, predictable shape,
+// regardless of whether the caller's apiService already unwrapped axios's
+// `.data` envelope. Always returns content/pagination fields, never undefined.
+export function toPage(response) {
+  const body = response?.data && !Array.isArray(response.data) ? response.data : response;
+  const content = toArray(response);
+  return {
+    content,
+    totalPages: body?.totalPages ?? (content.length ? 1 : 0),
+    totalElements: body?.totalElements ?? content.length,
+    number: body?.number ?? 0,
+    size: body?.size ?? content.length,
+    first: body?.first ?? true,
+    last: body?.last ?? true,
+  };
+}
+
 class ProjectService {
   // ===== CORE PROJECT OPERATIONS =====
 
@@ -86,8 +119,7 @@ class ProjectService {
         throw new Error('Project ID is required');
       }
       // Return only the response body
-      const response = await apiService.get(`/projects/${projectId}`);
-      return response.data;
+      return await apiService.get(`/projects/${projectId}`);
     } catch (error) {
       console.error(`Failed to get project ${projectId}:`, error);
       throw new Error(error.message || 'Failed to get project');
@@ -171,8 +203,8 @@ class ProjectService {
   async getProjectCategories() {
     try {
       const response = await apiService.get('/projects/categories');
-      // Handle both { data: [...] } and [...] response formats
-      return Array.isArray(response) ? response : (response.data || []);
+      // Handles plain arrays, Spring Page objects, and raw axios responses
+      return toArray(response);
     } catch (error) {
       console.error('Failed to get project categories:', error);
       throw new Error(error.message || 'Failed to get project categories');
@@ -185,8 +217,9 @@ class ProjectService {
       if (!categoryData.name) {
         throw new Error('Category name is required');
       }
-      const response = await apiService.post('/projects/categories', categoryData);
-      return response.data; // Return the newly created category object
+      return await apiService.post('/projects/categories', null, {
+        params: { name: categoryData.name }
+      });
     } catch (error) {
       console.error('Failed to create project category:', error);
       throw new Error(error.message || 'Failed to create project category');
@@ -333,95 +366,42 @@ class ProjectService {
     }
   }
 
-  // ===== INVITATION MANAGEMENT =====
+  // ===== JOIN REQUESTS & INVITATIONS =====
 
-  // Send project invitation - matches ProjectController endpoint
-  async sendInvitation(projectId, invitationData) {
-    try {
-      if (!projectId) {
-        throw new Error('Project ID is required');
-      }
-      if (!invitationData.invitedUserId) {
-        throw new Error('Invited User ID is required for invitation');
-      }
-
-      return await apiService.post(`/projects/${projectId}/invitations`, invitationData);
-    } catch (error) {
-      console.error(`Failed to send invitation:`, error);
-      throw new Error(error.message || 'Failed to send invitation');
-    }
-  }
-
-  // Get project invitations - matches ProjectController endpoint
-  async getProjectInvitations(projectId) {
+  // Get join requests + invitations for a project (paginated)
+  // GET /api/projects/{projectId}/invitations-requests
+  async getJoinRequests(projectId, { page = 0, size = 10 } = {}) {
     try {
       if (!projectId) {
         throw new Error('Project ID is required');
       }
 
-      return await apiService.get(`/projects/${projectId}/invitations`);
+      return await apiService.get(`/projects/${projectId}/invitations-requests`, { page, size });
     } catch (error) {
-      console.error(`Failed to get invitations:`, error);
-      throw new Error(error.message || 'Failed to get invitations');
+      console.error(`Failed to get join requests for project ${projectId}:`, error);
+      throw new Error(error.message || 'Failed to get join requests');
     }
   }
 
-  // Get received invitations - matches ProjectController endpoint
-  async getReceivedInvitations(page = 0, size = 10) {
+  // Accept or reject a join request / invitation
+  // PUT /api/{requestId}/respond
+  async respondToJoinRequest(requestId, response) {
     try {
-      const params = { page, size };
-      const response = await apiService.get('/projects/invitations/received', params);
-      if (Array.isArray(response)) {
-        return response;
+      if (!requestId) {
+        throw new Error('Request ID is required');
       }
-      return response?.content || response?.data || [];
-    } catch (error) {
-      console.error('Failed to get received invitations:', error);
-      throw new Error(error.message || 'Failed to get received invitations');
-    }
-  }
-
-  // Accept invitation - matches ProjectController endpoint
-  async acceptInvitation(invitationId) {
-    try {
-      if (!invitationId) {
-        throw new Error('Invitation ID is required');
+      if (!['ACCEPTED', 'REJECTED'].includes(response)) {
+        throw new Error('Response must be ACCEPTED or REJECTED');
       }
 
-      return await apiService.post(`/projects/invitations/${invitationId}/accept`);
+      return await apiService.put(`/${requestId}/respond`, { response });
     } catch (error) {
-      console.error(`Failed to accept invitation:`, error);
-      throw new Error(error.message || 'Failed to accept invitation');
+      console.error(`Failed to respond to request ${requestId}:`, error);
+      throw new Error(error.message || 'Failed to respond to request');
     }
   }
 
-  // Reject invitation - matches ProjectController endpoint
-  async rejectInvitation(invitationId) {
-    try {
-      if (!invitationId) {
-        throw new Error('Invitation ID is required');
-      }
 
-      return await apiService.post(`/projects/invitations/${invitationId}/reject`);
-    } catch (error) {
-      console.error(`Failed to reject invitation:`, error);
-      throw new Error(error.message || 'Failed to reject invitation');
-    }
-  }
-
-  // Cancel invitation - matches ProjectController endpoint
-  async cancelInvitation(invitationId) {
-    try {
-      if (!invitationId) {
-        throw new Error('Invitation ID is required');
-      }
-
-      return await apiService.post(`/projects/invitations/${invitationId}/cancel`);
-    } catch (error) {
-      console.error(`Failed to cancel invitation:`, error);
-      throw new Error(error.message || 'Failed to cancel invitation');
-    }
-  }
 
   // ===== PROJECT DISCOVERY =====
   async searchProjects(searchParams = {}) {
@@ -440,7 +420,7 @@ class ProjectService {
       if (searchParams.skills) {
         if (Array.isArray(searchParams.skills)) {
           searchParams.skills.forEach(skill =>
-            queryParams.append('skills', skill)
+              queryParams.append('skills', skill)
           );
         } else {
           queryParams.append('skills', searchParams.skills);
@@ -449,8 +429,8 @@ class ProjectService {
 
       if (searchParams.availableOnly !== undefined) {
         queryParams.append(
-          'availableOnly',
-          searchParams.availableOnly
+            'availableOnly',
+            searchParams.availableOnly
         );
       }
 
@@ -465,15 +445,15 @@ class ProjectService {
       const queryString = queryParams.toString();
 
       const endpoint = queryString
-        ? `/projectDiscovery/searchProjects?${queryString}`
-        : '/projectDiscovery/searchProjects';
+          ? `/projects/searchProjects?${queryString}`
+          : '/projects/searchProjects';
 
       return await apiService.get(endpoint);
 
     } catch (error) {
       console.error('Failed to search projects:', error);
       throw new Error(
-        error.message || 'Failed to search projects'
+          error.message || 'Failed to search projects'
       );
     }
   }
@@ -501,8 +481,8 @@ class ProjectService {
         this.getJoinedProjects(page, size)
       ]);
 
-      const ownedProjects = ownedResponse?.content || ownedResponse?.data?.content || [];
-      const joinedProjects = joinedResponse?.content || joinedResponse?.data?.content || [];
+      const ownedProjects = toArray(ownedResponse);
+      const joinedProjects = toArray(joinedResponse);
 
       // Combine and remove duplicates based on project ID
       const allProjects = [...ownedProjects];
@@ -545,8 +525,8 @@ class ProjectService {
       ]);
 
       const projectData = project?.data || project;
-      const tasksList = tasks?.data || tasks || [];
-      const membersList = members?.data || members || [];
+      const tasksList = toArray(tasks);
+      const membersList = toArray(members);
 
       const summary = {
         project: projectData,
@@ -556,13 +536,13 @@ class ProjectService {
           pendingTasks: tasksList.filter(task => !task.completed).length,
           totalMembers: membersList.length,
           completionRate: tasksList.length > 0
-            ? Math.round((tasksList.filter(task => task.completed).length / tasksList.length) * 100)
-            : 0
+              ? Math.round((tasksList.filter(task => task.completed).length / tasksList.length) * 100)
+              : 0
         },
         recentActivity: {
           lastTaskUpdate: tasksList.length > 0
-            ? tasksList.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0]
-            : null,
+              ? tasksList.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0]
+              : null,
           memberCount: membersList.length
         }
       };

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useRequests } from '../../contexts/RequestContext';
+import { joinRequestService } from '../../services/JoinRequestService';
 import RequestCard from './RequestCard';
 import { teamService } from '../../services/TeamService';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,14 +12,18 @@ import { Inbox } from 'lucide-react';
 export default function InvitationsTab() {
   const { receivedInvitations, loading, error, refresh } = useRequests();
 
-  const handleInvitationResponse = async (invitationId, response) => {
-    try {
-      await teamService.respondToInvitation(invitationId, response);
-      refresh();
-    } catch (err) {
-      console.error(err);
+ const handleInvitationResponse = async (invitationId, response) => {
+  try {
+    if (response === 'ACCEPTED') {
+      await joinRequestService.acceptJoinRequest(invitationId);
+    } else {
+      await joinRequestService.rejectJoinRequest(invitationId);
     }
-  };
+    refresh();
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   if (error) {
     return (

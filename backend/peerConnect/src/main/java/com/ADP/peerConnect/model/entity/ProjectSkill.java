@@ -1,5 +1,6 @@
 package com.ADP.peerConnect.model.entity;
 
+import com.ADP.peerConnect.model.enums.SkillLevel;
 import jakarta.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
@@ -23,8 +24,7 @@ import java.time.LocalDateTime;
 @Getter
 @Table(name = "project_skills", indexes = {
         @Index(name = "idx_project_skill_project", columnList = "project_id"),
-        @Index(name = "idx_project_skill_skill", columnList = "skill_id"),
-        @Index(name = "idx_project_skill_required", columnList = "is_required")
+        @Index(name = "idx_project_skill_skill", columnList = "skill_id")
 }, uniqueConstraints = {
         @UniqueConstraint(name = "uk_project_skill", columnNames = { "project_id", "skill_id" })
 })
@@ -46,22 +46,16 @@ public class ProjectSkill {
     @NotNull(message = "Skill is required")
     private Skill skill;
 
-    @Column(name = "is_required", nullable = false)
-    private Boolean isRequired = true;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "required_level")
-    private com.ADP.peerConnect.model.enums.SkillLevel requiredLevel;
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private SkillLevel requiredLevel;
 
 
 
-    public ProjectSkill(Project project, Skill skill, Boolean isRequired) {
+
+    public ProjectSkill(Project project, Skill skill,SkillLevel level) {
         this.project = project;
         this.skill = skill;
-        this.isRequired = isRequired;
+        this.requiredLevel=level;
     }
 }

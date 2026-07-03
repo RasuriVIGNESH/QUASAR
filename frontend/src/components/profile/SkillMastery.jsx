@@ -35,7 +35,7 @@ export default function SkillMastery() {
                     skillsService.getUserSkillsByUserId(userProfile?.id),
                     skillsService.getPredefinedSkills()
                 ]);
-                setSkills(userSkillsRes?.data || []);
+                setSkills(Array.isArray(userSkillsRes?.data) ? userSkillsRes.data : []);
                 setPredefinedSkills(
                     Array.isArray(predData?.data) ? predData.data : []
                 );

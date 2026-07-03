@@ -38,7 +38,7 @@ export default function MyProjects() {
     try {
       setLoading(true);
       const res = await projectService.getMyProjects();
-      const projectList = res?.content || res?.data?.content || res?.data || (Array.isArray(res) ? res : []);
+      const projectList = res?.content || res?.data?.content || [];
       setProjects(projectList);
       setFilteredProjects(projectList);
     } catch (err) {
@@ -144,7 +144,7 @@ export default function MyProjects() {
                 <CardContent className="p-5 flex flex-col h-full">
                   <div className="flex items-start justify-between mb-3">
                     <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold text-[9px] px-2 py-0 rounded-lg">
-                      {project.categoryName || 'General'}
+                      {(project.categoryName || project.category?.name || 'General').replace(/^in\s+/i, '')}
                     </Badge>
                     <Badge variant="outline" className="text-slate-500 border-slate-200 font-semibold text-[9px] px-2 py-0">
                       {project.status || 'Active'}

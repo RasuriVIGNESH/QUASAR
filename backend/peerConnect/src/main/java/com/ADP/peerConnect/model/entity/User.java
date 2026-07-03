@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import org.hibernate.annotations.UuidGenerator;
 
 @Entity
 @AllArgsConstructor
@@ -40,8 +41,11 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User {
 
+
+    // personal info
     @Id
     @Column(name = "id", updatable = false, nullable = false)
+    @UuidGenerator
     private String id;
 
     @Email(message = "Email should be valid")
@@ -108,11 +112,14 @@ public class User {
     @Column(name = "portfolio_url")
     private String portfolioUrl;
 
-    @Column(name = "linkedin_id")
-    private String linkedinId;
-
     @Column(name = "github_id")
     private String githubId;
+
+
+    @BatchSize(size = 25)
+    @ManyToMany(mappedBy = "members", fetch = FetchType.LAZY)
+    private Set<Team> teams = new HashSet<>();
+
 
     @BatchSize(size = 25)
     @ManyToMany(fetch = FetchType.LAZY)
@@ -126,35 +133,5 @@ public class User {
             }
     )
     private Set<Project> recommendedProjects = new HashSet<>();
-
-    @CreationTimestamp
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-
-
-    public void addRecommendedProject(Project project) {
-        this.recommendedProjects.add(project);
-    }
-
-    public void removeRecommendedProject(Project project) {
-        this.recommendedProjects.remove(project);
-    }
-    public void setIsVerified(boolean verified) {
-        this.isVerified = verified;
-    }
-    public void addUserSkill(UserSkill userSkill) {
-        userSkills.add(userSkill);
-        userSkill.setUser(this);
-    }
-
-    public void removeUserSkill(UserSkill userSkill) {
-        userSkills.remove(userSkill);
-        userSkill.setUser(null);
-    }
 
 }

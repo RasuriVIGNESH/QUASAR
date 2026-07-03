@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { meetingRoomService } from '../../services/MeetingRoomService';
 import StickyNotes from './StickyNotes';
 
-export default function MeetingRooms({ projectId, projectName, isProjectLead }) {
+export default function MeetingRooms({ projectId, projectName, isProjectLead, isMember }) {
     const [view, setView] = useState('grid'); // 'grid' | 'editor'
     const [rooms, setRooms] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -120,7 +120,7 @@ export default function MeetingRooms({ projectId, projectName, isProjectLead }) 
                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{projectName} Collaborative Hubs</p>
                             </div>
 
-                            {isProjectLead && (
+                            {isMember && (
                                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                                     <DialogTrigger asChild>
                                         <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-2xl h-12 px-6 font-bold shadow-lg shadow-indigo-900/20">

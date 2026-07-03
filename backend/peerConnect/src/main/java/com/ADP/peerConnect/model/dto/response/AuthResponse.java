@@ -1,18 +1,7 @@
 package com.ADP.peerConnect.model.dto.response;
+import lombok.*;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
-/**
- * Authentication response DTO
- */
-
-@NoArgsConstructor
-@AllArgsConstructor
-@Setter
-@Getter
+@Data
 public class AuthResponse {
     
     private String accessToken;

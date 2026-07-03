@@ -1,7 +1,6 @@
 package com.ADP.peerConnect.repository;
 
 import com.ADP.peerConnect.model.entity.ChatMessage;
-import com.ADP.peerConnect.model.enums.MessageType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
