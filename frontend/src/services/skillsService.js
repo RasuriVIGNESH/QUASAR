@@ -223,16 +223,14 @@ class SkillsService {
         if (!skillsList || skillsList.length === 0)
             throw new Error('At least one skill is required');
 
-        const payload = {
-            skills: skillsList.map(s => ({
-            skillName: s.skillName || s.skill?.name || s.name,
-            level: s.level || 'BEGINNER',
-            experience: String(s.experience || '0'),
-            category: s.category || s.skill?.category || ''
-            }))
-        };
+            const payload = skillsList.map(s => ({
+                skillName: s.skillName || s.skill?.name || s.name,
+                level: s.level || 'BEGINNER',
+                experience: String(s.experience || '0'),
+                category: s.category || s.skill?.category || ''
+            }));
 
-        const response = await apiService.post('/skills/batch', payload);
+            const response = await apiService.post('/skills/batch', payload);
 
         if (currentUser?.id)
             apiService.invalidateCache(`/students/users/${currentUser.id}/skills`);

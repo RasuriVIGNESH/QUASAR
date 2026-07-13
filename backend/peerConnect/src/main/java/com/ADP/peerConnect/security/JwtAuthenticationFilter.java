@@ -22,8 +22,6 @@ import java.io.IOException;
  */
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
-
     @Autowired
     private JwtTokenProvider tokenProvider;
 
@@ -69,7 +67,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         }catch (io.jsonwebtoken.ExpiredJwtException ex) {
 
-            logger.warn("JWT token expired");
+//            logger.warn("JWT token expired");
 
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
@@ -86,7 +84,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }catch (Exception ex) {
 
-            logger.error("Could not set user authentication", ex);
+//            logger.error("Could not set user authentication", ex);
 
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");

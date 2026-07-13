@@ -20,14 +20,15 @@ import { teamService } from '@/services/TeamService';
 // --- HELPER COMPONENTS ---
 
 // Empty State Illustration Component
-const EmptyStateIllustration = ({ icon: Icon, title, description }) => (
-  <div className="flex flex-col items-center justify-center py-12 text-center">
-    <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
-      <Icon className="text-indigo-600" size={32} />
+const EmptyStateIllustration = ({ icon: Icon, title, description, children }) => (
+    <div className="flex flex-col items-center justify-center py-12 text-center">
+      <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4">
+        <Icon className="text-indigo-600" size={32} />
+      </div>
+      <h3 className="text-slate-900 font-bold text-sm mb-1">{title}</h3>
+      <p className="text-slate-400 text-xs mb-4">{description}</p>
+      {children}
     </div>
-    <h3 className="text-slate-900 font-bold text-sm mb-1">{title}</h3>
-    <p className="text-slate-400 text-xs">{description}</p>
-  </div>
 );
 
 // Tech Stack Tags Component
@@ -244,10 +245,26 @@ export default function Dashboard() {
                 ) : (
                   <div className="col-span-full bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm">
                     <EmptyStateIllustration
-                      icon={Briefcase}
-                      title="No Active Projects"
-                      description="Create your first project to get started"
-                    />
+                        icon={Briefcase}
+                        title="No Active Projects"
+                        description="Create your first project to get started"
+                    >
+                      <div className="flex items-center gap-3">
+                        <Button
+                            onClick={() => navigate('/projects/create')}
+                            className="h-9 px-4 bg-slate-900 text-white text-xs font-bold rounded-lg hover:bg-slate-800"
+                        >
+                          Create Project
+                        </Button>
+                        <Button
+                            onClick={() => navigate('/discover/projects')}
+                            variant="outline"
+                            className="h-9 px-4 border border-slate-300 text-xs font-bold rounded-lg text-slate-700 hover:bg-slate-50"
+                        >
+                          Explore Projects
+                        </Button>
+                      </div>
+                    </EmptyStateIllustration>
                   </div>
                 )}
               </div>

@@ -30,10 +30,10 @@ export default function Register() {
           dataService.getColleges()
         ]);
         setStaticData({
-          branches: b.data || [],
-          graduationYears: y.data || [],
-          colleges: c.data || []
-        });
+  branches: Array.isArray(b) ? b : b?.data || [],
+  graduationYears: Array.isArray(y) ? y : y?.data || [],
+  colleges: Array.isArray(c) ? c : c?.data || []
+});
       } catch (err) {
         console.error("Data fetch failed");
       }
