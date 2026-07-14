@@ -102,6 +102,6 @@ public class TeamService {
     }
     @Transactional(readOnly = true)
     public boolean isProjectMember(String projectId, String userId) {
-        return teamRepo.isInTeam(projectId, userId);
+        return teamRepo.isInTeam(projectId, userId) || teamRepo.isLead(projectId, userId);
     }
 }

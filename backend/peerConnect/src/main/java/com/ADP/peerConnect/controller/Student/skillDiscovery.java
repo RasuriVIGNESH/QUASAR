@@ -30,17 +30,17 @@ public class skillDiscovery {
     @Autowired
     private ModelMapper modelMapper;
 
-    /**
-     * Find skills by name
-     */
-    @GetMapping("/by-name/{name}")
-    public ResponseEntity<List<SkillResponse>> findByName(@PathVariable String name ) {
-        List<Skill> skills = skillService.findByName(name);
-        List<SkillResponse> skillResponses = skills.stream()
-                .map(skill -> modelMapper.map(skill, SkillResponse.class))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(skillResponses);
-    }
+//    /**
+//     * Find skills by name
+//     */
+//    @GetMapping("/by-name/{name}")
+//    public ResponseEntity<List<SkillResponse>> findByName(@PathVariable String name ) {
+//        List<Skill> skills = skillService.findByName(name);
+//        List<SkillResponse> skillResponses = skills.stream()
+//                .map(skill -> modelMapper.map(skill, SkillResponse.class))
+//                .collect(Collectors.toList());
+//        return ResponseEntity.ok(skillResponses);
+//    }
     /**
      * Search skills by name
      */

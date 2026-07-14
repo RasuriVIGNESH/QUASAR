@@ -66,21 +66,37 @@ public class RequestInvitationController {
         return new ResponseEntity<>(savedRequest, HttpStatus.OK);
     }
 
+
     @GetMapping("/projects/{projectId}/invitations-requests")
-    @Operation(summary = "Get join requests and invitations for a project")
-    public ResponseEntity<Page<InvitationsAndRequestsResponse>> getProjectJoinRequests(
+    public ResponseEntity<PagedResponse<InvitationsAndRequestsResponse>> getProjectJoinRequests(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @PathVariable String projectId,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size);
-        return ResponseEntity.ok(
+
+        Page<InvitationsAndRequestsResponse> requests =
                 service.getProjectJoinRequests(
-                                projectId,
-                                currentUser.getId(),pageable
-                        )
-        );
+                        projectId,
+                        currentUser.getId(),
+                        pageable
+                );
+
+        PagedResponse<InvitationsAndRequestsResponse> response =
+                new PagedResponse<>(
+                        requests.getContent(),
+                        requests.getNumber(),
+                        requests.getSize(),
+                        requests.getTotalElements(),
+                        requests.getTotalPages()
+                );
+
+        response.setFirst(requests.isFirst());
+        response.setLast(requests.isLast());
+        response.setNumberOfElements(requests.getNumberOfElements());
+
+        return ResponseEntity.ok(response);
     }
     @GetMapping("/User/invitations-requests")
     @Operation(summary = "Invitations and requests ->  for user")

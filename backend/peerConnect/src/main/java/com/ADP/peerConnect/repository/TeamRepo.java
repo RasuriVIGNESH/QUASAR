@@ -43,14 +43,12 @@ public interface TeamRepo extends JpaRepository<Team, String> {
             @Param("userId") String userId);
 
     @Query("""
-        SELECT COUNT(u) > 0 FROM Team t
-        JOIN t.members u
-        WHERE t.project.id = :projectId AND u.id = :userId
-        OR t.lead.id = :userId AND t.project.id = :projectId
-        """)
-    boolean isInTeam(
-            @Param("projectId") String projectId,
-            @Param("userId") String userId);
+SELECT CASE WHEN COUNT(t) > 0 THEN true ELSE false END
+FROM Team t
+WHERE t.project.id = :projectId
+AND (t.lead.id = :userId OR :userId IN (SELECT m.id FROM t.members m))
+""")
+    boolean isInTeam(@Param("projectId") String projectId, @Param("userId") String userId);
 
     @Query("""
         SELECT t.lead.id = :userId FROM Team t

@@ -1,5 +1,6 @@
 package com.ADP.peerConnect.controller;
 
+import com.ADP.peerConnect.model.dto.request.CreateCollege;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.CollegeResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
@@ -21,9 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,6 +73,13 @@ public class publicEndpoints {
                 projects.getTotalPages()
         );
 
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/colleges")
+    public ResponseEntity<CollegeResponse> newCollege(@RequestBody CreateCollege college) {
+        College createdCollege = collegeService.createCollege(college.getName(), college.getLocation());
+        CollegeResponse response = new CollegeResponse(createdCollege);
         return ResponseEntity.ok(response);
     }
     @GetMapping("/colleges")

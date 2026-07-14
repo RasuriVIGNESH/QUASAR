@@ -20,7 +20,6 @@ public class InvitationsAndRequestsService {
     private static final Logger log = LoggerFactory.getLogger(InvitationsAndRequestsService.class);
 
     @Autowired private InvitationsAndRequestsRepository repository;
-    @Autowired private ProjectRepository projectRepository;
     @Autowired private TeamService teamService;
     @Autowired private UserService userService;
     @Autowired private ProjectService projectService;
@@ -148,45 +147,60 @@ public class InvitationsAndRequestsService {
         return entity;
     }
 
-    private InvitationsAndRequests findJoinRequestById(Long id) {
-        InvitationsAndRequests entity = repository.findByIdWithAssociations(id)
+    private InvitationsAndRequests findRequestById(Long id) {
+        return repository.findByIdWithAssociations(id)
                 .orElseThrow(() -> new ResourceNotFoundException(
-                        "Join request not found with ID: " + id));
-        if (!entity.isJoinRequest()) {
-            throw new ResourceNotFoundException("Join request not found with ID: " + id);
-        }
-        return entity;
+                        "Invitation or join request not found with ID: " + id));
     }
 
-    public void accept(Long requestId, String currentuser) {
-        InvitationsAndRequests request = findJoinRequestById(requestId);
+    public void accept(Long requestId, String currentUserId) {
+        InvitationsAndRequests request = findRequestById(requestId);
         Project project = request.getProject();
+
         if (!request.isPending()) {
-            throw new ConflictException("This join request has already been responded to.");
+            throw new ConflictException("This request has already been responded to.");
         }
         if (project.isFull()) {
-            throw new ConflictException("Cannot accept request, the project team is now full.");
+            throw new ConflictException("Cannot accept, the project team is now full.");
         }
-        if (!projectService.isProjectMember(project.getId(), currentuser)) {
-            throw new UnauthorizedException("Only the project members can accept join requests.");
+
+        if (request.isJoinRequest()) {
+            if (!projectService.isProjectMember(project.getId(), currentUserId)) {
+                throw new UnauthorizedException("Only the project members can accept join requests.");
+            }
+        } else {
+            if (!request.getTargetUser().getId().equals(currentUserId)) {
+                throw new UnauthorizedException("Only the invited user can accept this invitation.");
+            }
         }
 
         request.accept();
         repository.save(request);
 
         teamService.addMember(project.getId(), request.getTargetUser().getId());
+
+        if (project.getCurrentTeamSize() >= project.getMaxTeamSize()) {
+            project.setStatus(ProjectStatus.IN_PROGRESS);
+        }
     }
 
-    // ── Reject join request ──────────────────────────────────────────────────
+    // ── Reject join request / invitation ─────────────────────────────────────
 
-    public void reject(Long requestId, String leadId) {
-        InvitationsAndRequests request = findJoinRequestById(requestId);
+    public void reject(Long requestId, String currentUserId) {
+        InvitationsAndRequests request = findRequestById(requestId);
 
-        if (!projectService.isProjectMember(request.getProject().getId(), leadId)) {
-            throw new UnauthorizedException("Only the project lead can reject join requests.");
-        }
         if (!request.isPending()) {
-            throw new ConflictException("This join request has already been responded to.");
+            throw new ConflictException("This request has already been responded to.");
+        }
+
+        if (request.isJoinRequest()) {
+            if (!projectService.isProjectMember(request.getProject().getId(), currentUserId)) {
+                throw new UnauthorizedException("Only the project lead can reject join requests.");
+            }
+        } else {
+            if (!request.getTargetUser().getId().equals(currentUserId)) {
+                throw new UnauthorizedException("Only the invited user can reject this invitation.");
+            }
         }
 
         request.reject();
@@ -196,7 +210,7 @@ public class InvitationsAndRequestsService {
     // ── Cancel join request ───────────────────────────────────────────────────
 
     public void cancelJoinRequest(Long requestId, String userId) {
-        InvitationsAndRequests request = findJoinRequestById(requestId);
+        InvitationsAndRequests request = findRequestById(requestId);
 
         if (!request.getTargetUser().getId().equals(userId)) {
             throw new UnauthorizedException("You can only cancel your own join requests.");

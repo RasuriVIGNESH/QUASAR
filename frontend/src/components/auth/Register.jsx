@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CheckCircle2, ArrowRight, ArrowLeft, Loader2, Github } from 'lucide-react';
+import { CheckCircle2, ArrowRight, ArrowLeft, Loader2, Github, Eye, EyeOff, Plus, X } from 'lucide-react';
 import { dataService } from '../../services/dataService.js';
 import { toast } from "sonner";
 
@@ -17,6 +17,12 @@ export default function Register() {
   });
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showAddCollege, setShowAddCollege] = useState(false);
+  const [newCollegeName, setNewCollegeName] = useState('');
+  const [newCollegeLocation, setNewCollegeLocation] = useState('');
+  const [addingCollege, setAddingCollege] = useState(false);
   const [staticData, setStaticData] = useState({ branches: [], graduationYears: [], colleges: [] });
   const { signup, loginWithGitHub } = useAuth();
   const navigate = useNavigate();
@@ -43,6 +49,32 @@ export default function Register() {
 
   const handleInputChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
   const handleSelectChange = (name, value) => setFormData({ ...formData, [name]: value });
+
+  const handleAddCollege = async () => {
+    if (!newCollegeName.trim()) return toast.error("College name is required");
+    if (!newCollegeLocation.trim()) return toast.error("Location is required");
+    try {
+      setAddingCollege(true);
+      const created = await dataService.createCollege({
+        name: newCollegeName.trim(),
+        location: newCollegeLocation.trim()
+      });
+      const college = created?.data || created;
+      setStaticData((prev) => ({
+        ...prev,
+        colleges: [...prev.colleges, college]
+      }));
+      setFormData((prev) => ({ ...prev, collegeId: college.id }));
+      setShowAddCollege(false);
+      setNewCollegeName('');
+      setNewCollegeLocation('');
+      toast.success("College added");
+    } catch (err) {
+      toast.error(err.message || "Failed to add college");
+    } finally {
+      setAddingCollege(false);
+    }
+  };
 
   const nextStep = (e) => { e.preventDefault(); setStep(step + 1); };
 
@@ -195,7 +227,7 @@ export default function Register() {
 
                       <div className="space-y-2">
                         <Label className="text-xs font-semibold text-slate-700">Institute</Label>
-                        <Select onValueChange={(v) => handleSelectChange('collegeId', v)}>
+                        <Select value={formData.collegeId ? String(formData.collegeId) : undefined} onValueChange={(v) => handleSelectChange('collegeId', v)}>
                           {/* Added text-slate-900 to Trigger */}
                           <SelectTrigger className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900">
                             <SelectValue placeholder="Select University" />
@@ -204,11 +236,56 @@ export default function Register() {
                           <SelectContent className="bg-white border-slate-200">
                             {staticData.colleges.map(c => (
                               <SelectItem key={c.id} value={String(c.id)} className="text-slate-900 focus:bg-slate-100">
-                                {c.name}
+                                <span className="flex items-baseline gap-1.5">
+                                  <span>{c.name}</span>
+                                  {c.location && (
+                                    <span className="text-xs text-slate-400">— {c.location}</span>
+                                  )}
+                                </span>
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+
+                        {!showAddCollege ? (
+                          <button
+                            type="button"
+                            onClick={() => setShowAddCollege(true)}
+                            className="flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900 mt-1"
+                          >
+                            <Plus size={12} /> Can't find your college? Add it
+                          </button>
+                        ) : (
+                          <div className="mt-2 p-3 border border-slate-200 rounded-lg bg-slate-50 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs font-bold text-slate-700">Add your college</span>
+                              <button type="button" onClick={() => setShowAddCollege(false)} className="text-slate-400 hover:text-slate-700">
+                                <X size={14} />
+                              </button>
+                            </div>
+                            <Input
+                              placeholder="College name"
+                              value={newCollegeName}
+                              onChange={(e) => setNewCollegeName(e.target.value)}
+                              className="h-10 bg-white border-slate-200 rounded-lg text-sm text-slate-900"
+                            />
+                            <Input
+                              placeholder="Location"
+                              value={newCollegeLocation}
+                              onChange={(e) => setNewCollegeLocation(e.target.value)}
+                              className="h-10 bg-white border-slate-200 rounded-lg text-sm text-slate-900"
+                              required
+                            />
+                            <Button
+                              type="button"
+                              onClick={handleAddCollege}
+                              disabled={addingCollege}
+                              className="w-full h-9 bg-slate-900 text-white text-xs font-bold rounded-lg"
+                            >
+                              {addingCollege ? <Loader2 size={14} className="animate-spin" /> : "Add College"}
+                            </Button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
@@ -255,11 +332,21 @@ export default function Register() {
                       </div>
                       <div className="space-y-2">
                         <Label className="text-xs font-semibold text-slate-700">Password</Label>
-                        <Input name="password" type="password" placeholder="••••••••" onChange={handleInputChange} value={formData.password} className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900" required />
+                        <div className="relative">
+                          <Input name="password" type={showPassword ? "text" : "password"} placeholder="••••••••" onChange={handleInputChange} value={formData.password} className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900 pr-10" required />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                            {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label className="text-xs font-semibold text-slate-700">Confirm Password</Label>
-                        <Input name="confirmPassword" type="password" placeholder="••••••••" onChange={handleInputChange} value={formData.confirmPassword} className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900" required />
+                        <div className="relative">
+                          <Input name="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" onChange={handleInputChange} value={formData.confirmPassword} className="h-12 bg-slate-50 border-slate-200 rounded-lg focus:ring-slate-900 text-slate-900 pr-10" required />
+                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700">
+                            {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                          </button>
+                        </div>
                       </div>
                     </motion.div>
                   )}

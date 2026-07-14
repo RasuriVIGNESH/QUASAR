@@ -54,16 +54,13 @@ const TechStackTags = ({ techStack = [] }) => {
 
 // Project Progress Bar Component
 const ProjectProgress = ({ currentTeamSize, maxTeamSize }) => {
-  const percentage = Math.round(((currentTeamSize + 1) / maxTeamSize) * 100);
+  const percentage = Math.round((currentTeamSize / maxTeamSize) * 100);
   const isNearFull = percentage >= 80;
 
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between items-center">
         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Team Capacity</span>
-        <span className={`text-[10px] font-bold ${isNearFull ? 'text-amber-600' : 'text-slate-600'}`}>
-          {currentTeamSize + 1}/{maxTeamSize}
-        </span>
       </div>
       <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
         <div
@@ -235,7 +232,7 @@ export default function Dashboard() {
                           <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 rounded-lg">
                             <Users size={12} className="text-slate-400" />
                             <span className="text-[11px] font-black text-slate-700">
-                              {p.currentTeamSize + 1}/{p.maxTeamSize}
+                              {p.currentTeamSize }/{p.maxTeamSize}
                             </span>
                           </div>
                         </div>

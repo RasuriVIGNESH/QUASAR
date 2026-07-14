@@ -52,13 +52,13 @@ const TeamMeter = ({ current, max }) => {
     <div className="w-full space-y-1.5">
       <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
         <span className="text-slate-500">Team Capacity</span>
-        <span className={current >= max ? 'text-rose-600' : 'text-indigo-600'}>
-          {current + 1} / {max}
+         <span className={current >= max ? 'text-emerald-600' : 'text-indigo-600'}>
+          {current } / {max}
         </span>
       </div>
       <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
         <div
-          className={`h-full rounded-full transition-all ${current >= max ? 'bg-rose-500' : 'bg-indigo-600'}`}
+          className={`h-full rounded-full transition-all ${current >= max ? 'bg-emerald-500' : 'bg-indigo-600'}`}
           style={{ width: `${pct}%` }}
         />
       </div>
