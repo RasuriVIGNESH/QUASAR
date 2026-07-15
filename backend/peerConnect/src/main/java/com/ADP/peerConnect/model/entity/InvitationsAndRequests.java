@@ -70,22 +70,21 @@ public class InvitationsAndRequests {
     private LocalDateTime respondedAt;
 
     public InvitationsAndRequests createInvitation(Project project, User invitedBy, User invitedUser, String message) {
-        InvitationsAndRequests entity = new InvitationsAndRequests();
-        entity.setProject(project);
-        entity.setRequestType(RequestType.INVITATION);
-        entity.setInitiatedBy(invitedBy);
-        entity.setTargetUser(invitedUser);
-        entity.setMessage(message);
-        return entity;
+        this.setProject(project);
+        this.setRequestType(RequestType.INVITATION);
+        this.setInitiatedBy(invitedBy);
+        this.setTargetUser(invitedUser);
+        this.setMessage(message);
+        return this;
     }
+
     public InvitationsAndRequests createJoinRequest(Project project, User requestingUser, String message) {
-        InvitationsAndRequests entity = new InvitationsAndRequests();
-        entity.setProject(project);
-        entity.setRequestType(RequestType.JOIN_REQUEST);
-        entity.setInitiatedBy(null);
-        entity.setTargetUser(requestingUser);
-        entity.setMessage(message);
-        return entity;
+        this.setProject(project);
+        this.setRequestType(RequestType.JOIN_REQUEST);
+        this.setInitiatedBy(null);
+        this.setTargetUser(requestingUser);
+        this.setMessage(message);
+        return this;
     }
 
     public Long getInvitationId() {

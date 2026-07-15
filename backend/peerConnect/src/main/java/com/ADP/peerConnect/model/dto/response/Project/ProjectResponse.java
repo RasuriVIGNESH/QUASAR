@@ -34,6 +34,7 @@ public class ProjectResponse {
     private String goals;
     private String problemStatement;
     private List<String> techStack;
+    private List<String> skillsRequired;
     private String githubRepo;
     private String demoUrl;
     private String notepadContent;
@@ -55,7 +56,7 @@ public class ProjectResponse {
         this.expectedEndDate = project.getExpectedEndDate();
         this.maxTeamSize = project.getMaxTeamSize();
         this.currentTeamSize = project.getCurrentTeamSize();
-        this.requirements = null; // legacy field - not used currently
+        this.requirements = null;
         this.goals = project.getGoals();
         this.problemStatement = project.getProblemStatement();
         this.createdAt = project.getCreatedAt();
@@ -66,6 +67,11 @@ public class ProjectResponse {
         this.objectives = project.getObjectives();
         if (project.getTechStack() != null) {
             this.techStack = project.getTechStackList();
+        }
+        if(project.getProjectSkills() != null) {
+            this.skillsRequired = project.getProjectSkills().stream()
+                    .map(ps -> ps.getSkill().getName())
+                    .collect(Collectors.toList());
         }
     }
 }

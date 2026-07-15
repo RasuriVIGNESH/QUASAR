@@ -185,7 +185,7 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public long getCurrentTeamSize(String projectId) {
+    public int getCurrentTeamSize(String projectId) {
         return teamRepo.countByProjectId(projectId);
     }
 

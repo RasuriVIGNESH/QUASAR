@@ -52,7 +52,7 @@ public class RequestInvitationController {
                     "Invitation sent successfully", invitation);
             return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
         } catch (Exception e) {
-            return ResponseEntity.badRequest(). body(new ApiResponse(false, e.getMessage()));
+            return new ResponseEntity<>(new ApiResponse(false, e.getMessage()), HttpStatus.BAD_REQUEST);
         }
     }
     @PostMapping("/projects/{projectId}/join-request")

@@ -10,8 +10,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
@@ -55,6 +57,22 @@ public class TeamController {
                 ApiResponse<Void> response = ApiResponse.success("Member removed successfully");
 
                 return ResponseEntity.ok(response);
+        }
+
+        @PutMapping("/projects/{projectId}/members/{memberId}")
+        @Operation(summary = "Update project lead", description = "make member as lead (Lead only)")
+        @ApiResponses(value = {
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Member updated successfully"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Unauthorized"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Only project Lead can update members"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Member not found")
+        })
+        public ResponseEntity<AllTeam> updateMemberInProject(
+                        @Parameter(description = "Project ID") @PathVariable String projectId,
+                        @Parameter(description = "Member user ID") @PathVariable String memberId,
+                        @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
+                AllTeam team = teamService.updateLead(projectId, memberId, currentUser.getId());
+                return new ResponseEntity<>(team,HttpStatus.OK);
         }
 
         @PostMapping("/projects/{projectId}/leave")

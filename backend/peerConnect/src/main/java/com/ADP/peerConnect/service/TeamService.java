@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import java.util.List;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -102,6 +102,40 @@ public class TeamService {
     }
     @Transactional(readOnly = true)
     public boolean isProjectMember(String projectId, String userId) {
-        return teamRepo.isInTeam(projectId, userId) || teamRepo.isLead(projectId, userId);
+        return teamRepo.isInTeam(projectId, userId);
+    }
+
+
+    @Transactional
+    public AllTeam updateLead(String projectId, String memberId, String currentUserId) {
+        Team team = teamRepo.findTeamWithLeadAndMembers(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Team not found for this project"));
+
+        if (!team.getLead().getId().equals(currentUserId)) {
+            throw new UnauthorizedException("Only project lead can update members");
+        }
+        if (memberId.equals(currentUserId)) {
+            throw new ConflictException("You are already the project lead");
+        }
+
+        User newLead = team.getMembers().stream()
+                .filter(m -> m.getId().equals(memberId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("Member not found in this project"));
+
+        User oldLead = team.getLead();
+
+        team.setLead(newLead);
+        team.getMembers().remove(newLead);
+        team.getMembers().add(oldLead);
+
+        Team updatedTeam = teamRepo.save(team);
+
+        AllTeam allTeam = new AllTeam();
+        allTeam.setLead(new UserCardResponse(updatedTeam.getLead()));
+        allTeam.setMembers(updatedTeam.getMembers().stream()
+                .map(UserCardResponse::new)
+                .collect(Collectors.toList()));
+        return allTeam;
     }
 }

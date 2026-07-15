@@ -19,6 +19,23 @@ async inviteUserToProject(projectId, invitedId, message = '') {
   }
 }
 
+// Update project lead - matches TeamController endpoint PUT /projects/{projectId}/members/{memberId}
+  async updateProjectLead(projectId, memberId) {
+    try {
+      if (!projectId || !memberId) {
+        throw new Error('Project ID and Member ID are required');
+      }
+
+      console.log('TeamService: Updating project lead:', projectId, memberId);
+
+      const response = await apiService.put(`/projects/${projectId}/members/${memberId}`);
+      console.log('TeamService: Project lead updated:', response);
+      return response;
+    } catch (error) {
+      console.error('TeamService: Error updating project lead:', error);
+      throw new Error(error.message || 'Failed to update project lead');
+    }
+  }
   // Respond to invitation (accept/REJECTED) - matches TeamController endpoint
   async respondToInvitation(invitationId, response) {
   try {

@@ -90,13 +90,12 @@ export default function ProjectPage() {
 
   const currentUserId = useMemo(() => userProfile?.id || currentUser?.id, [userProfile, currentUser]);
   const isProjectLead = useMemo(() => {
-    if (!project) return false;
-    const leadId = project?.team?.lead?.id ?? project?.team?.lead
-        ?? project?.lead?.id ?? project?.lead;
+    if (!teamLead) return false;
+    const leadId = teamLead.id ?? teamLead.userId;
     return String(currentUserId) === String(leadId);
-  }, [project, currentUserId]);
+  }, [teamLead, currentUserId]);
   const isMember = useMemo(() => {
-    return isProjectLead || members.some(m => String(m.user?.id ?? m.userId) === String(currentUserId));
+    return isProjectLead || members.some(m => String(m.user?.id ?? m.userId ?? m.id) === String(currentUserId));
   }, [isProjectLead, members, currentUserId]);
 
   const NAV_TABS = useMemo(() => [
@@ -221,9 +220,7 @@ export default function ProjectPage() {
               <div className="flex -space-x-2">
                 {members.slice(0, 4).map((m, i) => {
                   const memberId = m.user?.id ?? m.userId;
-                  const isLead = m.role === 'LEAD' || String(memberId) === String(
-                      project?.team?.lead?.id ?? project?.team?.lead ?? project?.lead?.id ?? project?.lead
-                  );
+                  const isLead = m.role === 'LEAD' || String(memberId) === String(teamLead?.id ?? teamLead?.userId);
                   return (
                       <Avatar key={m.id || i} className={`w-7 h-7 border-2 border-white relative ${isLead ? 'ring-2 ring-amber-400' : ''}`}>
                         <AvatarImage src={m.user?.profilePictureUrl || m.profilePictureUrl} />
@@ -238,7 +235,7 @@ export default function ProjectPage() {
                 )}
               </div>
 
-              {isMember  && (
+              {isProjectLead && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="h-8 text-xs gap-1 rounded-lg">
@@ -290,7 +287,7 @@ export default function ProjectPage() {
               )}
               {activeTab === 'tasks' && <TaskBoard projectId={projectId} isProjectLead={isMember} />}
               {activeTab === 'chat' && <ChatSection projectId={projectId} currentUserId={currentUserId} />}
-              {activeTab === 'team' && <TeamSection lead={teamLead} members={members} isProjectLead={isMember} projectId={projectId} onUpdate={loadData} />}
+              {activeTab === 'team' && <TeamSection lead={teamLead} members={members} isProjectLead={isProjectLead} projectId={projectId} onUpdate={loadData} />}
               {activeTab === 'manage' && <SettingsTab project={project} isProjectLead={isProjectLead} onPurge={() => setIsDeleteDialogOpen(true)} onUpdate={loadData} />}
             </div>
           </div>
@@ -885,9 +882,8 @@ const JoinRequestsPanel = ({ projectId, pageSize = 20 }) => {
 };
 
 const TeamSection = memo(({ lead, members, isProjectLead, projectId, onUpdate }) => {
-  const navigate = useNavigate();
   const [removingId, setRemovingId] = useState(null);
-  const [showRequests, setShowRequests] = useState(false);
+  const [promotingId, setPromotingId] = useState(null);
 
   const handleRemove = async (memberId, memberName) => {
     if (!window.confirm(`Remove ${memberName} from the project?`)) return;
@@ -900,6 +896,20 @@ const TeamSection = memo(({ lead, members, isProjectLead, projectId, onUpdate })
       toast.error('Failed to remove member');
     } finally {
       setRemovingId(null);
+    }
+  };
+
+  const handleMakeLead = async (memberUserId, memberName) => {
+    if (!window.confirm(`Make ${memberName} the project lead? You will become a member.`)) return;
+    setPromotingId(memberUserId);
+    try {
+      await teamService.updateProjectLead(projectId, memberUserId);
+      toast.success(`${memberName} is now the project lead`);
+      onUpdate();
+    } catch {
+      toast.error('Failed to update project lead');
+    } finally {
+      setPromotingId(null);
     }
   };
 
@@ -923,36 +933,54 @@ const TeamSection = memo(({ lead, members, isProjectLead, projectId, onUpdate })
   });
   const totalCount = (leadPerson ? 1 : 0) + otherMembers.length;
 
-  const PersonCard = ({ person, role, canRemove }) => (
-      <Card className="p-4 bg-white border-slate-200 rounded-2xl flex items-center gap-4 hover:border-indigo-200 hover:shadow-sm transition-all">
-        <Avatar className={`w-11 h-11 border shrink-0 ${role === 'LEAD' ? 'border-amber-300 ring-2 ring-amber-200' : 'border-slate-200'}`}>
-          <AvatarImage src={person.profilePictureUrl} />
-          <AvatarFallback className="bg-indigo-50 text-indigo-700 font-black text-sm">{person.firstName?.[0] || 'U'}</AvatarFallback>
-        </Avatar>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-bold text-slate-800 truncate">
-            {person.firstName} {person.lastName}
-          </p>
-          <p className="text-xs text-slate-400 truncate">{person.branch}</p>
-          <p className={`text-xs font-semibold mt-0.5 ${role === 'LEAD' ? 'text-amber-600' : 'text-indigo-600'}`}>
-            {role === 'LEAD' ? 'Project Lead' : 'Member'}
-          </p>
-        </div>
-        {canRemove && (
-            <button
-                onClick={() => handleRemove(person.memberId, person.firstName)}
-                disabled={removingId === person.memberId}
-                className="p-1.5 text-slate-300 hover:text-red-500 transition-colors shrink-0"
-                aria-label={`Remove ${person.firstName}`}
-            >
-              {removingId === person.memberId
-                  ? <Loader2 size={14} className="animate-spin" />
-                  : <MoreVertical size={14} />
-              }
-            </button>
-        )}
-      </Card>
-  );
+  const PersonCard = ({ person, role, canManage }) => {
+    const isBusy = removingId === person.memberId || promotingId === person.id;
+    return (
+        <Card className="p-4 bg-white border-slate-200 rounded-2xl flex items-center gap-4 hover:border-indigo-200 hover:shadow-sm transition-all">
+          <Avatar className={`w-11 h-11 border shrink-0 ${role === 'LEAD' ? 'border-amber-300 ring-2 ring-amber-200' : 'border-slate-200'}`}>
+            <AvatarImage src={person.profilePictureUrl} />
+            <AvatarFallback className="bg-indigo-50 text-indigo-700 font-black text-sm">{person.firstName?.[0] || 'U'}</AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-slate-800 truncate">
+              {person.firstName} {person.lastName}
+            </p>
+            <p className="text-xs text-slate-400 truncate">{person.branch}</p>
+            <p className={`text-xs font-semibold mt-0.5 ${role === 'LEAD' ? 'text-amber-600' : 'text-indigo-600'}`}>
+              {role === 'LEAD' ? 'Project Lead' : 'Member'}
+            </p>
+          </div>
+          {canManage && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                      disabled={isBusy}
+                      className="p-1.5 text-slate-300 hover:text-slate-600 transition-colors shrink-0"
+                      aria-label={`Manage ${person.firstName}`}
+                  >
+                    {isBusy ? <Loader2 size={14} className="animate-spin" /> : <MoreVertical size={14} />}
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40 bg-white border-slate-200 text-slate-900">
+                  <DropdownMenuItem
+                      onClick={() => handleMakeLead(person.id, person.firstName)}
+                      className="text-xs text-amber-600"
+                  >
+                    Make Lead
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                      onClick={() => handleRemove(person.memberId, person.firstName)}
+                      className="text-xs text-red-500"
+                  >
+                    Remove
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+          )}
+        </Card>
+    );
+  };
 
   return (
       <div className="space-y-4">
@@ -963,27 +991,6 @@ const TeamSection = memo(({ lead, members, isProjectLead, projectId, onUpdate })
           </div>
 
           {/* Invite / Join Requests — visible to everyone */}
-          <div className="flex items-center gap-2 relative">
-            <Button
-                size="sm"
-                variant="outline"
-                className={`h-8 text-xs gap-1 rounded-lg border-slate-200 hover:text-indigo-700 hover:border-indigo-200 ${showRequests ? 'text-indigo-700 border-indigo-200 bg-indigo-50' : 'text-slate-600'}`}
-                onClick={() => setShowRequests(v => !v)}
-            >
-              {showRequests ? <X size={14} /> : <Inbox size={14} />} Join Requests
-            </Button>
-            <Button
-                size="sm"
-                className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg"
-                onClick={() => navigate(`/projects/${projectId}/invite`)}
-            >
-              <Plus size={14} className="mr-1" /> Invite
-            </Button>
-
-            {showRequests && (
-                <JoinRequestsPanel projectId={projectId} />
-            )}
-          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -995,7 +1002,7 @@ const TeamSection = memo(({ lead, members, isProjectLead, projectId, onUpdate })
                   key={m.id}
                   person={getPerson(m)}
                   role={m.role || 'MEMBER'}
-                  canRemove={isProjectLead && m.role !== 'LEAD'}
+                  canManage={isProjectLead && m.role !== 'LEAD'}
               />
           ))}
           {totalCount === 0 && (

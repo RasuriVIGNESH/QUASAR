@@ -7,7 +7,6 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -48,13 +47,13 @@ FROM Team t
 WHERE t.project.id = :projectId
 AND (t.lead.id = :userId OR :userId IN (SELECT m.id FROM t.members m))
 """)
-    boolean isInTeam(@Param("projectId") String projectId, @Param("userId") String userId);
+    Boolean isInTeam(@Param("projectId") String projectId, @Param("userId") String userId);
 
     @Query("""
         SELECT t.lead.id = :userId FROM Team t
         WHERE t.project.id = :projectId
         """)
-    boolean isLead(
+    Boolean isLead(
             @Param("projectId") String projectId,
             @Param("userId") String userId);
 
@@ -65,7 +64,7 @@ AND (t.lead.id = :userId OR :userId IN (SELECT m.id FROM t.members m))
         JOIN t.members u
         WHERE t.project.id = :projectId
         """)
-    long countByProjectId(@Param("projectId") String projectId);
+    int countByProjectId(@Param("projectId") String projectId);
 
     // ── Member list ───────────────────────────────────────────────────────────
 
@@ -113,4 +112,12 @@ AND (t.lead.id = :userId OR :userId IN (SELECT m.id FROM t.members m))
     void removeMember(
             @Param("projectId") String projectId,
             @Param("userId") String userId);
+
+    @Query("""
+    SELECT t FROM Team t
+    JOIN FETCH t.lead
+    JOIN FETCH t.members
+    WHERE t.project.id = :projectId
+    """)
+    Optional<Team> findTeamWithLeadAndMembers(@Param("projectId") String projectId);
 }

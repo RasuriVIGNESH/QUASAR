@@ -16,9 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Transactional
 public class InvitationsAndRequestsService {
-
-    private static final Logger log = LoggerFactory.getLogger(InvitationsAndRequestsService.class);
-
     @Autowired private InvitationsAndRequestsRepository repository;
     @Autowired private TeamService teamService;
     @Autowired private UserService userService;
@@ -31,10 +28,10 @@ public class InvitationsAndRequestsService {
                                                          String message, String inviterId) {
         Project project = projectService.findById(projectId);
 
-        if (!projectService.isProjectMember(projectId, inviterId)) {
+        if (!teamService.isProjectMember(projectId, inviterId)) {
             throw new UnauthorizedException("Only project lead can send invitations");
         }
-        if (projectService.isProjectMember(projectId, invitedUserId)) {
+        if (teamService.isProjectMember(projectId, invitedUserId)) {
             throw new ConflictException("User is already a project member");
         }
         if (repository.existsByProjectIdAndTargetUserIdAndRequestTypeAndStatus(
@@ -48,30 +45,25 @@ public class InvitationsAndRequestsService {
         User inviter     = userService.findById(inviterId);
         User invitedUser = userService.findById(invitedUserId);
 
-        InvitationsAndRequests invitation =new InvitationsAndRequests();
-        invitation.createInvitation(
-                project, inviter, invitedUser, message);
-
+        InvitationsAndRequests invitation = new InvitationsAndRequests();
+        invitation.createInvitation(project, inviter, invitedUser, message);
         InvitationsAndRequests saved = repository.save(invitation);
-        log.debug("Invitation sent projectId={} invitedUserId={}", projectId, invitedUserId);
         InvitationsAndRequestsResponse response=new  InvitationsAndRequestsResponse(saved);
-        return new InvitationsAndRequestsResponse(saved);
+        return response;
     }
     public void cancelInvitation(Long invitationId, String requesterId) {
         InvitationsAndRequests invitation = repository.findByIdWithAssociations(invitationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Invitation not found"));
 
         if (!invitation.getInitiatedBy().getId().equals(requesterId) &&
-                !projectService.isProjectLead(invitation.getProject().getId(), requesterId)) {
+                !teamService.isLead(invitation.getProject().getId(), requesterId)) {
             throw new UnauthorizedException(
                     "You can only cancel invitations you sent or if you're the project lead");
         }
         if (!invitation.isPending()) {
             throw new ConflictException("Can only cancel pending invitations");
         }
-
         repository.delete(invitation);
-        log.debug("Invitation cancelled id={}", invitationId);
     }
 
 
@@ -95,11 +87,9 @@ public class InvitationsAndRequestsService {
             throw new ConflictException("You already have a pending request to join this project.");
         }
 
-        InvitationsAndRequests joinRequest = new  InvitationsAndRequests();
+        InvitationsAndRequests joinRequest = new InvitationsAndRequests();
         joinRequest.createJoinRequest(project, user, message);
-
         InvitationsAndRequests saved = repository.save(joinRequest);
-        log.debug("Join request sent projectId={} userId={}", projectId, userId);
         return new InvitationsAndRequestsResponse(saved);
     }
 
@@ -126,7 +116,7 @@ public class InvitationsAndRequestsService {
     @Transactional(readOnly = true)
     public Page<InvitationsAndRequestsResponse> getProjectJoinRequests(String projectId, String userId,
                                                                        Pageable pageable) {
-        if (!projectService.isProjectMember(projectId, userId)) {
+        if (!teamService.isProjectMember(projectId, userId)) {
             throw new UnauthorizedException("Only the project member can view join requests.");
         }
         return repository
@@ -165,7 +155,7 @@ public class InvitationsAndRequestsService {
         }
 
         if (request.isJoinRequest()) {
-            if (!projectService.isProjectMember(project.getId(), currentUserId)) {
+            if (!teamService.isProjectMember(project.getId(), currentUserId)) {
                 throw new UnauthorizedException("Only the project members can accept join requests.");
             }
         } else {
@@ -194,7 +184,7 @@ public class InvitationsAndRequestsService {
         }
 
         if (request.isJoinRequest()) {
-            if (!projectService.isProjectMember(request.getProject().getId(), currentUserId)) {
+            if (!teamService.isProjectMember(request.getProject().getId(), currentUserId)) {
                 throw new UnauthorizedException("Only the project lead can reject join requests.");
             }
         } else {
