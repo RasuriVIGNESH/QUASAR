@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 @Data
 public class TaskResponse {
+    private long id;
     private String title;
     private String description;
     private String projectId;
@@ -26,6 +27,7 @@ public class TaskResponse {
     private boolean overdue;
 
     public TaskResponse(Task task) {
+        this.id=task.getId();
         this.title = task.getTitle();
         this.description = task.getDescription();
         this.projectId = task.getProject().getId();

@@ -71,8 +71,8 @@ public class ProjectController {
             @PathVariable String projectId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         if(!teamService.isProjectMember(projectId,currentUser.getId()))throw new UnauthorizedException("only project members can access");
-            Project project = projectService.findById(projectId);
-            return new ResponseEntity<>(new ProjectResponse(project),HttpStatus.OK );
+        Project project = projectService.findById(projectId);
+        return new ResponseEntity<>(new ProjectResponse(project),HttpStatus.OK );
     }
 
     @Operation(summary = "Update project")

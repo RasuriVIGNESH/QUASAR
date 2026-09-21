@@ -15,21 +15,25 @@ export default function AdminUsers() {
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('ALL');
     const [page, setPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchUsers = async () => {
             try {
                 setLoading(true);
-                // Using getAllUsers which supports pagination
+                setError('');
                 const response = await userService.getAllUsers(page, 50);
-                const userList = Array.isArray(response) ? response
-                    : Array.isArray(response?.content) ? response.content
-                        : Array.isArray(response?.data) ? response.data
-                            : Array.isArray(response?.data?.content) ? response.data.content
-                                : [];
+                const data = response?.data || response;
+                const userList = Array.isArray(data?.content) ? data.content
+                    : Array.isArray(data) ? data : [];
                 setUsers(userList);
+                setTotalPages(Math.max(1, data?.totalPages || 1));
             } catch (error) {
                 console.error('Failed to fetch users:', error);
+                setUsers([]);
+                setTotalPages(1);
+                setError(error.message || 'Failed to load users.');
             } finally {
                 setLoading(false);
             }
@@ -39,13 +43,15 @@ export default function AdminUsers() {
     }, [page]);
 
     const filteredUsers = users.filter(user => {
-        const matchesSearch = user.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.lastName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+        const search = searchTerm.toLowerCase();
+        const matchesSearch = !search ||
+            user.firstName?.toLowerCase().includes(search) ||
+            user.lastName?.toLowerCase().includes(search) ||
+            user.branch?.toLowerCase().includes(search);
 
-        const userRole = user.role || (user.roles && user.roles.length > 0 ? user.roles[0].name : "USER");
-        const matchesRole = roleFilter === 'ALL' || userRole.toUpperCase() === roleFilter.toUpperCase();
-
+        // UserCardResponse does not include role, so role filtering cannot be
+        // performed safely without an admin-specific full-user endpoint.
+        const matchesRole = roleFilter === 'ALL';
         return matchesSearch && matchesRole;
     });
 
@@ -83,8 +89,12 @@ export default function AdminUsers() {
                             </Select>
                         </div>
                     </div>
+                    <p className="mt-2 text-xs text-slate-500">
+                        The backend user-card response provides name, avatar, and branch. Email, graduation year, and role are not available from this endpoint.
+                    </p>
                 </CardHeader>
                 <CardContent>
+                    {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
                     <div className="rounded-md border border-slate-200 dark:border-slate-800">
                         <Table>
                             <TableHeader>
@@ -115,20 +125,18 @@ export default function AdminUsers() {
                                         <TableRow key={user.id}>
                                             <TableCell>
                                                 <Avatar className="h-9 w-9">
-                                                    <AvatarImage src={user.profilePictureUrl || user.profilePhoto?.[0]} />
+                                                    <AvatarImage src={user.profilePictureUrl} />
                                                     <AvatarFallback>{user.firstName?.[0]}{user.lastName?.[0]}</AvatarFallback>
                                                 </Avatar>
                                             </TableCell>
                                             <TableCell className="font-medium">
                                                 {user.firstName} {user.lastName}
                                             </TableCell>
-                                            <TableCell>{user.email}</TableCell>
+                                            <TableCell>-</TableCell>
                                             <TableCell>{user.branch || '-'}</TableCell>
-                                            <TableCell>{user.graduationYear || '-'}</TableCell>
+                                            <TableCell>-</TableCell>
                                             <TableCell>
-                                                <Badge variant="secondary" className="font-mono text-xs">
-                                                    {user.role || (user.roles && user.roles.length > 0 ? user.roles[0].name : "USER")}
-                                                </Badge>
+                                                <Badge variant="secondary" className="font-mono text-xs">-</Badge>
                                             </TableCell>
                                         </TableRow>
                                     ))
@@ -150,7 +158,7 @@ export default function AdminUsers() {
                             variant="outline"
                             size="sm"
                             onClick={() => setPage(p => p + 1)}
-                            disabled={filteredUsers.length < 50}
+                            disabled={page >= totalPages - 1}
                         >
                             Next
                         </Button>

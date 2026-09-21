@@ -39,6 +39,7 @@ public class Team {
     @NotNull
     private User lead;
 
+
     @BatchSize(size = 25)
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(

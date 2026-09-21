@@ -249,7 +249,6 @@ class ProjectService {
       if (!projectId || !taskId) {
         throw new Error('Project ID and Task ID are required');
       }
-
       return await apiService.put(`/projects/${projectId}/tasks/${taskId}`, updateData);
     } catch (error) {
       console.error(`Failed to update task ${taskId}:`, error);

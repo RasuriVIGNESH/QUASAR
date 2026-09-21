@@ -30,7 +30,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     // Step 1: paginate IDs only
     @Query(value = "SELECT t.id FROM Task t WHERE t.project.id = :projectId ORDER BY t.createdAt ASC",
             countQuery = "SELECT count(t) FROM Task t WHERE t.project.id = :projectId")
-    Page<String> findIdsByProjectId(@Param("projectId") String projectId, Pageable pageable);
+    Page<Long> findIdsByProjectId(@Param("projectId") String projectId, Pageable pageable);
 
     // Step 2: fetch full entities by IDs
     @Query("SELECT t FROM Task t " +
@@ -43,7 +43,7 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
             "WHERE t.id IN :ids " +
             "ORDER BY t.createdAt ASC")
 
-    List<Task> findByIdsWithAssociations(@Param("ids") List<String> ids);
+    List<Task> findByIdsWithAssociations(@Param("ids") List<Long> ids);
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
             "JOIN FETCH p.team pt " +

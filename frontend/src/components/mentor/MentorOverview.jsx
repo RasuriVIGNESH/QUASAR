@@ -32,7 +32,7 @@ export default function MentorOverview() {
                 if (Array.isArray(countRes)) projectCount = countRes[1] || 0;
                 else if (Array.isArray(countRes?.data)) projectCount = countRes.data[1] || 0;
 
-                // Use /api/all to fetch students (any authenticated user can access)
+                // Use the authenticated /api/students/search endpoint for paginated users.
                 const usersRes = await userService.getAllUsers(0, 6);
                 const usersData = usersRes?.data || usersRes;
                 const studentList = Array.isArray(usersData?.content) ? usersData.content

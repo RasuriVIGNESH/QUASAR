@@ -1,0 +1,483 @@
+QUASAR
+ 1.0.0 
+OAS 3.1
+/v3/api-docs
+REST API for QUASAR - A social networking platform for college students
+
+QUASAR Team - Website
+Send email to QUASAR Team
+MIT License
+Servers
+
+http://localhost:8080 - Local server
+
+Authorize
+Student Management
+Student management APIs
+
+
+
+PUT
+/api/students/profile
+Update user profile
+
+
+
+PUT
+/api/students/availability
+Update availability status
+
+
+
+GET
+/api/students/{userId}
+Get user profile
+
+
+
+GET
+/api/students/users/{userId}/skills
+
+
+
+GET
+/api/students/sort
+Discover users
+
+
+
+GET
+/api/students/search
+Search users
+
+
+Meeting Room Management
+APIs for managing meeting rooms and notes
+
+
+
+PUT
+/api/notes/{noteId}
+
+
+
+DELETE
+/api/notes/{noteId}
+
+
+
+GET
+/api/rooms/{roomId}/notes
+
+
+
+POST
+/api/rooms/{roomId}/notes
+
+
+
+GET
+/api/projects/{projectId}/rooms
+
+
+
+POST
+/api/projects/{projectId}/rooms
+
+
+
+DELETE
+/api/rooms/{roomId}
+
+
+Project Management
+Project management APIs
+
+
+
+GET
+/api/projects/{projectId}
+Get project by ID
+
+
+
+PUT
+/api/projects/{projectId}
+Update project
+
+
+
+DELETE
+/api/projects/{projectId}
+Delete project
+
+
+
+PUT
+/api/projects/{projectId}/tasks/{taskId}
+Update task
+
+
+
+DELETE
+/api/projects/{projectId}/tasks/{taskId}
+Delete task
+
+
+
+GET
+/api/projects/{projectId}/tasks
+
+
+
+POST
+/api/projects/{projectId}/tasks
+Create task
+
+
+
+GET
+/api/projects/categories
+List all project categories
+
+
+
+POST
+/api/projects/categories
+Create a project category
+
+
+
+POST
+/api/projects/Create
+Create project
+
+
+
+GET
+/api/projects/searchProjects
+Search projects
+
+
+
+GET
+/api/projects/my-projects
+Get my projects
+
+
+Authentication
+Authentication management APIs
+
+
+
+POST
+/api/auth/register
+
+
+
+POST
+/api/auth/logout
+
+
+
+POST
+/api/auth/login
+
+
+
+GET
+/api/auth/me
+
+
+
+GET
+/api/auth/github
+
+
+Skill Management
+Skill management APIs
+
+
+
+PUT
+/api/skills/{skillId}
+Update user skill
+
+
+
+DELETE
+/api/skills/{skillId}
+Remove user skill
+
+
+
+GET
+/api/skills
+Get all skills
+
+
+
+POST
+/api/skills
+Add user skill
+
+
+
+POST
+/api/skills/batch
+Add multiple user skills
+
+
+
+GET
+/api/skills/search
+Search skills
+
+
+
+GET
+/api/skills/predefined
+Get predefined skills
+
+
+
+GET
+/api/skills/category/{category}
+Get skills by category
+
+
+
+GET
+/api/skills/categories
+Get skill categories
+
+
+Team Management
+Team and invitation management APIs
+
+
+
+PUT
+/api/projects/{projectId}/members/{memberId}
+Update project lead
+
+
+
+DELETE
+/api/projects/{projectId}/members/{memberId}
+Remove project member
+
+
+
+POST
+/api/projects/{projectId}/leave
+Leave project
+
+
+
+GET
+/api/projects/{projectId}/members
+Get project members
+
+
+Chat Management
+Chat and messaging APIs
+
+
+
+PUT
+/api/chat/messages/{messageId}
+
+
+
+DELETE
+/api/chat/messages/{messageId}
+
+
+
+GET
+/api/chat/projects/{projectId}/messages
+
+
+
+POST
+/api/chat/projects/{projectId}/messages
+
+
+
+GET
+/api/chat/projects/{projectId}/messages/recent
+
+
+
+GET
+/api/chat/projects/{projectId}/messages/after
+
+
+Join Requests & Invitations
+
+
+PUT
+/api/{requestId}/respond
+Accept or reject -> for both requests and invitations
+
+
+
+PUT
+/api/projects/invitations/{invitationId}/cancel
+Cancel invitation
+
+
+
+POST
+/api/{projectId}/Invite
+Invite user to project
+
+
+
+POST
+/api/projects/{projectId}/join-request
+Send a request to join a project
+
+
+
+GET
+/api/projects/{projectId}/invitations-requests
+
+
+
+GET
+/api/User/invitations-requests
+Invitations and requests -> for user
+
+
+file-controller
+
+
+POST
+/api/students/profile-photo
+Update profile photo
+
+
+
+DELETE
+/api/students/profile-photo
+Delete profile photo
+
+
+public-endpoints
+
+
+GET
+/api/colleges
+Get all registered colleges
+
+
+
+POST
+/api/colleges
+
+
+
+GET
+/api/popularSkills
+Get popular skills
+
+
+
+GET
+/api/health
+
+
+
+GET
+/api/graduation-years
+Get graduation years
+
+
+
+GET
+/api/count
+Get user count
+
+
+
+GET
+/api/branches
+Get branches
+
+
+
+GET
+/api/api/predefined-skills
+Get predefined skills
+
+
+
+GET
+/api/RecentProjects
+Get recent projects
+
+
+skill-discovery
+
+
+GET
+/api/skills/discovery/search
+Search skills
+
+
+
+GET
+/api/skills/discovery/category/{category}
+Get skills by category
+
+
+
+GET
+/api/skills/discovery/categories
+Get skill categories
+
+
+event-controller
+
+
+GET
+/api/events/{eventId}
+
+
+
+GET
+/api/events/{eventId}/students
+
+
+
+GET
+/api/events/{eventId}/students/{userId}/exists
+Check event registration
+
+
+
+GET
+/api/events/{eventId}/students/count
+Get exact registration count
+
+
+
+GET
+/api/events/{eventId}/projects
+
+
+
+GET
+/api/events/upcoming
+
+
+
+GET
+/api/events/recent
+
+
+
+GET
+/api/events/all

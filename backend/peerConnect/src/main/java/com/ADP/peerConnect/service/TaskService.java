@@ -189,7 +189,7 @@ public class TaskService {
 
     @Transactional(readOnly = true)
     public Page<Task> getProjectTasks(String projectId, Pageable pageable) {
-        Page<String> idPage = taskRepository.findIdsByProjectId(projectId, pageable);
+        Page<Long> idPage = taskRepository.findIdsByProjectId(projectId, pageable);
 
         if (idPage.isEmpty()) {
             return Page.empty(pageable);

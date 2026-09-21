@@ -15,10 +15,10 @@ export default function GlobalErrorManager() {
         const handleGlobalError = (error) => {
             // Handle different error statuses
             switch (error.status) {
-                case 401:
-                    // Session expired handled by redirect, but show toast for context
-                    toast.error('Session expired. Please login again.');
-                    break;
+                // case 401:
+                //     // Session expired handled by redirect, but show toast for context
+                //     toast.error('Session expired. Please login again.');
+                //     break;
 
                 case 403:
                     toast.error('You do not have permission to access this resource.');
@@ -29,15 +29,15 @@ export default function GlobalErrorManager() {
                     // Individual components can handle their own 404s if needed
                     break;
 
-                case 500:
-                    toast.error('Something went wrong. Please try again later.');
-                    break;
+                // case 500:
+                //     toast.error('Something went wrong. Please try again later.');
+                //     break;
 
-                default:
-                    // Only show toast if it's a real error and not already handled
-                    if (error.status && error.status >= 400) {
-                        toast.error(error.message || 'An unexpected error occurred.');
-                    }
+                // default:
+                //     // Only show toast if it's a real error and not already handled
+                //     if (error.status && error.status >= 400) {
+                //         toast.error(error.message || 'An unexpected error occurred.');
+                //     }
             }
         };
 

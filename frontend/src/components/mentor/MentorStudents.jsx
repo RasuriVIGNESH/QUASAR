@@ -17,24 +17,32 @@ export default function MentorStudents() {
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [branches, setBranches] = useState([]);
     const [page, setPage] = useState(0);
-    const [totalPages, setTotalPages] = useState(0);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalElements, setTotalElements] = useState(0);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchUsers = async () => {
             try {
                 setLoading(true);
+                setError('');
                 const response = await userService.getAllUsers(page, 20, 'firstName', 'asc');
                 const data = response?.data || response;
                 const userList = Array.isArray(data?.content) ? data.content
                     : Array.isArray(data) ? data : [];
                 setUsers(userList);
-                setTotalPages(data?.totalPages || 1);
+                setTotalPages(Math.max(1, data?.totalPages || 1));
+                setTotalElements(data?.totalElements ?? userList.length);
 
                 // Collect unique branches for filter dropdown
                 const uniqueBranches = [...new Set(userList.map(u => u.branch).filter(Boolean))];
                 setBranches(uniqueBranches);
             } catch (error) {
                 console.error('Failed to fetch students:', error);
+                setUsers([]);
+                setTotalPages(1);
+                setTotalElements(0);
+                setError(error.message || 'Failed to load students.');
             } finally {
                 setLoading(false);
             }
@@ -44,8 +52,7 @@ export default function MentorStudents() {
 
     const filtered = users.filter(u => {
         const name = `${u.firstName || ''} ${u.lastName || ''}`.toLowerCase();
-        const email = (u.email || '').toLowerCase();
-        const matchSearch = !searchTerm || name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase());
+        const matchSearch = !searchTerm || name.includes(searchTerm.toLowerCase()) || (u.branch || '').toLowerCase().includes(searchTerm.toLowerCase());
         const matchBranch = branchFilter === 'ALL' || u.branch === branchFilter;
         const matchStatus = statusFilter === 'ALL' || u.availabilityStatus === statusFilter;
         return matchSearch && matchBranch && matchStatus;
@@ -67,8 +74,8 @@ export default function MentorStudents() {
             {/* Stats */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {[
-                    { label: 'Total Students', value: users.length, icon: <Users className="w-4 h-4" />, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
-                    { label: 'Available', value: users.filter(u => u.availabilityStatus === 'AVAILABLE').length, icon: <GraduationCap className="w-4 h-4" />, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
+                    { label: 'Total Students', value: totalElements, icon: <Users className="w-4 h-4" />, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-50 dark:bg-blue-900/20' },
+                    { label: 'Available', value: '—', icon: <GraduationCap className="w-4 h-4" />, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-50 dark:bg-green-900/20' },
                     { label: 'Branches', value: branches.length, icon: <BookOpen className="w-4 h-4" />, color: 'text-violet-600 dark:text-violet-400', bg: 'bg-violet-50 dark:bg-violet-900/20' },
                 ].map((s) => (
                     <Card key={s.label} className="border-slate-200 dark:border-slate-800">
@@ -127,6 +134,7 @@ export default function MentorStudents() {
                     </div>
                 </CardHeader>
                 <CardContent>
+                    {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
                     <div className="rounded-lg border border-slate-200 dark:border-slate-800 overflow-hidden">
                         <Table>
                             <TableHeader>
@@ -168,14 +176,14 @@ export default function MentorStudents() {
                                             <TableCell className="hidden md:table-cell text-sm text-slate-500 dark:text-slate-400">
                                                 <div className="flex items-center gap-1.5">
                                                     <Mail className="w-3.5 h-3.5" />
-                                                    <span className="truncate max-w-[200px]">{u.email}</span>
+                                                    <span className="truncate max-w-[200px]">—</span>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="hidden sm:table-cell text-sm text-slate-600 dark:text-slate-300">
                                                 {u.branch || '—'}
                                             </TableCell>
                                             <TableCell className="hidden lg:table-cell text-sm text-slate-600 dark:text-slate-300">
-                                                {u.graduationYear || '—'}
+                                                —
                                             </TableCell>
                                             <TableCell>
                                                 {avail ? (
