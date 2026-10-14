@@ -2,7 +2,7 @@ package com.ADP.peerConnect.model.dto.response;
 
 import com.ADP.peerConnect.model.entity.ChatMessage;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
+import lombok.Data;
 
 import java.time.LocalDateTime;
 
@@ -15,10 +15,10 @@ public class ChatMessageResponse {
     private UserCardResponse sender;
     private LocalDateTime createdAt;
 
-    public ChatMessageResponse(ChatMessage message) {
-        this.id=message.getId();
-        this.message=message.getMessage();
-        this.createdAt=message.getCreatedAt();
-        this.sender=message.getUser();
+    public ChatMessageResponse(ChatMessage chatMessage) {
+        this.id = chatMessage.getId();
+        this.message = chatMessage.getMessage();
+        this.createdAt = chatMessage.getCreatedAt();
+        this.sender = new UserCardResponse(chatMessage.getSender());
     }
 }

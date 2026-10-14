@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -123,10 +126,45 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProjectResponse> getRecentProjects(Pageable pageable) {
-        return projectRepository.findAllWithCategory(pageable)
-                .map(ProjectResponse::new);
+    public Page<ProjectCardResponse> getRecentProjects(
+            Pageable pageable
+    ) {
+        Page<String> idPage =
+                projectRepository.findRecentProjectIds(pageable);
+
+        if (idPage.isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<Project> projects =
+                projectRepository.findByIdsWithCardAssociations(
+                        idPage.getContent()
+                );
+
+        Map<String, Project> projectMap =
+                projects.stream()
+                        .collect(Collectors.toMap(
+                                Project::getId,
+                                Function.identity(),
+                                (first, second) -> first
+                        ));
+
+        List<ProjectCardResponse> responses =
+                idPage.getContent()
+                        .stream()
+                        .map(projectMap::get)
+                        .filter(Objects::nonNull)
+                        .map(ProjectCardResponse::new)
+                        .collect(Collectors.toList());
+
+        return new PageImpl<>(
+                responses,
+                pageable,
+                idPage.getTotalElements()
+        );
     }
+
+
 
     @Transactional(readOnly = true)
     public Page<ProjectCardResponse> findProjectsByUser(String userId, Pageable pageable) {
@@ -231,11 +269,19 @@ public class ProjectService {
                 grouped.getOrDefault(p.getId(), new ArrayList<>())));
     }
 
-    private ProjectCardResponse toCardResponseWithImages(Project project) {
-        ProjectCardResponse card = new ProjectCardResponse(project);
-        card.setMemberProfileImageUrls(teamRepo.getMemberProfileImageUrls(project.getId()));
+    private ProjectCardResponse toCardResponseWithImages(
+            Project project
+    ) {
+        ProjectCardResponse card =
+                new ProjectCardResponse(project);
+
+        card.setMemberProfileImageUrls(
+                teamRepo.getMemberProfileImageUrls(project.getId())
+        );
+
         return card;
     }
+
 
     private Specification<Project> buildSearchSpec(String query, String category,
                                                    ProjectStatus status, List<String> skills,

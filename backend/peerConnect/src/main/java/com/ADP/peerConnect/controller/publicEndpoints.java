@@ -4,6 +4,7 @@ import com.ADP.peerConnect.model.dto.request.CreateCollege;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.CollegeResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
+import com.ADP.peerConnect.model.dto.response.Project.ProjectCardResponse;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectResponse;
 import com.ADP.peerConnect.model.dto.response.SkillResponse;
 import com.ADP.peerConnect.model.entity.College;
@@ -55,7 +56,8 @@ public class publicEndpoints {
 
     @Operation(summary = "Get recent projects")
     @GetMapping("/RecentProjects")
-    public ResponseEntity<PagedResponse<ProjectResponse>> getAllProjects() {
+    public ResponseEntity<PagedResponse<ProjectCardResponse>>
+    getAllProjects() {
 
         Pageable pageable = PageRequest.of(
                 0,
@@ -63,18 +65,22 @@ public class publicEndpoints {
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
-        Page<ProjectResponse> projects = projectService.getRecentProjects(pageable);
+        Page<ProjectCardResponse> projects =
+                projectService.getRecentProjects(pageable);
 
-        PagedResponse<ProjectResponse> response = new PagedResponse<>(
-                projects.getContent(),
-                projects.getNumber(),
-                projects.getSize(),
-                projects.getTotalElements(),
-                projects.getTotalPages()
-        );
+        PagedResponse<ProjectCardResponse> response =
+                new PagedResponse<>(
+                        projects.getContent(),
+                        projects.getNumber(),
+                        projects.getSize(),
+                        projects.getTotalElements(),
+                        projects.getTotalPages()
+                );
 
         return ResponseEntity.ok(response);
     }
+
+
 
     @PostMapping("/colleges")
     public ResponseEntity<CollegeResponse> newCollege(@RequestBody CreateCollege college) {

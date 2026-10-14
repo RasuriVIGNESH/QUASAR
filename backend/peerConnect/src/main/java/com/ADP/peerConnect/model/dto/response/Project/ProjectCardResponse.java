@@ -2,9 +2,13 @@ package com.ADP.peerConnect.model.dto.response.Project;
 
 import com.ADP.peerConnect.model.dto.response.UserCardResponse;
 import com.ADP.peerConnect.model.entity.Project;
+import com.ADP.peerConnect.model.entity.ProjectSkill;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Data
 public class ProjectCardResponse {
@@ -19,18 +23,37 @@ public class ProjectCardResponse {
     private UserCardResponse Lead;
     private List<String> memberProfileImageUrls;
 
-    public ProjectCardResponse(Project p) {
-        this.id = p.getId();
-        this.title = p.getTitle();
-        this.status = p.getStatus().name();
-        this.maxTeamSize = p.getMaxTeamSize();
-        this.currentTeamSize = p.getCurrentTeamSize();
-        this.categoryName = p.getCategory() != null ? p.getCategory().getName() : null;
-        this.Lead=new UserCardResponse(p.getTeam().getLead());
-        this.skillsRequired = p.getProjectSkills() != null
-                ? p.getProjectSkills().stream()
-                .map(ps -> ps.getSkill().getName())
-                .collect(java.util.stream.Collectors.toList())
-                : new java.util.ArrayList<>();
+    public ProjectCardResponse(Project project) {
+        this.id = project.getId();
+        this.title = project.getTitle();
+
+        this.status = project.getStatus() != null
+                ? project.getStatus().name()
+                : null;
+
+        this.maxTeamSize = project.getMaxTeamSize();
+        this.currentTeamSize = project.getCurrentTeamSize();
+
+        this.categoryName = project.getCategory() != null
+                ? project.getCategory().getName()
+                : null;
+
+        this.Lead = project.getTeam() != null
+                && project.getTeam().getLead() != null
+                ? new UserCardResponse(project.getTeam().getLead())
+                : null;
+
+        this.skillsRequired = project.getProjectSkills() == null
+                ? new ArrayList<>()
+                : project.getProjectSkills()
+                .stream()
+                .filter(Objects::nonNull)
+                .map(ProjectSkill::getSkill)
+                .filter(Objects::nonNull)
+                .map(skill -> skill.getName())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        this.memberProfileImageUrls = new ArrayList<>();
     }
 }

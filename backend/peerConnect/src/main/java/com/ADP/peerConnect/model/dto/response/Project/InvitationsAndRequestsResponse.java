@@ -38,5 +38,33 @@ public class InvitationsAndRequestsResponse {
         this.createdAt = entity.getCreatedAt();
         this.respondedAt = entity.getRespondedAt();
     }
+    public InvitationsAndRequestsResponse(
+            Long id,
+            RequestType requestType,
+            String projectId,
+            String projectTitle,
+            String initiatedById,
+            String initiatedByName,
+            String targetUserId,
+            String targetUserName,
+            Status status,
+            String message,
+            LocalDateTime createdAt,
+            LocalDateTime respondedAt
+    ) {
+        this.id = id;
+        this.requestType = requestType;
+        this.projectId = projectId;
+        this.projectTitle = projectTitle;
+        this.initiatedById = initiatedById;
+        this.initiatedByName = initiatedByName;
+        this.targetUserId = targetUserId;
+        this.targetUserName = targetUserName;
+        this.status = status;
+        this.message = message;
+        this.createdAt = createdAt;
+        this.respondedAt = respondedAt;
+    }
+
 
 }

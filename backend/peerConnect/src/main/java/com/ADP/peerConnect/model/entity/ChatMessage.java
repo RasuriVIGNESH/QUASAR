@@ -52,8 +52,7 @@ public class ChatMessage {
     private LocalDateTime createdAt;
 
 
-    public UserCardResponse getUser(){
-        UserCardResponse user=new UserCardResponse(sender);
-        return user;
+    public UserCardResponse getUser() {
+        return new UserCardResponse(this.sender);
     }
 }

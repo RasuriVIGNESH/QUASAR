@@ -153,19 +153,25 @@ public class ProjectController {
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<Task> tasks = taskService.getProjectTasks(projectId, pageable);
 
-        List<TaskResponse> responses = tasks.getContent()
-                .stream()
-                .map(TaskResponse::new)
-                .collect(Collectors.toList());
+        Page<TaskResponse> tasks =
+                taskService.getProjectTaskResponses(
+                        projectId,
+                        pageable
+                );
 
-        PagedResponse<TaskResponse> response = new PagedResponse<>(
-                responses, tasks.getNumber(), tasks.getSize(),
-                tasks.getTotalElements(), tasks.getTotalPages());
+        PagedResponse<TaskResponse> response =
+                new PagedResponse<>(
+                        tasks.getContent(),
+                        tasks.getNumber(),
+                        tasks.getSize(),
+                        tasks.getTotalElements(),
+                        tasks.getTotalPages()
+                );
 
         return ResponseEntity.ok(response);
     }
+
 
     @Operation(summary = "Update task")
     @PutMapping("/{projectId}/tasks/{taskId}")

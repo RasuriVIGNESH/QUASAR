@@ -99,33 +99,43 @@ public class RequestInvitationController {
         return ResponseEntity.ok(response);
     }
     @GetMapping("/User/invitations-requests")
-    @Operation(summary = "Invitations and requests ->  for user")
-    public ResponseEntity<PagedResponse<InvitationsAndRequestsResponse>> getReceivedInvitationsPaginated(
+    public ResponseEntity<PagedResponse<InvitationsAndRequestsResponse>>
+    getReceivedInvitationsPaginated(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam Status status,
+            @RequestParam(defaultValue = "PENDING") Status status,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
         Pageable pageable = PageRequest.of(page, size);
+
         Page<InvitationsAndRequestsResponse> invitations;
-        if(status==PENDING){
+
+        if (status == Status.PENDING) {
             invitations =
-                service.getPendingInvitations(currentUser.getId(), pageable);
-        }
-        else {
-            invitations=
-                    service.getUserInvitations(currentUser.getId(), pageable);
+                    service.getPendingInvitations(
+                            currentUser.getId(),
+                            pageable
+                    );
+        } else {
+            invitations =
+                    service.getUserInvitations(
+                            currentUser.getId(),
+                            pageable
+                    );
         }
 
-        PagedResponse<InvitationsAndRequestsResponse> response = new PagedResponse<>(
-                invitations.getContent(),
-                invitations.getNumber(),
-                invitations.getSize(),
-                invitations.getTotalElements(),
-                invitations.getTotalPages()
-        );
+        PagedResponse<InvitationsAndRequestsResponse> response =
+                new PagedResponse<>(
+                        invitations.getContent(),
+                        invitations.getNumber(),
+                        invitations.getSize(),
+                        invitations.getTotalElements(),
+                        invitations.getTotalPages()
+                );
+
         return ResponseEntity.ok(response);
     }
+
 
     @PutMapping("/{requestId}/respond")
     @Operation(summary = "Accept or reject -> for both requests and invitations")

@@ -28,22 +28,46 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     Optional<Task> findByIdWithAssociations(@Param("id") Long id);
 
     // Step 1: paginate IDs only
-    @Query(value = "SELECT t.id FROM Task t WHERE t.project.id = :projectId ORDER BY t.createdAt ASC",
-            countQuery = "SELECT count(t) FROM Task t WHERE t.project.id = :projectId")
-    Page<Long> findIdsByProjectId(@Param("projectId") String projectId, Pageable pageable);
+    @Query(
+            value = """
+        SELECT t.id
+        FROM Task t
+        WHERE t.project.id = :projectId
+        ORDER BY t.createdAt ASC
+        """,
+            countQuery = """
+        SELECT COUNT(t)
+        FROM Task t
+        WHERE t.project.id = :projectId
+        """
+    )
+    Page<Long> findIdsByProjectId(
+            @Param("projectId") String projectId,
+            Pageable pageable
+    );
 
     // Step 2: fetch full entities by IDs
-    @Query("SELECT t FROM Task t " +
-            "JOIN FETCH t.project p " +
-            "JOIN FETCH p.team pt " +
-            "JOIN FETCH pt.lead " +
-            "LEFT JOIN FETCH t.assignedTo " +
-            "JOIN FETCH t.createdBy " +
-            "LEFT JOIN FETCH t.completedBy " +
-            "WHERE t.id IN :ids " +
-            "ORDER BY t.createdAt ASC")
+    @Query("""
+        SELECT DISTINCT t
+        FROM Task t
+        JOIN FETCH t.project p
+        JOIN FETCH p.team pt
+        JOIN FETCH pt.lead ptl
+        LEFT JOIN FETCH ptl.college
+        LEFT JOIN FETCH p.category
+        LEFT JOIN FETCH p.event
+        LEFT JOIN FETCH t.assignedTo at
+        LEFT JOIN FETCH at.college
+        JOIN FETCH t.createdBy cb
+        LEFT JOIN FETCH cb.college
+        LEFT JOIN FETCH t.completedBy cmb
+        LEFT JOIN FETCH cmb.college
+        WHERE t.id IN :ids
+        """)
+    List<Task> findByIdsWithAssociations(
+            @Param("ids") List<Long> ids
+    );
 
-    List<Task> findByIdsWithAssociations(@Param("ids") List<Long> ids);
     @Query("SELECT t FROM Task t " +
             "JOIN FETCH t.project p " +
             "JOIN FETCH p.team pt " +

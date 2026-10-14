@@ -3,6 +3,7 @@ package com.ADP.peerConnect.service;
 import com.ADP.peerConnect.exception.BadRequestException;
 import com.ADP.peerConnect.exception.ResourceNotFoundException;
 import com.ADP.peerConnect.exception.UnauthorizedException;
+import com.ADP.peerConnect.model.dto.response.ChatMessageResponse;
 import com.ADP.peerConnect.model.entity.ChatMessage;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.User;
@@ -105,15 +106,24 @@ public class ChatService {
     /**
      * Get project messages
      */
-    public Page<ChatMessage> getProjectMessages(String projectId, String userId, Pageable pageable) {
-        // Check if user is a member of the project
+    @Transactional(readOnly = true)
+    public Page<ChatMessageResponse> getProjectMessageResponses(
+            String projectId,
+            String userId,
+            Pageable pageable
+    ) {
         if (!projectService.isProjectMember(projectId, userId)) {
-            throw new UnauthorizedException("You must be a project member to view messages");
+            throw new UnauthorizedException(
+                    "You must be a project member to view messages"
+            );
         }
 
-        return chatMessageRepository.findByProjectIdWithSender(projectId, pageable);
+        return chatMessageRepository
+                .findByProjectIdWithSender(projectId, pageable)
+                .map(ChatMessageResponse::new);
     }
-    
+
+
     /**
      * Get recent messages (last 24 hours)
      */

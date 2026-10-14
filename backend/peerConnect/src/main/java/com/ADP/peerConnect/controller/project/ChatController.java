@@ -57,34 +57,39 @@ public class ChatController {
 
 
     @GetMapping("/projects/{projectId}/messages")
-    public ResponseEntity<ApiResponse<PagedResponse<ChatMessageResponse>>> getProjectMessages(
+    public ResponseEntity<ApiResponse<PagedResponse<ChatMessageResponse>>>
+    getProjectMessages(
             @PathVariable String projectId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
+        Pageable pageable = PageRequest.of(page, size);
 
-        Page<ChatMessage> messages = chatService.getProjectMessages(
-                projectId, currentUser.getId(), pageable
-        );
-        List<ChatMessageResponse> messageResponses = messages.getContent()
-                .stream()
-                .map(ChatMessageResponse::new)
-                .collect(Collectors.toList());
+        Page<ChatMessageResponse> messages =
+                chatService.getProjectMessageResponses(
+                        projectId,
+                        currentUser.getId(),
+                        pageable
+                );
 
-        PagedResponse<ChatMessageResponse> pagedResponse = new PagedResponse<>(
-                messageResponses,
-                messages.getNumber(),
-                messages.getSize(),
-                messages.getTotalElements(),
-                messages.getTotalPages()
-        );
+        PagedResponse<ChatMessageResponse> pagedResponse =
+                new PagedResponse<>(
+                        messages.getContent(),
+                        messages.getNumber(),
+                        messages.getSize(),
+                        messages.getTotalElements(),
+                        messages.getTotalPages()
+                );
 
         return ResponseEntity.ok(
-                ApiResponse.success("Messages retrieved successfully", pagedResponse)
+                ApiResponse.success(
+                        "Messages retrieved successfully",
+                        pagedResponse
+                )
         );
     }
+
 
 
     @GetMapping("/projects/{projectId}/messages/recent")

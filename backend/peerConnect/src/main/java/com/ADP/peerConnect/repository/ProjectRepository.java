@@ -30,19 +30,37 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
         """)
     Optional<Project> findByIdWithAssociations(@Param("id") String id);
 
-    // ── List / page queries ───────────────────────────────────────────────────
-
     @Query(
             value = """
-            SELECT p FROM Project p
-            JOIN FETCH p.team t
-            JOIN FETCH t.lead
-            LEFT JOIN FETCH p.category
-            LEFT JOIN FETCH p.event
-            """,
-            countQuery = "SELECT COUNT(p) FROM Project p"
+                SELECT p.id
+                FROM Project p
+                ORDER BY p.createdAt DESC
+                """,
+            countQuery = """
+                SELECT COUNT(p)
+                FROM Project p
+                """
     )
-    Page<Project> findAllWithCategory(Pageable pageable);
+    Page<String> findRecentProjectIds(Pageable pageable);
+
+
+    @Query("""
+        SELECT DISTINCT p
+        FROM Project p
+        JOIN FETCH p.team t
+        JOIN FETCH t.lead tl
+        LEFT JOIN FETCH tl.college
+        LEFT JOIN FETCH p.category
+        LEFT JOIN FETCH p.event
+        LEFT JOIN FETCH p.projectSkills ps
+        LEFT JOIN FETCH ps.skill
+        WHERE p.id IN :ids
+        """)
+    List<Project> findByIdsWithCardAssociations(
+            @Param("ids") List<String> ids
+    );
+
+
 
     @Query(
             value = """

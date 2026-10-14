@@ -3,6 +3,7 @@ package com.ADP.peerConnect.service;
 import com.ADP.peerConnect.exception.*;
 import com.ADP.peerConnect.model.dto.request.Project.CreateTask;
 import com.ADP.peerConnect.model.dto.request.Project.UpdateTask;
+import com.ADP.peerConnect.model.dto.response.Project.TaskResponse;
 import com.ADP.peerConnect.model.entity.*;
 import com.ADP.peerConnect.model.enums.*;
 import com.ADP.peerConnect.repository.*;
@@ -17,6 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
@@ -188,23 +190,44 @@ public class TaskService {
 
 
     @Transactional(readOnly = true)
-    public Page<Task> getProjectTasks(String projectId, Pageable pageable) {
-        Page<Long> idPage = taskRepository.findIdsByProjectId(projectId, pageable);
+    public Page<TaskResponse> getProjectTaskResponses(
+            String projectId,
+            Pageable pageable) {
+
+        Page<Long> idPage =
+                taskRepository.findIdsByProjectId(projectId, pageable);
 
         if (idPage.isEmpty()) {
             return Page.empty(pageable);
         }
-        List<Task> tasks = taskRepository.findByIdsWithAssociations(idPage.getContent());
 
-        // Preserve original order from id page
+        List<Task> tasks =
+                taskRepository.findByIdsWithAssociations(
+                        idPage.getContent()
+                );
+
         Map<Long, Task> taskMap = tasks.stream()
-                .collect(Collectors.toMap(Task::getId, t -> t));
-        List<Task> ordered = idPage.getContent().stream()
-                .map(taskMap::get)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        return new PageImpl<>(ordered, pageable, idPage.getTotalElements());
+                .collect(Collectors.toMap(
+                        Task::getId,
+                        Function.identity(),
+                        (first, second) -> first
+                ));
+
+        List<TaskResponse> responses =
+                idPage.getContent()
+                        .stream()
+                        .map(taskMap::get)
+                        .filter(Objects::nonNull)
+                        .map(TaskResponse::new)
+                        .toList();
+
+        return new PageImpl<>(
+                responses,
+                pageable,
+                idPage.getTotalElements()
+        );
     }
+
 
     @Transactional(readOnly = true)
     public List<Task> getTasksByAssignee(String assigneeId) {
