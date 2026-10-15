@@ -20,18 +20,19 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     @Query(
             value = """
-                SELECT cm
-                FROM ChatMessage cm
-                JOIN FETCH cm.sender s
-                LEFT JOIN FETCH s.college
-                WHERE cm.project.id = :projectId
-                ORDER BY cm.createdAt ASC
-                """,
+        SELECT cm
+        FROM ChatMessage cm
+        JOIN FETCH cm.sender s
+        LEFT JOIN FETCH s.college
+        JOIN FETCH cm.project
+        WHERE cm.project.id = :projectId
+        ORDER BY cm.createdAt ASC
+        """,
             countQuery = """
-                SELECT COUNT(cm)
-                FROM ChatMessage cm
-                WHERE cm.project.id = :projectId
-                """
+        SELECT COUNT(cm)
+        FROM ChatMessage cm
+        WHERE cm.project.id = :projectId
+        """
     )
     Page<ChatMessage> findByProjectIdWithSender(
             @Param("projectId") String projectId,

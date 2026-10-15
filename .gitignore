@@ -10,3 +10,5 @@ backend/.env
 backend/.idea/
 
 accesskeys.csv
+
+.idea
