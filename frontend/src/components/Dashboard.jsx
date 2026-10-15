@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 import { projectService } from '@/services/projectService';
 import { joinRequestService } from '@/services/JoinRequestService';
 import { dataService } from '@/services/dataService';
+import MatchingPanel from './discovery/MatchingPanel';
+import notificationService from '@/services/NotificationService';
 // --- HELPER COMPONENTS ---
 
 // Empty State Illustration Component
@@ -111,6 +113,7 @@ export default function Dashboard() {
   const [invitations, setInvitations] = useState([]);
   const [myRequests, setMyRequests] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -118,16 +121,20 @@ export default function Dashboard() {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
-        const [projectsRes, requestsRes, eventsRes] = await Promise.all([
+        const [projectsRes, requestsRes, eventsRes, notificationsRes] = await Promise.all([
           projectService.getMyProjects(0, 6),
           joinRequestService.getMyJoinRequests(0, 6),
-          dataService.getUpcomingEvents()
+          dataService.getUpcomingEvents(),
+          notificationService.getNotifications({ page: 0, size: 50 }).catch(() => null)
         ]);
 
         const allRequests = requestsRes?.content || requestsRes?.data?.content || [];
         setInvitations(allRequests.filter(r => r.requestType === 'INVITATION'));
         setMyRequests(allRequests.filter(r => r.requestType === 'JOIN_REQUEST'));
         setMyProjects(projectsRes?.content || projectsRes?.data?.content || []);
+        const notificationEnvelope = notificationsRes?.data ?? notificationsRes;
+        const notificationBody = notificationEnvelope?.data ?? notificationEnvelope;
+        setNotifications(Array.isArray(notificationBody) ? notificationBody : notificationBody?.content || []);
       } catch (err) {
         console.error('Dashboard Data Fetch Error:', err);
         setError("Unable to sync with logic core.");
@@ -267,8 +274,24 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* INVITATIONS & REQUESTS - Social Style */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* NOTIFICATIONS - actions are handled on the separate Requests page */}
+              <div id="notifications-legacy" className="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                  <div><h3 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2"><Bell size={16} className="text-indigo-600" /> Notifications</h3><p className="text-xs text-slate-500 mt-1">Invitations and request updates appear here.</p></div>
+                  <Button variant="outline" size="sm" onClick={() => navigate('/notifications')}>View all notifications</Button>
+                </div>
+                <div className="p-6 space-y-3">
+                  {loading ? [1, 2, 3].map(i => <Skeleton key={i} className="h-14 w-full rounded-xl" />) : notifications.length > 0 ? notifications.map(item => {
+                    const actionable = ['PROJECT_INVITATION', 'JOIN_REQUEST', 'REQUEST_DECISION'].includes(item.eventType);
+                    const tab = item.eventType === 'PROJECT_INVITATION' ? 'invitations' : item.eventType === 'JOIN_REQUEST' ? 'received' : 'sent';
+                    return <button key={item.id} type="button" onClick={() => navigate(actionable ? `/requests?tab=${tab}` : '/notifications')} className="w-full text-left flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all"><div className={`w-8 h-8 rounded-full flex items-center justify-center ${item.read ? 'bg-slate-100 text-slate-500' : 'bg-indigo-100 text-indigo-600'}`}><Bell size={14} /></div><div className="flex-1 min-w-0"><p className="text-sm font-bold text-slate-900 truncate">{item.title || 'Notification'}</p><p className="text-xs text-slate-500 truncate">{item.message}</p></div>{!item.read && <Badge className="bg-indigo-600 text-white border-none text-[9px]">NEW</Badge>}<ChevronRight size={15} className="text-slate-300" /></button>;
+                  }) : <EmptyStateIllustration icon={Bell} title="No notifications" description="You're all caught up." />}
+                </div>
+                <div className="px-6 pb-6"><Button onClick={() => navigate('/requests')} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white">Open invitations and requests</Button></div>
+              </div>
+
+              {/* INVITATIONS & REQUESTS - moved to separate Requests page */}
+              {false && <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                 {/* INVITATIONS CARD */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden hover:shadow-md transition-all">
@@ -406,12 +429,25 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
-              </div>
+              </div>}
             </div>
 
             {/* RIGHT: CAMPUS EVENTS - Sticky Sidebar */}
             <div className="lg:col-span-4">
               <div className="sticky top-24 space-y-6">
+                <div id="notifications" className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
+                    <div><h3 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2"><Bell size={16} className="text-indigo-600" /> Notifications</h3><p className="text-xs text-slate-500 mt-1">Invitations and request updates.</p></div>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/notifications')}>View all</Button>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    {notifications.length > 0 ? notifications.slice(0, 5).map(item => {
+                      const actionable = ['PROJECT_INVITATION', 'JOIN_REQUEST', 'REQUEST_DECISION'].includes(item.eventType);
+                      const tab = item.eventType === 'PROJECT_INVITATION' ? 'invitations' : item.eventType === 'JOIN_REQUEST' ? 'received' : 'sent';
+                      return <button key={item.id} type="button" onClick={() => navigate(actionable ? `/requests?tab=${tab}` : '/notifications')} className="w-full text-left flex items-center gap-2 p-2.5 rounded-lg border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all"><div className={`w-7 h-7 rounded-full flex items-center justify-center ${item.read ? 'bg-slate-100 text-slate-500' : 'bg-indigo-100 text-indigo-600'}`}><Bell size={13} /></div><div className="flex-1 min-w-0"><p className="text-xs font-bold text-slate-900 truncate">{item.title || 'Notification'}</p><p className="text-[11px] text-slate-500 truncate">{item.message}</p></div>{!item.read && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />}</button>;
+                    }) : <p className="text-xs text-slate-500 text-center py-4">No notifications.</p>}
+                  </div>
+                </div>
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-black text-slate-950 flex items-center gap-3">
                     <div className="p-2 bg-indigo-100 rounded-lg">
@@ -427,7 +463,12 @@ export default function Dashboard() {
                   </button>
                 </div>
 
-                <div className="space-y-4">
+                <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-8 text-center">
+                  <Calendar className="mx-auto text-slate-300 mb-3" size={28} />
+                  <p className="text-sm font-bold text-slate-700">Feature coming soon</p>
+                  <p className="text-xs text-slate-400 mt-1">Campus events will be available here soon.</p>
+                </div>
+                <div className="hidden space-y-4">
                   {loading ? (
                       [1, 2].map(i => <Skeleton key={i} className="h-40 w-full rounded-2xl" />)
                   ) : upcomingEvents.length > 0 ? (
@@ -480,6 +521,9 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
+            </div>
+            <div className="lg:col-span-4 mt-8 lg:mt-0">
+              <MatchingPanel />
             </div>
           </div>
         </main>

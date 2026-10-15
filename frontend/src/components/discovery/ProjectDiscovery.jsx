@@ -2,6 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import projectService from '@/services/projectService';
+import recommendationService from '@/services/recommendationService';
 import ProjectDetailModal from './ProjectDetailModal';
 
 import {
@@ -25,6 +26,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 /* ─── CONSTANTS ─────────────────────────────────────────────────────────── */
 const PAGE_SIZE = 9;
+
+const unwrapResponse = response => { const envelope = response?.data ?? response; return envelope?.data ?? envelope; };
+const normalizeRecommendation = result => {
+  const project = result?.project || result;
+  return { ...project, id: project?.id || result?.projectId, lead: project?.Lead || project?.lead, matchScore: result?.matchScore, matchedSkills: result?.matchedSkills || [], missingSkills: result?.missingSkills || [], reasons: result?.reasons || [] };
+};
 
 // Matches backend ProjectStatus enum exactly (see controller doc comment).
 const STATUS_OPTIONS = [
@@ -151,6 +158,7 @@ export default function ProjectDiscovery() {
   const [page, setPage] = useState(0);
   const [selectedProject, setSelectedProject] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [feedMode, setFeedMode] = useState('all');
 
   // ── Projects state ──
   const [projects, setProjects] = useState([]);
@@ -206,14 +214,17 @@ export default function ProjectDiscovery() {
           params.status = selectedStatus;
         }
 
-        const res = await projectService.searchProjects(params);
-        const content = res?.content || res?.data?.content || [];
+        const res = feedMode === 'recommended' ? await recommendationService.getRecommendedProjects(page, PAGE_SIZE) : await projectService.searchProjects(params);
+        const body = unwrapResponse(res);
+        const rawContent = Array.isArray(body) ? body : body?.content || [];
+        const content = feedMode === 'recommended' ? rawContent.map(normalizeRecommendation) : rawContent;
         setProjects(content);
-        setTotalPages(res?.totalPages || 1);
-        setTotalElements(res?.totalElements ?? content.length);
+        setTotalPages(body?.totalPages || 1);
+        setTotalElements(body?.totalElements ?? content.length);
 
         // Derive category list from returned project data
         setCategories((prev) => {
+          if (feedMode === 'recommended') return prev;
           const merged = new Set(prev);
           content.forEach((p) => {
             if (p.categoryName) merged.add(p.categoryName);
@@ -230,7 +241,7 @@ export default function ProjectDiscovery() {
 
     fetchProjects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, searchSkills, selectedCategory, selectedStatus, page]);
+  }, [debouncedSearch, searchSkills, selectedCategory, selectedStatus, page, feedMode]);
 
   // Reset to page 0 when filters change (but not on page change itself)
   const handleSearchChange = useCallback((e) => {
@@ -302,6 +313,10 @@ export default function ProjectDiscovery() {
                   <X size={12} /> Clear filters
                 </button>
               )}
+              <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5" aria-label="Explore feed mode">
+                <button type="button" onClick={() => { setFeedMode('all'); setPage(0); }} className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${feedMode === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900'}`}>All projects</button>
+                <button type="button" onClick={() => { setFeedMode('recommended'); setPage(0); }} className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${feedMode === 'recommended' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Recommended</button>
+              </div>
               <select
                 id="status-filter"
                 value={selectedStatus}
@@ -406,6 +421,7 @@ export default function ProjectDiscovery() {
                   <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold text-[9px] px-2 py-0 rounded-lg">
                     {(p.categoryName || p.category?.name || 'Uncategorized').replace(/^in\s+/i, '')}
                   </Badge>
+                  {feedMode === 'recommended' && p.matchScore != null && <span className="text-[9px] font-black text-indigo-700">{p.matchScore}% match</span>}
                   {p.status === 'RECRUITING' && (
                     <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg">
                       <span className="w-1 h-1 rounded-full bg-emerald-500" /> Hiring

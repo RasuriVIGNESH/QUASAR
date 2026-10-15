@@ -116,35 +116,35 @@ export default function MeetingRooms({ projectId, projectName, isProjectLead, is
                     >
                         <header className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">War Rooms</h2>
+                                <h2 className="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">War Rooms</h2>
                                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">{projectName} Collaborative Hubs</p>
                             </div>
 
                             {isMember && (
                                 <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                                     <DialogTrigger asChild>
-                                        <Button className="bg-indigo-600 hover:bg-indigo-700 rounded-2xl h-12 px-6 font-bold shadow-lg shadow-indigo-900/20">
+                                        <Button variant="outline" className="bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-2xl h-12 px-6 font-bold shadow-sm">
                                             <Plus className="w-4 h-4 mr-2" /> New Room
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="bg-slate-900 text-white rounded-2xl border border-slate-800 shadow-2xl">
+                                    <DialogContent className="bg-white text-slate-900 rounded-2xl border border-slate-200 shadow-2xl">
                                         <DialogHeader>
-                                            <DialogTitle className="text-xl font-bold text-white">Initialize War Room</DialogTitle>
+                                            <DialogTitle className="text-xl font-bold text-slate-900">Create meeting room</DialogTitle>
                                         </DialogHeader>
                                         <div className="space-y-4 py-4">
                                             <div className="space-y-1">
-                                                <Label className="text-xs text-slate-400 uppercase font-bold">Room Designation</Label>
-                                                <Input value={newRoom.name} onChange={e => setNewRoom({ ...newRoom, name: e.target.value })} className="bg-slate-950 border-slate-800 text-white rounded-lg focus:ring-indigo-500" placeholder="e.g. Frontend Squad" />
+                                                <Label className="text-xs text-slate-500 uppercase font-bold">Room name</Label>
+                                                <Input value={newRoom.name} onChange={e => setNewRoom({ ...newRoom, name: e.target.value })} className="bg-white border-slate-200 text-slate-900 rounded-lg focus:ring-indigo-500" placeholder="e.g. Frontend Squad" />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-xs text-slate-400 uppercase font-bold">Mission Brief</Label>
-                                                <Textarea value={newRoom.description} onChange={e => setNewRoom({ ...newRoom, description: e.target.value })} className="bg-slate-950 border-slate-800 text-white rounded-lg focus:ring-indigo-500" placeholder="Purpose of this room..." />
+                                                <Label className="text-xs text-slate-500 uppercase font-bold">Description</Label>
+                                                <Textarea value={newRoom.description} onChange={e => setNewRoom({ ...newRoom, description: e.target.value })} className="bg-white border-slate-200 text-slate-900 rounded-lg focus:ring-indigo-500" placeholder="Purpose of this room..." />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label className="text-xs text-slate-400 uppercase font-bold">Department</Label>
+                                                <Label className="text-xs text-slate-500 uppercase font-bold">Department</Label>
                                                 <Select value={newRoom.department} onValueChange={v => setNewRoom({ ...newRoom, department: v })}>
-                                                    <SelectTrigger className="bg-slate-950 border-slate-800 text-white"><SelectValue /></SelectTrigger>
-                                                    <SelectContent className="bg-slate-900 border-slate-800 text-white">
+                                                    <SelectTrigger className="bg-white border-slate-200 text-slate-900"><SelectValue /></SelectTrigger>
+                                                    <SelectContent className="bg-white border-slate-200 text-slate-900">
                                                         <SelectItem value="General">General</SelectItem>
                                                         <SelectItem value="Engineering">Engineering</SelectItem>
                                                         <SelectItem value="Design">Design</SelectItem>
@@ -154,7 +154,7 @@ export default function MeetingRooms({ projectId, projectName, isProjectLead, is
                                             </div>
                                         </div>
                                         <DialogFooter>
-                                            <Button onClick={handleCreateRoom} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 rounded-xl shadow-lg shadow-indigo-900/20">Create Room</Button>
+                                            <Button onClick={handleCreateRoom} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold h-11 rounded-xl shadow-sm">Create Room</Button>
                                         </DialogFooter>
                                     </DialogContent>
                                 </Dialog>
@@ -167,7 +167,7 @@ export default function MeetingRooms({ projectId, projectName, isProjectLead, is
                                     whileHover={{ y: -5 }}
                                     key={room.id}
                                     onClick={() => enterRoom(room)}
-                                    className="bg-slate-900/40 p-8 rounded-[40px] border border-slate-800 shadow-sm hover:shadow-2xl hover:shadow-indigo-500/10 transition-all cursor-pointer group relative overflow-hidden"
+                                    className="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm hover:shadow-xl hover:shadow-indigo-500/10 transition-all cursor-pointer group relative overflow-hidden"
                                 >
                                     <div className="absolute top-0 right-0 p-8 text-indigo-500/10 opacity-20 group-hover:opacity-40 transition-opacity">
                                         <Video size={100} />
@@ -175,15 +175,15 @@ export default function MeetingRooms({ projectId, projectName, isProjectLead, is
                                     <Badge className="bg-indigo-500/10 text-indigo-400 border-none px-3 py-1 mb-6 text-[9px] font-black uppercase tracking-widest">
                                         {room.department || 'General'}
                                     </Badge>
-                                    <h3 className="text-xl font-bold text-white mb-2">{room.name}</h3>
+                                    <h3 className="text-xl font-bold text-slate-900 mb-2">{room.name}</h3>
                                     <p className="text-xs text-slate-400 font-medium line-clamp-2 mb-6">{room.description}</p>
-                                    <div className="flex items-center justify-between pt-6 border-t border-slate-800">
+                                    <div className="flex items-center justify-between pt-6 border-t border-slate-100">
                                         <div className="flex items-center gap-2">
                                             <Users size={14} className="text-slate-500" />
                                             <span className="text-[10px] font-black text-slate-500 uppercase">{room.memberCount || 0} Operatives</span>
                                         </div>
                                         {isProjectLead && (
-                                            <div className="p-2 bg-slate-800/50 rounded-xl text-indigo-400 hover:bg-red-500/10 hover:text-red-400 transition-all">
+                                            <div className="p-2 bg-slate-50 rounded-xl text-indigo-500 hover:bg-red-50 hover:text-red-500 transition-all">
                                                 <Trash2 size={18} onClick={(e) => handleDeleteRoom(e, room.id)} />
                                             </div>
                                         )}

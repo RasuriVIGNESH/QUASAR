@@ -23,9 +23,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -38,7 +40,7 @@ public class ProjectService {
     @Autowired private ProjectRepository projectRepository;
     @Autowired private UserService userService;
     @Autowired private ProjectCategoryService projectCategoryService;
-    @Autowired private SkillRepository skillRepository;
+    @Autowired private SkillService skillService;
     @Autowired private ProjectSkillRepository projectSkillRepository;
     @Autowired private TeamRepo teamRepo;
     @Autowired private EventRepository eventRepo;
@@ -62,6 +64,7 @@ public class ProjectService {
                         "Project category not found with id: " + request.getCategoryId()));
 
         Project project = new Project(request, category, event);
+        applySkillsToProject(project, request.getSkills());
 
         Project saved = projectRepository.save(project);
 
@@ -243,10 +246,17 @@ public class ProjectService {
 
     private void applySkillsToProject(Project project, List<ProjectSkill> skillRequests) {
         project.getProjectSkills().clear();
+        Set<String> normalizedNames = new HashSet<>();
 
         for (ProjectSkill req : skillRequests) {
-            Skill skill = skillRepository.findByNameIgnoreCase(req.getSkillName())
-                    .orElseGet(() -> skillRepository.save(new Skill(req.getSkillName())));
+            if (req == null || req.getSkillName() == null || req.getSkillName().isBlank()) {
+                throw new BadRequestException("Project skill name is required");
+            }
+            String normalizedName = Skill.normalizeName(req.getSkillName());
+            if (!normalizedNames.add(normalizedName)) {
+                throw new BadRequestException("Duplicate project skill: " + req.getSkillName().trim());
+            }
+            Skill skill = skillService.findOrCreateSkill(req.getSkillName());
 
             com.ADP.peerConnect.model.entity.ProjectSkill ps = new com.ADP.peerConnect.model.entity.ProjectSkill();
             ps.setProject(project);

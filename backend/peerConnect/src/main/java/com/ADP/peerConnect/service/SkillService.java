@@ -130,11 +130,14 @@ public class SkillService {
         Skill skill = findById(id);
 
         // Check if new name conflicts with existing skill (excluding current skill)
-        if (name != null && !name.equalsIgnoreCase(skill.getName())) {
-            if (skillRepository.existsByNameIgnoreCase(name)) {
+        if (name != null && !name.isBlank() && !name.equalsIgnoreCase(skill.getName())) {
+            String normalized = Skill.normalizeName(name);
+            Optional<Skill> conflict = skillRepository.findByNormalizedName(normalized);
+            if (conflict.isPresent() && !conflict.get().getId().equals(id)) {
                 throw new ConflictException("Skill with this name already exists");
             }
             skill.setName(name.trim());
+            skill.setNormalizedName(normalized);
         }
 
         if (category != null) {

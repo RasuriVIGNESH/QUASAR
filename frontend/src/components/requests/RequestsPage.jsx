@@ -1,15 +1,20 @@
 import React from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useRequests } from '../../contexts/RequestContext';
 import SentRequestsTab from './SentRequestsTab';
 import InvitationsTab from './InvitationsTab';
+import ProjectRequestsTab from './ProjectRequestsTab';
 import { Inbox, Send, Sparkles } from 'lucide-react';
 
 export default function RequestsPage() {
   const { pendingCount } = useRequests();
+  const [searchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') || 'invitations';
 
   const tabs = [
     { id: 'invitations', label: 'Invitations', icon: <Sparkles size={14} /> },
+    { id: 'received', label: 'Join requests', icon: <Inbox size={14} /> },
     { id: 'sent', label: 'Sent', icon: <Send size={14} /> },
   ];
 
@@ -31,7 +36,7 @@ export default function RequestsPage() {
         </header>
 
         <main className="max-w-6xl mx-auto px-4 lg:px-8 py-8">
-          <Tabs defaultValue="invitations" className="space-y-6">
+          <Tabs key={initialTab} defaultValue={initialTab} className="space-y-6">
             {/* TAB LIST - Clean & Minimal */}
             <div className="flex justify-center sm:justify-start">
               <TabsList className="inline-flex h-10 items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-500">
@@ -58,6 +63,9 @@ export default function RequestsPage() {
             <div className="mt-4">
               <TabsContent value="invitations" className="mt-0 focus-visible:outline-none">
                 <InvitationsTab />
+              </TabsContent>
+              <TabsContent value="received" className="mt-0 focus-visible:outline-none">
+                <ProjectRequestsTab />
               </TabsContent>
               <TabsContent value="sent" className="mt-0 focus-visible:outline-none">
                 <SentRequestsTab />

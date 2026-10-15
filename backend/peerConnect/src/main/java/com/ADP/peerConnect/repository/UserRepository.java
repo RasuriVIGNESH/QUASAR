@@ -110,4 +110,29 @@ public interface UserRepository extends JpaRepository<User, String> {
                @Param("availabilityStatus") AvailabilityStatus availabilityStatus,
                @Param("skillNames") List<String> skillNames,
                Pageable pageable);
+
+       /** Candidate pool for project-specific recommendations. Skills are loaded separately in one batch. */
+       @Query(value = """
+        SELECT DISTINCT u FROM User u
+        JOIN u.userSkills us
+        JOIN us.skill s
+        WHERE u.id <> :excludeUserId
+          AND u.role = com.ADP.peerConnect.model.enums.Role.STUDENT
+          AND u.availabilityStatus = com.ADP.peerConnect.model.enums.AvailabilityStatus.AVAILABLE
+          AND s.id IN :skillIds
+        ORDER BY u.id ASC
+        """,
+        countQuery = """
+        SELECT COUNT(DISTINCT u) FROM User u
+        JOIN u.userSkills us
+        JOIN us.skill s
+        WHERE u.id <> :excludeUserId
+          AND u.role = com.ADP.peerConnect.model.enums.Role.STUDENT
+          AND u.availabilityStatus = com.ADP.peerConnect.model.enums.AvailabilityStatus.AVAILABLE
+          AND s.id IN :skillIds
+        """)
+       Page<User> findAvailableRecommendationCandidates(
+               @Param("skillIds") List<Long> skillIds,
+               @Param("excludeUserId") String excludeUserId,
+               Pageable pageable);
 }

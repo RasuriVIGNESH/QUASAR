@@ -23,4 +23,13 @@ public interface ProjectSkillRepository extends JpaRepository<ProjectSkill, Long
             @Param("projectIds") List<String> projectIds
     );
 
+    @Query("""
+        SELECT ps FROM ProjectSkill ps
+        JOIN FETCH ps.skill
+        JOIN FETCH ps.project p
+        JOIN FETCH p.event e
+        WHERE e.id IN :eventIds
+        """)
+    List<ProjectSkill> findSkillsByEventIds(@Param("eventIds") List<Long> eventIds);
+
 }

@@ -10,6 +10,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -143,5 +146,16 @@ public class GlobalExceptionHandler {
                 HttpStatus.METHOD_NOT_ALLOWED
         );
     }
-}
 
+    @ExceptionHandler({
+            ConstraintViolationException.class,
+            MethodArgumentTypeMismatchException.class,
+            HttpMessageNotReadableException.class
+    })
+    public ResponseEntity<Map<String, Object>> handleMalformedRequest(
+            Exception ex, WebRequest request) {
+        Map<String, Object> errorResponse = createErrorResponse(
+                HttpStatus.BAD_REQUEST, "Invalid request parameters or body", request);
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+}

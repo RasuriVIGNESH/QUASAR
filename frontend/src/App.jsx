@@ -21,14 +21,19 @@ const MyProjects = lazy(() => import('./components/projects/MyProjects'));
 const CreateProject = lazy(() => import('./components/projects/CreateProject'));
 const ProfilePage = lazy(() => import('./components/profile/ProfilePage'));
 const ProjectPage = lazy(() => import('./components/project/ProjectPage'));
-const joinRequestPage=lazy(()=>import('./components/project/Joinrequestspage.jsx'))
+const JoinRequestPage = lazy(() => import('./components/project/Joinrequestspage.jsx'));
 const InviteMembers = lazy(() => import('./components/project/InviteMembers'));
 const StudentDiscovery = lazy(() => import('./components/discovery/StudentDiscovery'));
 const ProjectDiscovery = lazy(() => import('./components/discovery/ProjectDiscovery'));
+const RecommendedProjectsPage = lazy(() => import('./components/discovery/RecommendedProjectsPage'));
+const NotificationsPage = lazy(() => import('./components/notifications/NotificationsPage'));
 const RequestsPage = lazy(() => import('./components/requests/RequestsPage'));
 const SkillMastery = lazy(() => import('./components/profile/SkillMastery'));
 const EventsPage = lazy(() => import('./components/events/EventsPage'));
 const OAuth2RedirectHandler = lazy(() => import('./components/auth/OAuth2RedirectHandler'));
+const AdminRoute = lazy(() => import('./components/admin/AdminRoute'));
+const AdminDashboardLayout = lazy(() => import('./components/admin/AdminDashboardLayout'));
+const AdminReports = lazy(() => import('./components/admin/AdminReports'));
 
 /**
  * NavigationRegistrar
@@ -46,62 +51,70 @@ function NavigationRegistrar() {
 
 export function PageLoader() {
   return (
-    <div className="w-full h-full flex items-center justify-center bg-[#F8FAFC] min-h-[200px]">
-      <div className="w-8 h-8 border-2 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin" />
-    </div>
+      <div className="w-full h-full flex items-center justify-center bg-[#F8FAFC] min-h-[200px]">
+        <div className="w-8 h-8 border-2 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin" />
+      </div>
   );
 }
 
 export default function App() {
   return (
-    <Router>
-      <NavigationRegistrar />
-      <AuthProvider>
-        <RequestProvider>
-          <Suspense fallback={<div className="min-h-screen bg-[#F8FAFC]" />}>
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<LandingPage />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/forgot-password" element={<ForgotPassword />} />
-              <Route path="/complete-profile" element={<CompleteProfile />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/auth/oauth2/redirect" element={<OAuth2RedirectHandler />} />
+      <Router>
+        <NavigationRegistrar />
+        <AuthProvider>
+          <RequestProvider>
+            <Suspense fallback={<div className="min-h-screen bg-[#F8FAFC]" />}>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<LandingPage />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/complete-profile" element={<CompleteProfile />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/auth/oauth2/redirect" element={<OAuth2RedirectHandler />} />
 
-              {/* Protected Routes */}
-              <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
-              <Route path="Project/:projectId/requests" element={<ProtectedRoute><joinRequestPage /></ProtectedRoute>}/>
-              <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
-              <Route path="/projects/create" element={<ProtectedRoute><CreateProject /></ProtectedRoute>} />
-              <Route path="/projects/:projectId/invite" element={<ProtectedRoute><InviteMembers /></ProtectedRoute>} />
-              <Route path="/events" element={<EventsPage />} />
+                <Route element={<AdminRoute><AdminDashboardLayout /></AdminRoute>}>
+                  <Route path="/admin/reports" element={<AdminReports />} />
+                </Route>
 
-              <Route element={<ProtectedRoute><ResponsiveLayout /></ProtectedRoute>}>
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/projects/my-projects" element={<MyProjects />} />
-                <Route path="/profile" element={<ProfilePage />} />
-                <Route path="/skills" element={<SkillMastery />} />
-                <Route path="/messages" element={<RequestsPage />} />
-                <Route path="/discover/projects" element={<ProjectDiscovery />} />
-                <Route path="/discover/students" element={<StudentDiscovery />} />
+                {/* Protected Routes */}
+                <Route path="/projects/:projectId" element={<ProtectedRoute><ProjectPage /></ProtectedRoute>} />
+                <Route path="Project/:projectId/requests" element={<ProtectedRoute><JoinRequestPage /></ProtectedRoute>}/>
+                <Route path="/projects/:projectId/requests" element={<ProtectedRoute><JoinRequestPage /></ProtectedRoute>} />
+                <Route path="/events/:id" element={<ProtectedRoute><EventDetails /></ProtectedRoute>} />
+                <Route path="/projects/create" element={<ProtectedRoute><CreateProject /></ProtectedRoute>} />
+                <Route path="/projects/:projectId/invite" element={<ProtectedRoute><InviteMembers /></ProtectedRoute>} />
+                <Route path="/events" element={<EventsPage />} />
 
-              </Route>
+                <Route element={<ProtectedRoute><ResponsiveLayout /></ProtectedRoute>}>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/projects/my-projects" element={<MyProjects />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/skills" element={<SkillMastery />} />
+                  <Route path="/messages" element={<RequestsPage />} />
+                  <Route path="/requests" element={<RequestsPage />} />
+                  <Route path="/notifications" element={<NotificationsPage />} />
+                  <Route path="/discover/projects" element={<ProjectDiscovery />} />
+                  <Route path="/discover/recommended" element={<RecommendedProjectsPage />} />
+                  <Route path="/discover/students" element={<StudentDiscovery />} />
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </Suspense>
+                </Route>
 
-          <Toaster
-            position="top-right"
-            richColors
-            closeButton
-            expand={true}
-          />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
 
-          <GlobalErrorManager />
-        </RequestProvider>
-      </AuthProvider>
-    </Router>
+            <Toaster
+                position="top-right"
+                richColors
+                closeButton
+                expand={true}
+            />
+
+            <GlobalErrorManager />
+          </RequestProvider>
+        </AuthProvider>
+      </Router>
   );
 }

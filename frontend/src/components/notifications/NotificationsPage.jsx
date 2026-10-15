@@ -1,0 +1,20 @@
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, CheckCheck, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import notificationService from '@/services/NotificationService';
+
+export default function NotificationsPage() {
+  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const load = useCallback(async () => { try { const response = await notificationService.getNotifications({ page: 0, size: 50 }); const envelope = response?.data ?? response; const body = envelope?.data ?? envelope; setNotifications(Array.isArray(body) ? body : body?.content || []); } catch (error) { toast.error(error.message || 'Unable to load notifications'); } finally { setLoading(false); } }, []);
+  useEffect(() => { load(); }, [load]);
+  const markRead = async (id) => { try { await notificationService.markAsRead(id); setNotifications(prev => prev.map(item => item.id === id ? { ...item, read: true } : item)); } catch (error) { toast.error(error.message || 'Could not mark notification as read'); } };
+  const markAll = async () => { try { await notificationService.markAllAsRead(); setNotifications(prev => prev.map(item => ({ ...item, read: true }))); } catch (error) { toast.error(error.message || 'Could not mark notifications as read'); } };
+  const openNotification = async item => { if (!item.read) await markRead(item.id); const eventType = item.eventType; const tab = eventType === 'PROJECT_INVITATION' ? 'invitations' : eventType === 'JOIN_REQUEST' ? 'received' : eventType === 'REQUEST_DECISION' ? 'sent' : 'invitations'; navigate(`/requests?tab=${tab}`); };
+  return <div className="min-h-screen bg-slate-50/50 px-4 sm:px-8 py-8"><div className="max-w-3xl mx-auto"><div className="flex items-center justify-between mb-6"><div className="flex items-center gap-3"><div className="p-3 bg-indigo-100 rounded-xl"><Bell className="text-indigo-600" size={20} /></div><div><h1 className="text-2xl font-black text-slate-900">Notifications</h1><p className="text-sm text-slate-500">Click an invitation or request notification to respond.</p></div></div><Button variant="outline" onClick={markAll} disabled={!notifications.some(item => !item.read)}><CheckCheck size={15} className="mr-2" /> Mark all read</Button></div>{loading ? <div className="flex justify-center py-16"><Loader2 className="animate-spin text-indigo-600" /></div> : notifications.length === 0 ? <Card className="border-dashed"><CardContent className="py-16 text-center text-sm text-slate-500">You are all caught up.</CardContent></Card> : <div className="space-y-3">{notifications.map(item => { const read = !!item.read; const actionable = ['PROJECT_INVITATION', 'JOIN_REQUEST', 'REQUEST_DECISION'].includes(item.eventType); return <Card key={item.id} onClick={() => actionable && openNotification(item)} className={`${read ? 'bg-white' : 'bg-indigo-50/50 border-indigo-200'} border-slate-200 ${actionable ? 'cursor-pointer hover:border-indigo-300 hover:shadow-sm' : ''}`}><CardContent className="p-5 flex items-start justify-between gap-4"><div><div className="flex items-center gap-2"><h2 className="font-bold text-slate-900">{item.title || 'Notification'}</h2>{!read && <Badge className="bg-indigo-600 text-white border-none text-[10px]">NEW</Badge>}</div><p className="text-sm text-slate-600 mt-1">{item.message}</p><p className="text-[11px] text-slate-400 mt-2">{item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}</p>{actionable && <p className="text-xs text-indigo-600 font-bold mt-3">Open requests to respond →</p>}</div>{!read && <Button variant="ghost" size="sm" onClick={event => { event.stopPropagation(); markRead(item.id); }}>Mark read</Button>}</CardContent></Card>; })}</div>}</div></div>;
+}

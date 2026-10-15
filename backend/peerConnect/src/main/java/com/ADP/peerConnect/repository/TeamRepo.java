@@ -90,6 +90,25 @@ AND (t.lead.id = :userId OR :userId IN (SELECT m.id FROM t.members m))
     WHERE t.project.id = :projectId AND u.profilePictureUrl IS NOT NULL
     """)
     List<String> getMemberProfileImageUrls(@Param("projectId") String projectId);
+
+    /** Counts recruiting/in-progress projects per candidate in one query; avoids per-user workload queries. */
+    @Query(value = """
+        SELECT project_members.user_id AS "userId",
+               COUNT(DISTINCT project_members.project_id) AS "projectCount"
+        FROM (
+            SELECT t.lead_id AS user_id, t.project_id AS project_id
+            FROM teams t
+            UNION ALL
+            SELECT tm.user_id AS user_id, t.project_id AS project_id
+            FROM team_members tm
+            JOIN teams t ON t.id = tm.team_id
+        ) project_members
+        JOIN projects p ON p.id = project_members.project_id
+        WHERE project_members.user_id IN (:userIds)
+          AND p.status IN ('RECRUITING', 'IN_PROGRESS')
+        GROUP BY project_members.user_id
+        """, nativeQuery = true)
+    List<UserProjectCountProjection> findActiveProjectCountsByUserIds(@Param("userIds") List<String> userIds);
     
     // ── Mutations ─────────────────────────────────────────────────────────────
 
@@ -114,10 +133,10 @@ AND (t.lead.id = :userId OR :userId IN (SELECT m.id FROM t.members m))
             @Param("userId") String userId);
 
     @Query("""
-    SELECT t FROM Team t
-    JOIN FETCH t.lead
-    JOIN FETCH t.members
-    WHERE t.project.id = :projectId
-    """)
+        SELECT DISTINCT t FROM Team t
+        JOIN FETCH t.lead
+        LEFT JOIN FETCH t.members
+        WHERE t.project.id = :projectId
+        """)
     Optional<Team> findTeamWithLeadAndMembers(@Param("projectId") String projectId);
 }

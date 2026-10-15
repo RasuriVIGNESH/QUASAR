@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { joinRequestService } from '../../services/JoinRequestService';
 import { useAuth } from '../../contexts/AuthContext';
+import recommendationService from '../../services/recommendationService';
 
 export default function ProjectDetailModal({ project, open, onOpenChange, onJoinSuccess }) {
     const { currentUser } = useAuth();
@@ -21,8 +22,22 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasApplied, setHasApplied] = useState(false);
     const [checkingStatus, setCheckingStatus] = useState(false);
+    const [safeProject, setSafeProject] = useState(null);
+    const [loadingProject, setLoadingProject] = useState(false);
 
     useEffect(() => {
+        const loadSafeProject = async () => {
+            if (!project?.id || !open) return;
+            setLoadingProject(true);
+            try {
+                const response = await recommendationService.getDiscoveryProject(project.id);
+                const envelope = response?.data ?? response;
+                setSafeProject(envelope?.data ?? envelope);
+            }
+            catch { setSafeProject(project); }
+            finally { setLoadingProject(false); }
+        };
+        loadSafeProject();
         const checkApplicationStatus = async () => {
             if (!project?.id || !open || !currentUser) return;
             setCheckingStatus(true);
@@ -62,6 +77,8 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
     };
 
     if (!project) return null;
+    const displayProject = safeProject || project;
+    const requestedSkills = displayProject.requestedSkills || displayProject.projectCard?.skillsRequired || displayProject.skillsRequired || displayProject.requiredSkills || [];
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -71,24 +88,24 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
                     <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                             <div className="flex items-center gap-2 mb-3">
-                                {project.categoryName && (
+                                {displayProject.categoryName && (
                                     <Badge className="bg-indigo-100 text-indigo-700 border-none font-bold text-xs px-2 py-0">
-                                        {project.categoryName}
+                                    {displayProject.categoryName}
                                     </Badge>
                                 )}
-                                {project.status && (
+                                {displayProject.status && (
                                     <Badge variant="outline" className="text-slate-600 border-slate-200 font-bold px-2 text-[9px] uppercase tracking-wide">
-                                        {project.status}
+                                        {displayProject.status}
                                     </Badge>
                                 )}
                             </div>
                             <h2 className="text-2xl font-bold text-slate-900 tracking-tight leading-tight mb-2">
-                                {project.title}
+                                {displayProject.title}
                             </h2>
                             <div className="flex items-center gap-4 text-xs font-semibold text-slate-500 uppercase tracking-wide">
                                 <span className="flex items-center gap-1.5">
                                     <Users className="h-3.5 w-3.5 text-indigo-600" />
-                                    {project.currentTeamSize || 1} / {project.maxTeamSize || 4}
+                                    {displayProject.currentTeamSize || 1} / {displayProject.maxTeamSize || 4}
                                 </span>
                                 <span className="flex items-center gap-1.5">
                                     <Clock className="h-3.5 w-3.5 text-indigo-600" />
@@ -112,21 +129,21 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
                         <div className="space-y-2">
                             <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">About This Project</h4>
                             <p className="text-sm text-slate-600 leading-relaxed">
-                                {project.description || project.goals || 'The team has not yet provided a detailed description for this project.'}
+                                {displayProject.description || displayProject.goals || 'The team has not yet provided a detailed description for this project.'}
                             </p>
                         </div>
 
                         {/* Skills */}
-                        {project.requiredSkills?.length > 0 && (
+                        {requestedSkills.length > 0 && (
                             <div className="space-y-3">
                                 <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Required Skills</h4>
                                 <div className="flex flex-wrap gap-2">
-                                    {project.requiredSkills.map((s, i) => (
+                                    {requestedSkills.map((s, i) => (
                                         <Badge
                                             key={i}
                                             className="bg-slate-100 border-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs font-semibold"
                                         >
-                                            {typeof s === 'string' ? s : s.skill?.name || s.name}
+                                            {typeof s === 'string' ? s : s.name || s.skill?.name}
                                         </Badge>
                                     ))}
                                 </div>
@@ -158,16 +175,16 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
                 {/* FOOTER - Actions */}
                 <div className="p-6 bg-slate-50 border-t border-slate-100 flex gap-4 justify-between items-center shrink-0">
                     <div className="flex items-center gap-3">
-                        {project.lead && (
+                        {displayProject.lead && (
                             <div className="flex items-center gap-3">
                                 <Avatar className="w-9 h-9 border border-slate-200 shadow-sm">
-                                    <AvatarImage src={project.lead.profilePictureUrl} />
+                            <AvatarImage src={displayProject.lead.profilePictureUrl} />
                                     <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold text-xs">
-                                        {project.lead.firstName?.[0]}
+                                        {displayProject.lead.firstName?.[0]}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0">
-                                    <p className="text-xs font-bold text-slate-900">{project.lead.firstName} {project.lead.lastName}</p>
+                                    <p className="text-xs font-bold text-slate-900">{displayProject.lead.firstName} {displayProject.lead.lastName}</p>
                                     <p className="text-[11px] text-slate-500 font-medium">Lead</p>
                                 </div>
                             </div>

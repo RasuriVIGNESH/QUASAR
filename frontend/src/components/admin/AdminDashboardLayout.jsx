@@ -54,6 +54,7 @@ export default function AdminDashboardLayout() {
         { path: '/admin/users', label: 'Users', icon: <Users /> },
         { path: '/admin/projects', label: 'Projects', icon: <Briefcase /> },
         { path: '/admin/mentors', label: 'Mentors', icon: <GraduationCap /> },
+        { path: '/admin/reports', label: 'Reports', icon: <ShieldAlert /> },
     ];
 
     return (

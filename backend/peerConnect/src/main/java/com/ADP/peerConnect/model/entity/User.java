@@ -121,17 +121,4 @@ public class User {
     private Set<Team> teams = new HashSet<>();
 
 
-    @BatchSize(size = 25)
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "user_recommended_projects",
-            joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "project_id"),
-            indexes = {
-                    @Index(name = "idx_recommended_user", columnList = "user_id"),
-                    @Index(name = "idx_recommended_project", columnList = "project_id")
-            }
-    )
-    private Set<Project> recommendedProjects = new HashSet<>();
-
 }

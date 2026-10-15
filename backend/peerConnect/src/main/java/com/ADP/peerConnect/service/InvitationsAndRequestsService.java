@@ -10,6 +10,7 @@ import com.ADP.peerConnect.model.entity.User;
 import com.ADP.peerConnect.model.enums.ProjectStatus;
 import com.ADP.peerConnect.model.enums.RequestType;
 import com.ADP.peerConnect.model.enums.Status;
+import com.ADP.peerConnect.model.enums.NotificationEventType;
 import com.ADP.peerConnect.repository.InvitationsAndRequestsRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -24,17 +25,20 @@ public class InvitationsAndRequestsService {
     private final TeamService teamService;
     private final UserService userService;
     private final ProjectService projectService;
+    private final InboxNotificationService notificationService;
 
     public InvitationsAndRequestsService(
             InvitationsAndRequestsRepository repository,
             TeamService teamService,
             UserService userService,
-            ProjectService projectService
+            ProjectService projectService,
+            InboxNotificationService notificationService
     ) {
         this.repository = repository;
         this.teamService = teamService;
         this.userService = userService;
         this.projectService = projectService;
+        this.notificationService = notificationService;
     }
 
     // -------------------------------------------------------------------------
@@ -93,6 +97,10 @@ public class InvitationsAndRequestsService {
 
         InvitationsAndRequests saved =
                 repository.save(invitation);
+
+        notificationService.create(invitedUser.getId(), NotificationEventType.PROJECT_INVITATION,
+                "Project invitation", displayName(inviter) + " invited you to join " + project.getTitle() + ".",
+                projectId, inviterId);
 
         /*
          * The surrounding class-level transaction is still active here,
@@ -193,6 +201,11 @@ public class InvitationsAndRequestsService {
 
         InvitationsAndRequests saved =
                 repository.save(joinRequest);
+
+        User lead = project.getTeam().getLead();
+        notificationService.create(lead.getId(), NotificationEventType.JOIN_REQUEST,
+                "New join request", displayName(user) + " requested to join " + project.getTitle() + ".",
+                projectId, userId);
 
         return new InvitationsAndRequestsResponse(saved);
     }
@@ -357,6 +370,13 @@ public class InvitationsAndRequestsService {
                 request.getTargetUser().getId()
         );
 
+        String notifyUserId = request.isJoinRequest()
+                ? project.getTeam().getLead().getId()
+                : request.getInitiatedBy().getId();
+        notificationService.create(notifyUserId, NotificationEventType.REQUEST_DECISION,
+                "Collaboration request accepted", "A request for " + project.getTitle() + " was accepted.",
+                project.getId(), currentUserId);
+
         if (project.getCurrentTeamSize()
                 >= project.getMaxTeamSize()) {
             project.setStatus(ProjectStatus.IN_PROGRESS);
@@ -401,11 +421,25 @@ public class InvitationsAndRequestsService {
 
         request.reject();
         repository.save(request);
+
+        String notifyUserId = request.isJoinRequest()
+                ? request.getTargetUser().getId()
+                : request.getInitiatedBy().getId();
+        notificationService.create(notifyUserId, NotificationEventType.REQUEST_DECISION,
+                "Collaboration request declined", "A request for " + request.getProject().getTitle() + " was declined.",
+                request.getProject().getId(), currentUserId);
     }
 
     // -------------------------------------------------------------------------
     // Cancel join request
     // -------------------------------------------------------------------------
+
+    private String displayName(User user) {
+        String first = user.getFirstName() == null ? "" : user.getFirstName().trim();
+        String last = user.getLastName() == null ? "" : user.getLastName().trim();
+        String name = (first + " " + last).trim();
+        return name.isEmpty() ? "A student" : name;
+    }
 
     public void cancelJoinRequest(
             Long requestId,

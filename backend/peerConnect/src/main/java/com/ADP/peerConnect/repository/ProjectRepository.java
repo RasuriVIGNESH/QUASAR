@@ -104,7 +104,7 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
                   SELECT 1 FROM Team tm JOIN tm.members u
                   WHERE tm.project.id = p.id AND u.id = :userId
               )
-            ORDER BY p.createdAt DESC
+            ORDER BY p.createdAt DESC, p.id ASC
             """,
             countQuery = """
             SELECT COUNT(DISTINCT p) FROM Project p

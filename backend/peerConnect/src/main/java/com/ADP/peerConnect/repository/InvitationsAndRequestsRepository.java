@@ -170,4 +170,16 @@ public interface InvitationsAndRequestsRepository
             String projectId,
             RequestType requestType
     );
+
+    @Query("SELECT DISTINCT r.project.id FROM InvitationsAndRequests r " +
+            "WHERE r.targetUser.id = :userId AND r.status = :status")
+    List<String> findProjectIdsByTargetUserIdAndStatus(
+            @Param("userId") String userId,
+            @Param("status") Status status);
+
+    @Query("SELECT DISTINCT r.targetUser.id FROM InvitationsAndRequests r " +
+            "WHERE r.project.id = :projectId AND r.status = :status")
+    List<String> findTargetUserIdsByProjectIdAndStatus(
+            @Param("projectId") String projectId,
+            @Param("status") Status status);
 }

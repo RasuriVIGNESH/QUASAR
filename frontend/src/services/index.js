@@ -11,3 +11,7 @@ export { default as dataService } from './dataService.js';
 export { default as chatService } from './Chatservice.js';
 export { default as notificationService } from './NotificationService.js';
 export { default as teamService } from './TeamService.js';
+export { default as recommendationService } from './recommendationService.js';
+export { default as portfolioService } from './portfolioService.js';
+export { default as moderationService } from './moderationService.js';
+export { default as discoveryService } from './discoveryService.js';

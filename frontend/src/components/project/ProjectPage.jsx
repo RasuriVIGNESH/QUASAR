@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 // Icons
 import {
-  LayoutDashboard, ClipboardList, Users, MessageSquare, Settings,
+  LayoutDashboard, ClipboardList, Users, UserPlus, MessageSquare, Settings,
   Github, Globe, ArrowLeft, Plus, Send, CheckCircle2,
   Link as LinkIcon, Video, Flag, MoreHorizontal, Calendar,
   Edit, Loader2, Cpu, MoreVertical, Zap, ChevronDown, Pencil, Trash2, Inbox,
@@ -30,6 +30,9 @@ import projectService, { toArray } from '@/services/projectService';
 import { teamService } from '@/services/TeamService';
 import { chatService } from '@/services/Chatservice';
 import MeetingRooms from './MeetingRooms';
+import RecruitingPanel from './RecruitingPanel';
+import PortfolioSection from './PortfolioSection';
+import ReportDialog from '@/components/common/ReportDialog';
 import { toast } from 'sonner';
 
 /* ─── STATIC CONSTANTS ──────────────────────────────── */
@@ -55,6 +58,7 @@ export default function ProjectPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSubmittingCompletion, setIsSubmittingCompletion] = useState(false);
   const [completionLinks, setCompletionLinks] = useState({ githubRepo: '', demoUrl: '' });
+  const [reportOpen, setReportOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!projectId) return;
@@ -101,6 +105,7 @@ export default function ProjectPage() {
     { id: 'tasks', icon: ClipboardList, label: 'Tasks' },
     { id: 'chat', icon: MessageSquare, label: 'Chat' },
     { id: 'team', icon: Users, label: 'Team' },
+    { id: 'portfolio', icon: LinkIcon, label: 'Portfolio' },
     ...(isMember ? [{ id: 'manage', icon: Settings, label: 'Settings' }] : [])
   ], [isMember]);
 
@@ -226,10 +231,16 @@ export default function ProjectPage() {
               {activeTab === 'tasks' && <TaskBoard projectId={projectId} isProjectLead={isProjectLead} members={members} />}
               {activeTab === 'chat' && <ChatSection projectId={projectId} currentUserId={currentUserId} />}
               {activeTab === 'team' && <TeamSection lead={teamLead} members={members} isProjectLead={isProjectLead} isMember={isMember} projectId={projectId} onUpdate={loadData} />}
+              {activeTab === 'portfolio' && <PortfolioSection projectId={projectId} canEdit={isMember} currentUserId={currentUserId} />}
               {activeTab === 'manage' && <SettingsTab project={project} isProjectLead={isProjectLead} onPurge={() => setIsDeleteDialogOpen(true)} onUpdate={loadData} onStatusChange={handleStatusChange} currentStatus={project.status} />}
             </div>
           </div>
         </main>
+
+        <Button variant="ghost" size="icon" aria-label="Report project" onClick={() => setReportOpen(true)} className="fixed right-5 bottom-5 rounded-full bg-white shadow-lg border border-slate-200 text-slate-500 hover:text-rose-600">
+          <Flag size={17} />
+        </Button>
+        <ReportDialog open={reportOpen} onOpenChange={setReportOpen} projectId={projectId} />
 
         {/* ── COMPLETION DIALOG ── */}
         <Dialog open={isCompletionDialogOpen} onOpenChange={setIsCompletionDialogOpen}>
@@ -310,7 +321,7 @@ const OverviewTab = memo(({ project, members }) => (
         <Card className="p-6 bg-white border-slate-200 rounded-2xl">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-4">Required Skills</h3>
           <div className="flex flex-wrap gap-2">
-            {project.requiredSkills?.length ? project.requiredSkills.map((ps, i) => (
+            {(project.skillsRequired || project.requiredSkills)?.length ? (project.skillsRequired || project.requiredSkills).map((ps, i) => (
                 <span key={i} className="px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-lg border border-emerald-100">{ps.skill?.name || ps}</span>
             )) : <span className="text-sm text-slate-400">Not specified</span>}
           </div>
@@ -359,7 +370,8 @@ const TaskBoard = ({ projectId, isProjectLead, members = [] }) => {
     priority: 'MEDIUM',
     dueDate: '',
     estimatedHours: '',
-    assignedToId: ''
+    assignedToId: '',
+    status: 'TODO'
   });
 
   const fetchTasks = useCallback(async () => {
@@ -377,7 +389,7 @@ const TaskBoard = ({ projectId, isProjectLead, members = [] }) => {
   useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const resetTaskForm = () => {
-    setNewTask({ title: '', description: '', priority: 'MEDIUM', dueDate: '', estimatedHours: '', assignedToId: '' });
+    setNewTask({ title: '', description: '', priority: 'MEDIUM', dueDate: '', estimatedHours: '', assignedToId: '', status: 'TODO' });
     setEditingTask(null);
   };
 
@@ -420,7 +432,8 @@ const TaskBoard = ({ projectId, isProjectLead, members = [] }) => {
       priority: task.priority || 'MEDIUM',
       dueDate: task.dueDate || '',
       estimatedHours: task.estimatedHours ?? '',
-      assignedToId: task.assignedTo?.id || task.assignedToId || '', // <-- Added
+      assignedToId: task.assignedTo?.id || task.assignedToId || '',
+      status: task.status || 'TODO',
     });
     setIsEditOpen(true);
   };
@@ -439,8 +452,8 @@ const TaskBoard = ({ projectId, isProjectLead, members = [] }) => {
         priority: newTask.priority,
         dueDate: newTask.dueDate || undefined,
         estimatedHours: newTask.estimatedHours ? Number(newTask.estimatedHours) : undefined,
-        assignedToId: newTask.assignedToId || undefined, // <-- Added
-        status: editingTask.status || 'TODO',
+        assignedToId: newTask.assignedToId || undefined,
+        status: newTask.status || 'TODO',
       });
       toast.success('Task updated');
       setIsEditOpen(false);
@@ -579,6 +592,14 @@ const TaskBoard = ({ projectId, isProjectLead, members = [] }) => {
               </select>
             </div>
           </div>
+          {editingTask && <div className="space-y-2">
+            <Label className="text-xs font-bold text-slate-500">Status</Label>
+            <select value={newTask.status} onChange={e => setNewTask(prev => ({ ...prev, status: e.target.value }))} className="w-full h-11 px-3 rounded-xl border border-slate-200 text-slate-900 text-sm bg-white">
+              <option value="TODO">To Do</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="COMPLETED">Completed</option>
+            </select>
+          </div>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => { setIsAddOpen(false); setIsEditOpen(false); resetTaskForm(); }} className="rounded-xl">Cancel</Button>
@@ -719,19 +740,23 @@ const ChatSection = ({ projectId, currentUserId }) => {
   const scrollRef = useRef(null);
 
   const getMessageContent = (msgString) => {
-    if (!msgString) return '';
-    try {
-      const parsed = JSON.parse(msgString);
-      return parsed.content || msgString;
-    } catch {
-      return msgString;
+    let value = msgString;
+    for (let depth = 0; depth < 4; depth += 1) {
+      if (typeof value !== 'string') break;
+      try {
+        const parsed = JSON.parse(value);
+        if (parsed && typeof parsed === 'object' && Object.prototype.hasOwnProperty.call(parsed, 'content')) value = parsed.content;
+        else break;
+      } catch { break; }
     }
+    return typeof value === 'string' ? value : value == null ? '' : JSON.stringify(value);
   };
 
   const fetchMessages = useCallback(async () => {
     try {
       const res = await chatService.getProjectMessages(projectId, 0, 100);
-      const payload = res?.data ?? res ?? {};
+      const envelope = res?.data ?? res ?? {};
+      const payload = envelope?.data ?? envelope;
       const list = payload.content || (Array.isArray(payload) ? payload : []);
       setMessages(Array.isArray(list) ? list : []);
     } catch { /* silent */ }
@@ -753,8 +778,7 @@ const ChatSection = ({ projectId, currentUserId }) => {
     setMsg('');
     setSending(true);
     try {
-      // Stringify to match backend expectation: {"content": "message"}
-      await chatService.sendMessage(projectId, JSON.stringify({ content: text }));
+      await chatService.sendMessage(projectId, text);
       fetchMessages();
     } catch {
       toast.error('Failed to send message');
@@ -791,7 +815,7 @@ const ChatSection = ({ projectId, currentUserId }) => {
     setMessages(m => m.map(x => x.id === messageId ? { ...x, message: JSON.stringify({ content: editText.trim() }) } : x));
     setEditingId(null);
     try {
-      await chatService.editMessage(messageId, JSON.stringify({ content: editText.trim() }));
+      await chatService.editMessage(messageId, editText.trim());
       fetchMessages();
     } catch {
       toast.error('Failed to edit message');
@@ -834,9 +858,9 @@ const ChatSection = ({ projectId, currentUserId }) => {
                   ) : (
                       <div className="flex items-center gap-1.5">
                         {isMe && (
-                            <div className="hidden group-hover:flex gap-1.5 text-slate-300">
-                              <button onClick={() => startEdit(m)} className="hover:text-indigo-500" title="Edit"><Pencil size={12} /></button>
-                              <button onClick={() => handleDelete(m.id)} className="hover:text-red-500" title="Delete"><Trash2 size={12} /></button>
+                            <div className="flex gap-1.5 text-slate-400">
+                              <button onClick={() => startEdit(m)} className="p-1.5 rounded-md bg-slate-50 border border-slate-200 hover:text-indigo-600 hover:border-indigo-200" title="Edit message" aria-label="Edit message"><Pencil size={13} /></button>
+                              <button onClick={() => handleDelete(m.id)} className="p-1.5 rounded-md bg-slate-50 border border-slate-200 hover:text-red-600 hover:border-red-200" title="Delete message" aria-label="Delete message"><Trash2 size={13} /></button>
                             </div>
                         )}
                         <div className={`px-4 py-2.5 rounded-2xl text-sm max-w-sm leading-relaxed ${isMe ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-800'}`}>
@@ -952,7 +976,7 @@ const TeamSection = memo(({ lead, members, isProjectLead, isMember, projectId, o
           </div>
           {isMember && (
               <div className="flex items-center gap-2">
-                <Button size="sm" variant="outline" className="h-8 text-xs gap-1 rounded-lg border-slate-200 text-slate-600 hover:text-indigo-700 hover:border-indigo-200" onClick={() => navigate(`/projects/${projectId}/join-requests`)}>
+                <Button size="sm" variant="outline" className="h-8 text-xs gap-1 rounded-lg border-slate-200 text-slate-600 hover:text-indigo-700 hover:border-indigo-200" onClick={() => navigate(`/projects/${projectId}/requests`)}>
                   <Inbox size={14} /> Join Requests
                 </Button>
                 <Button size="sm" className="h-8 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded-lg" onClick={() => navigate(`/projects/${projectId}/invite`)}>
@@ -968,6 +992,7 @@ const TeamSection = memo(({ lead, members, isProjectLead, isMember, projectId, o
           ))}
           {totalCount === 0 && <p className="text-sm text-slate-400 col-span-3">No team members yet.</p>}
         </div>
+        {isProjectLead && <div className="pt-4 border-t border-slate-200"><RecruitingPanel projectId={projectId} /></div>}
       </div>
   );
 });

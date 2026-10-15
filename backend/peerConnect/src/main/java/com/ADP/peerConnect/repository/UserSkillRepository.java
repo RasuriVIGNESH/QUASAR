@@ -29,5 +29,9 @@ public interface UserSkillRepository extends JpaRepository<UserSkill, Long> {
     @Query("SELECT COUNT(us) > 0 FROM UserSkill us JOIN us.skill s WHERE us.user.id = :userId AND LOWER(s.name) = LOWER(:skillName)")
     boolean existsByUserIdAndSkillNameIgnoreCase(@Param("userId") String userId, @Param("skillName") String skillName);
 
+    /** Batch-load all skills for a bounded set of recommendation candidates. */
+    @Query("SELECT us FROM UserSkill us JOIN FETCH us.skill WHERE us.user.id IN :userIds")
+    List<UserSkill> findAllByUserIdsWithSkill(@Param("userIds") List<String> userIds);
+
     long countByUserId(String userId);
 }

@@ -5,6 +5,7 @@ import { projectService } from '../services/projectService';
 
 const RequestContext = createContext();
 export const useRequests = () => useContext(RequestContext);
+const unwrap = response => { const envelope = response?.data ?? response; return envelope?.data ?? envelope; };
 
 export const RequestProvider = ({ children }) => {
   const { isAuthenticated, userProfile } = useAuth();
@@ -44,11 +45,12 @@ export const RequestProvider = ({ children }) => {
         projectService.getMyProjects()
       ]);
 
-      const sentRequests = joinRequestsRes?.data || joinRequestsRes || [];
-      const invitations = Array.isArray(invitationsRes)
-        ? invitationsRes
-        : invitationsRes?.content || invitationsRes?.data || [];
-      const myProjects = myProjectsResponse?.content || [];
+      const sentBody = unwrap(joinRequestsRes);
+      const sentRequests = Array.isArray(sentBody) ? sentBody : sentBody?.content || [];
+      const invitationBody = unwrap(invitationsRes);
+      const invitations = Array.isArray(invitationBody) ? invitationBody : invitationBody?.content || [];
+      const projectBody = unwrap(myProjectsResponse);
+      const myProjects = Array.isArray(projectBody) ? projectBody : projectBody?.content || [];
 
       const ownedProjects = myProjects.filter(p => (p.lead?.id || p.Lead?.id) === userId);
 
@@ -64,7 +66,7 @@ export const RequestProvider = ({ children }) => {
           )
         );
 
-        allJoinRequests = results.map(res => res?.data || res || []).flat();
+        allJoinRequests = results.map(res => { const body = unwrap(res); return Array.isArray(body) ? body : body?.content || []; }).flat();
       }
 
       // ✅ SET STATE

@@ -24,6 +24,10 @@ public class ProjectCardResponse {
     private List<String> memberProfileImageUrls;
 
     public ProjectCardResponse(Project project) {
+        this(project, project.getProjectSkills());
+    }
+
+    public ProjectCardResponse(Project project, List<ProjectSkill> projectSkills) {
         this.id = project.getId();
         this.title = project.getTitle();
 
@@ -43,9 +47,9 @@ public class ProjectCardResponse {
                 ? new UserCardResponse(project.getTeam().getLead())
                 : null;
 
-        this.skillsRequired = project.getProjectSkills() == null
+        this.skillsRequired = projectSkills == null
                 ? new ArrayList<>()
-                : project.getProjectSkills()
+                : projectSkills
                 .stream()
                 .filter(Objects::nonNull)
                 .map(ProjectSkill::getSkill)

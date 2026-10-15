@@ -68,8 +68,12 @@ export default function JoinRequestsPage() {
                 projectService.getProject(projectId),
                 teamService.getProjectMembers(projectId),
             ]);
-            setProject(projectData);
-            setMembers(toArray(membersRes));
+            const projectEnvelope = projectData?.data ?? projectData;
+            const projectBody = projectEnvelope?.data ?? projectEnvelope;
+            const membersEnvelope = membersRes?.data ?? membersRes;
+            const membersBody = membersEnvelope?.data ?? membersEnvelope;
+            setProject(projectBody);
+            setMembers(toArray(membersBody?.members ?? membersBody));
         } catch (err) {
             console.error('Failed to load project:', err);
             toast.error('Failed to load project');
@@ -138,16 +142,6 @@ export default function JoinRequestsPage() {
         );
     }
 
-    if (!isMember) {
-        return (
-            <div className="h-screen w-full flex flex-col items-center justify-center bg-white text-slate-900 gap-4">
-                <p className="text-xl font-bold text-slate-700">Only project members can view join requests.</p>
-                <Button onClick={() => navigate(`/projects/${projectId}`)} className="bg-indigo-600 hover:bg-indigo-700">
-                    Back to Project
-                </Button>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen w-full bg-slate-50 text-slate-900">

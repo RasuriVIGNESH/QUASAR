@@ -2,13 +2,14 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageLoader } from '../../App';
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 
 import {
     Briefcase, Zap, User, LogOut, Menu, X,
     Home, Bell, PlusSquare, Search, Compass, UserPlus
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import notificationService from '@/services/NotificationService';
 
 export default function ResponsiveLayout() {
     const { userProfile, logout } = useAuth();
@@ -23,6 +24,21 @@ export default function ResponsiveLayout() {
         { id: 'skills', label: 'Skills', icon: Zap, route: '/skills' },
         { id: 'profile', label: 'Profile', icon: User, route: '/profile' }
     ];
+
+    const [unreadCount, setUnreadCount] = useState(0);
+    useEffect(() => {
+        let active = true;
+        const loadCount = async () => {
+            try {
+                const response = await notificationService.getUnreadCount();
+                const value = response?.unreadCount ?? response?.data?.unreadCount ?? response?.data?.data?.unreadCount ?? 0;
+                if (active) setUnreadCount(Number(value) || 0);
+            } catch { /* Notification access should never block the shell. */ }
+        };
+        if (userProfile) loadCount();
+        const timer = userProfile ? setInterval(loadCount, 30000) : null;
+        return () => { active = false; if (timer) clearInterval(timer); };
+    }, [userProfile]);
 
     const handleNavigate = (route) => {
         navigate(route);
@@ -70,8 +86,9 @@ export default function ResponsiveLayout() {
                     <h1 className="text-lg font-bold text-slate-900 tracking-tight">Quasar</h1>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button onClick={() => navigate('/messages')} className="text-slate-900 relative">
+                    <button onClick={() => navigate('/dashboard#notifications')} className="text-slate-900 relative">
                         <Bell size={24} strokeWidth={2} />
+                        {unreadCount > 0 && <span className="absolute -right-2 -top-2 min-w-4 h-4 px-1 rounded-full bg-indigo-600 text-white text-[9px] font-black flex items-center justify-center">{unreadCount > 99 ? '99+' : unreadCount}</span>}
                     </button>
                 </div>
             </header>

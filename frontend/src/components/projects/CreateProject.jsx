@@ -23,6 +23,7 @@ import { skillsService } from '../../services/skillsService.js';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import ValidationAlert from '@/components/common/ValidationAlert';
 import { toast } from 'sonner';
+import ProjectTemplatePicker from './ProjectTemplatePicker';
 
 const stepContent = {
   1: {
@@ -116,6 +117,19 @@ export default function CreateProject() {
     }
   };
 
+  const applyTemplate = (template) => {
+    setFormData(prev => ({
+      ...prev,
+      title: prev.title || template.title || template.name || '',
+      description: prev.description || template.description || template.brief || '',
+      problemStatement: prev.problemStatement || template.problemStatement || template.problem || '',
+      goals: prev.goals || template.goals || '',
+      objectives: prev.objectives || template.objectives || '',
+      skillsRequired: prev.skillsRequired.length ? prev.skillsRequired : (template.suggestedSkills || []).filter(Boolean),
+    }));
+    toast.success('Template applied. Empty fields were filled; your existing entries were preserved.');
+  };
+
   const validateStep = (step) => {
     if (step === 1) {
       if (!formData.title) return setError('Project title is required'), false;
@@ -194,7 +208,7 @@ export default function CreateProject() {
         categoryName: formData.category, // Keep categoryName for display/backend if needed
         goals: formData.goals,
         objectives: formData.objectives,
-        skills: formData.skillsRequired.map(name => ({ name })),// Backend expects 'skills'
+        skills: formData.skillsRequired.map(skillName => ({ skillName, level: null })),
         maxTeamSize: parseInt(formData.maxTeamSize),
         techStack: formData.techStack,
         githubRepo: formData.githubRepo,
@@ -260,6 +274,7 @@ export default function CreateProject() {
       <div className="lg:w-3/5 overflow-y-auto bg-white/50 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-8 py-16 lg:py-24">
           <ValidationAlert error={error} />
+          {currentStep === 1 && <ProjectTemplatePicker onApply={applyTemplate} />}
 
           <AnimatePresence mode="wait">
             <motion.div key={currentStep} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
