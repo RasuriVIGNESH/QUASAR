@@ -98,7 +98,7 @@ public class ProjectController {
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         try {
             projectService.deleteProject(projectId, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Project deleted successfully"));
+            return ResponseEntity.ok(new ApiResponse(true, "Project marked as deleted; its history has been preserved."));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         }
@@ -219,7 +219,7 @@ public class ProjectController {
         return new ResponseEntity<>(created.getName(), HttpStatus.CREATED);
     }
     @Operation(summary = "Search projects",
-            description = "use project status only RECRUITING, IN_PROGRESS, COMPLETED, CANCELLED")
+            description = "use project status RECRUITING, IN_PROGRESS, COMPLETED, CANCELLED, or DELETED")
     @GetMapping("/searchProjects")
     public ResponseEntity<PagedResponse<ProjectCardResponse>> searchProjects(
             @Parameter(description = "Search query") @RequestParam(required = false) String query,

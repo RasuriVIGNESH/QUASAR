@@ -3,6 +3,7 @@ package com.ADP.peerConnect.model.dto.response.Project;
 import com.ADP.peerConnect.model.entity.InvitationsAndRequests;
 import com.ADP.peerConnect.model.enums.Status;
 import com.ADP.peerConnect.model.enums.RequestType;
+import com.ADP.peerConnect.model.enums.ProjectStatus;
 import lombok.Data;
 import lombok.Getter;
 
@@ -15,6 +16,7 @@ public class InvitationsAndRequestsResponse {
     private  RequestType requestType;
     private  String projectId;
     private  String projectTitle;
+    private  ProjectStatus projectStatus;
     private  String initiatedById;
     private  String initiatedByName;
     private  String targetUserId;
@@ -29,6 +31,7 @@ public class InvitationsAndRequestsResponse {
         this.requestType = entity.getRequestType();
         this.projectId = entity.getProject().getId();
         this.projectTitle = entity.getProject().getTitle();
+        this.projectStatus = entity.getProject().getStatus();
         this.initiatedById = entity.getInitiatedBy() != null ? entity.getInitiatedBy().getId() : null;
         this.initiatedByName = entity.getInitiatedBy() != null ? entity.getInitiatedBy().getFirstName() : null;
         this.targetUserId = entity.getTargetUser().getId();
@@ -43,6 +46,7 @@ public class InvitationsAndRequestsResponse {
             RequestType requestType,
             String projectId,
             String projectTitle,
+            ProjectStatus projectStatus,
             String initiatedById,
             String initiatedByName,
             String targetUserId,
@@ -56,6 +60,7 @@ public class InvitationsAndRequestsResponse {
         this.requestType = requestType;
         this.projectId = projectId;
         this.projectTitle = projectTitle;
+        this.projectStatus = projectStatus;
         this.initiatedById = initiatedById;
         this.initiatedByName = initiatedByName;
         this.targetUserId = targetUserId;

@@ -136,7 +136,9 @@ public class Project {
     }
 
     public boolean canDelete() {
-        return status != ProjectStatus.IN_PROGRESS && status != ProjectStatus.COMPLETED;
+        return status != ProjectStatus.IN_PROGRESS
+                && status != ProjectStatus.COMPLETED
+                && status != ProjectStatus.DELETED;
     }
 
     public boolean isActive() {

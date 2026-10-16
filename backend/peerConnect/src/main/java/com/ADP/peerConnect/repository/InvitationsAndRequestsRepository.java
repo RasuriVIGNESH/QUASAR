@@ -118,6 +118,7 @@ public interface InvitationsAndRequestsRepository
                     r.requestType,
                     p.id,
                     p.title,
+                    p.status,
                     ib.id,
                     ib.firstName,
                     tu.id,

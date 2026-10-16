@@ -18,6 +18,9 @@ import java.util.Optional;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, String>, JpaSpecificationExecutor<Project> {
 
+    @Query("SELECT p.status FROM Project p WHERE p.id = :id")
+    Optional<ProjectStatus> findStatusById(@Param("id") String id);
+
     // ── Single project ────────────────────────────────────────────────────────
 
     @Query("""

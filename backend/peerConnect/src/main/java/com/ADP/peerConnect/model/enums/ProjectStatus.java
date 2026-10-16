@@ -7,7 +7,8 @@ public enum ProjectStatus {
     RECRUITING("Recruiting team members"),
     IN_PROGRESS("Currently in progress"),
     COMPLETED("Project completed"),
-    CANCELLED("Project cancelled");
+    CANCELLED("Project cancelled"),
+    DELETED("Project deleted");
 
     private final String description;
 
@@ -37,6 +38,6 @@ public enum ProjectStatus {
      * Check if project is finished
      */
     public boolean isFinished() {
-        return this == COMPLETED || this == CANCELLED;
+        return this == COMPLETED || this == CANCELLED || this == DELETED;
     }
 }

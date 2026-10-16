@@ -26,25 +26,25 @@ import java.util.Map;
  */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex, WebRequest request) {
-        
+
         Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.BAD_REQUEST, "Validation failed", request);
-        
+                HttpStatus.BAD_REQUEST, "Validation failed", request);
+
         Map<String, String> validationErrors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
             String errorMessage = error.getDefaultMessage();
             validationErrors.put(fieldName, errorMessage);
         });
-        
+
         errorResponse.put("validationErrors", validationErrors);
-        
+
 //        logger.warn("Validation error: {}", validationErrors);
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
@@ -52,22 +52,30 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleResourceNotFoundException(
             ResourceNotFoundException ex, WebRequest request) {
-        
+
         Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.NOT_FOUND, ex.getMessage(), request);
-        
+                HttpStatus.NOT_FOUND, ex.getMessage(), request);
+
 //        logger.warn("Resource not found: {}", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
-    
+
+    @ExceptionHandler(ProjectDeletedException.class)
+    public ResponseEntity<Map<String, Object>> handleProjectDeletedException(
+            ProjectDeletedException ex, WebRequest request) {
+        Map<String, Object> errorResponse = createErrorResponse(
+                HttpStatus.GONE, ex.getMessage(), request);
+        return new ResponseEntity<>(errorResponse, HttpStatus.GONE);
+    }
+
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequestException(
             BadRequestException ex, WebRequest request) {
-        
+
         Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.BAD_REQUEST, ex.getMessage(), request);
-        
+                HttpStatus.BAD_REQUEST, ex.getMessage(), request);
+
 //        logger.warn("Bad request: {}", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
@@ -75,9 +83,9 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({UnauthorizedException.class, AuthenticationException.class, BadCredentialsException.class})
     public ResponseEntity<Map<String, Object>> handleUnauthorizedException(
             Exception ex, WebRequest request) {
-        
+
         Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+                HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
 
         return new ResponseEntity<>(errorResponse, HttpStatus.UNAUTHORIZED);
     }
@@ -85,23 +93,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
             AccessDeniedException ex, WebRequest request) {
-        
+
         Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.FORBIDDEN, "Access denied", request);
+                HttpStatus.FORBIDDEN, "Access denied", request);
 
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
-    
+
     /**
      * Handle conflict exceptions
      */
     @ExceptionHandler(ConflictException.class)
     public ResponseEntity<Map<String, Object>> handleConflictException(
             ConflictException ex, WebRequest request) {
-        
+
         Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.CONFLICT, ex.getMessage(), request);
-        
+                HttpStatus.CONFLICT, ex.getMessage(), request);
+
         logger.warn("Conflict: {}", ex.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
     }
@@ -109,10 +117,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGlobalException(
             Exception ex, WebRequest request) {
-        
+
         Map<String, Object> errorResponse = createErrorResponse(
-            HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", request);
-        
+                HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred", request);
+
         logger.error("Unexpected error: ", ex);
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -124,7 +132,7 @@ public class GlobalExceptionHandler {
         errorResponse.put("error", status.getReasonPhrase());
         errorResponse.put("message", message);
         errorResponse.put("path", request.getDescription(false).replace("uri=", ""));
-        
+
         return errorResponse;
     }
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)

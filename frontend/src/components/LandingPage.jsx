@@ -1,634 +1,509 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  ArrowRight, ChevronRight, Terminal,
-  Code, GitMerge, Layers, Search,
-  Cpu, Layout, ShieldCheck, Activity, Users,
-  MessageSquare, Calendar, Briefcase, Award,
-  Zap, Globe, BookOpen, CheckCircle2,
-  Target, Lightbulb, TrendingUp, FolderOpen,
-  Sparkles, Send, UserPlus, Network, Loader2, Wifi, Star, ExternalLink, AlertCircle
-} from 'lucide-react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { projectService } from '@/services/projectService';
 import { apiService } from '@/services/api';
+import {
+  ArrowRight, Users, Layers, Briefcase, Search,
+  CheckCircle2, Menu, X, Zap, FolderOpen
+} from 'lucide-react';
 
-// --- MOCK DATA FOR WARM-UP PHASE ---
+// --- MOCK DATA ---
 const MOCK_PROJECTS = [
-  {
-    id: 'mock-1',
-    title: "AI Study Planner",
-    description: "An automated scheduling tool that syncs with your syllabus to optimize study blocks using machine learning.",
-    techStack: ["React", "Python", "FastAPI"],
-    status: "Warming...",
-    currentTeamSize: 2,
-    maxTeamSize: 4,
-    lead: { firstName: "Sarah", branch: "CS", lastName: "---" }
-  },
-  {
-    id: 'mock-2',
-    title: "Decentralized Campus Market",
-    description: "A peer-to-peer marketplace for students to trade textbooks and equipment securely using blockchain.",
-    techStack: ["Solidity", "Next.js", "Tailwind"],
-    status: "Warming...",
-    currentTeamSize: 1,
-    maxTeamSize: 3,
-    lead: { firstName: "Alex", branch: "IT", lastName: "---" }
-  },
-  {
-    id: 'mock-3',
-    title: "Eco-Track IoT",
-    description: "Hardware and software integration to track energy consumption in dormitories in real-time.",
-    techStack: ["C++", "Node.js", "MQTT"],
-    status: "Warming...",
-    currentTeamSize: 3,
-    maxTeamSize: 5,
-    lead: { firstName: "James", branch: "ECE", lastName: "---" }
-  }
+  { id: 'mock-1', title: 'AI Study Planner', description: 'An easier way to turn a syllabus into a focused study plan.', skillsRequired: ['React', 'Python', 'FastAPI'], status: 'RECRUITING', currentTeamSize: 2, maxTeamSize: 4, categoryName: 'Productivity', lead: { firstName: 'Sarah', lastName: 'Jenkins', branch: 'Computer Science' } },
+  { id: 'mock-2', title: 'Campus Market', description: 'A trusted student marketplace for books, tools, and essentials.', skillsRequired: ['Next.js', 'Node.js', 'PostgreSQL'], status: 'RECRUITING', currentTeamSize: 1, maxTeamSize: 3, categoryName: 'Community', lead: { firstName: 'Alex', lastName: 'Chen', branch: 'Information Technology' } },
+  { id: 'mock-3', title: 'EcoTrack IoT', description: 'Making energy use visible across student housing.', skillsRequired: ['C++', 'MQTT', 'Analytics'], status: 'IN_PROGRESS', currentTeamSize: 3, maxTeamSize: 5, categoryName: 'Climate', lead: { firstName: 'James', lastName: 'Wilson', branch: 'Electrical Engineering' } },
 ];
 
-// --- DESIGN SYSTEM CONSTANTS ---
-const COLORS = {
-  primary: '#4F46E5', // Indigo 600
-  secondary: '#0F172A', // Slate 900
-  accent: '#10B981', // Emerald 500
-  surface: '#F8FAFC', // Slate 50
-  border: '#E2E8F0', // Slate 200
-  text: '#334155', // Slate 700
-};
-
-// --- SUB-COMPONENTS ---
-
-const Badge = ({ children, variant = 'primary' }) => {
-  const styles = {
-    primary: 'bg-indigo-50 text-indigo-700 border-indigo-100',
-    accent: 'bg-emerald-50 text-emerald-700 border-emerald-100',
-    neutral: 'bg-slate-100 text-slate-600 border-slate-200',
-    warning: 'bg-amber-50 text-amber-700 border-amber-100',
-  };
-  return (
-    <span className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full border ${styles[variant]}`}>
-      {children}
-    </span>
-  );
-};
-
-const SectionHeading = ({ subtitle, title, description, align = 'center' }) => (
-  <div className={`max-w-3xl mb-16 ${align === 'center' ? 'mx-auto text-center' : 'text-left'}`}>
-    <motion.p
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      className="text-indigo-600 font-bold text-sm uppercase tracking-[0.2em] mb-4"
-    >
-      {subtitle}
-    </motion.p>
-    <motion.h2
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: 0.1 }}
-      className="text-3xl md:text-5xl font-extrabold text-slate-900 mb-6 tracking-tight"
-    >
-      {title}
-    </motion.h2>
-    {description && (
-      <motion.p
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.2 }}
-        className="text-lg text-slate-600 leading-relaxed"
-      >
-        {description}
-      </motion.p>
-    )}
-  </div>
-);
-
-const FeatureCard = ({ icon: Icon, title, problem, solution, image, reverse }) => (
-  <div className={`flex flex-col ${reverse ? 'lg:flex-row-reverse' : 'lg:flex-row'} items-center gap-12 lg:gap-20 py-16`}>
-    <motion.div
-      initial={{ opacity: 0, x: reverse ? 50 : -50 }}
-      whileInView={{ opacity: 1, x: 0 }}
-      viewport={{ once: true }}
-      className="flex-1 space-y-8"
-    >
-      <div className="inline-flex p-3 bg-indigo-600 rounded-2xl shadow-lg shadow-indigo-200 text-white">
-        <Icon size={28} />
-      </div>
-      <h3 className="text-3xl font-bold text-slate-900">{title}</h3>
-
-      <div className="space-y-6">
-        <div>
-          <h4 className="text-xs font-bold text-rose-500 uppercase tracking-widest mb-2 flex items-center gap-2">
-            <span className="w-8 h-px bg-rose-200" /> The Friction
-          </h4>
-          <p className="text-slate-600 text-lg leading-relaxed">{problem}</p>
-        </div>
-        <div className="p-6 bg-slate-50 rounded-2xl border border-slate-100 relative overflow-hidden group">
-          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600" />
-          <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-2">The Quasar Solution</h4>
-          <p className="text-slate-700 font-medium">{solution}</p>
-        </div>
-      </div>
-    </motion.div>
-
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      className="flex-1 w-full"
-    >
-      <div className="relative group">
-        <div className="absolute -inset-4 bg-gradient-to-tr from-indigo-500/10 to-emerald-500/10 rounded-[2rem] blur-2xl group-hover:opacity-100 transition-opacity opacity-0" />
-        <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-slate-200 shadow-2xl">
-          <img src={image} alt={title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000" />
-          <div className="absolute inset-0 bg-gradient-to-t from-slate-900/20 to-transparent" />
-        </div>
-      </div>
-    </motion.div>
-  </div>
-);
-
-// --- IMPROVED SERVER STATUS TOAST ---
-const ServerStatusToast = ({ status, elapsedSeconds }) => {
+// --- STATUS NOTICE ---
+function StatusNotice({ status, elapsed }) {
   if (status === 'live-notified') return null;
+  const live = status === 'live';
+  return (
+      <AnimatePresence>
+        <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            className="fixed bottom-6 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-xl border border-slate-200 bg-white/95 p-4 shadow-xl backdrop-blur-md"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold text-slate-900">{live ? 'Workspace Connected' : 'Initializing Workspace'}</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">{live ? 'Recent projects are now loading in real-time.' : 'Showing a small preview while the backend wakes up.'}</p>
+            </div>
+            <span className={`mt-1 h-2.5 w-2.5 rounded-full ${live ? 'bg-emerald-600' : 'animate-pulse bg-amber-500'}`} />
+          </div>
+          {!live && (
+              <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                <motion.div className="h-full rounded-full bg-amber-500" animate={{ width: `${Math.min((elapsed / 30) * 100, 100)}%` }} transition={{ duration: 0.5 }} />
+              </div>
+          )}
+        </motion.div>
+      </AnimatePresence>
+  );
+}
 
-  const isWarming = status === 'warming';
-  const progress = Math.min((elapsedSeconds / 30) * 100, 100);
+// --- PROJECT CARD ---
+function ProjectCard({ project, index }) {
+  const leadName = [project.lead?.firstName, project.lead?.lastName].filter(Boolean).join(' ') || 'Project Lead';
+  const status = String(project.status || 'RECRUITING').replaceAll('_', ' ');
+  const skills = Array.isArray(project.skillsRequired) ? project.skillsRequired : [];
+  const isRecruiting = status === 'RECRUITING';
 
   return (
-    <AnimatePresence>
-      {status !== 'live' && (
-        <motion.div
-          initial={{ y: 100, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          exit={{ y: 100, opacity: 0 }}
-          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] w-[90%] max-w-md"
-        >
-          <div className="bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl p-6 space-y-4">
-            <div className="flex items-start gap-4">
-              <div className="flex-shrink-0 pt-1">
-                {isWarming ? (
-                  <div className="relative">
-                    <div className="absolute inset-0 animate-ping bg-amber-500/20 rounded-full"></div>
-                    <Loader2 className="animate-spin text-amber-500 relative" size={24} />
-                  </div>
-                ) : (
-                  <div className="bg-emerald-500/20 p-2 rounded-full">
-                    <CheckCircle2 className="text-emerald-500" size={24} />
-                  </div>
-                )}
-              </div>
-              <div className="flex-1">
-                <h4 className="text-white text-sm font-bold">
-                  {isWarming ? "Backend Initializing..." : "Systems Online!"}
-                </h4>
-                <p className="text-slate-400 text-xs leading-relaxed mt-1">
-                  {isWarming
-                    ? "Our backend is starting up. This typically takes 20-30 seconds. You're viewing sample projects in the meantime."
-                    : "Connection established. Live projects are now loading in real-time."}
-                </p>
-              </div>
-            </div>
+      <motion.article
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: index * 0.08, duration: 0.4 }}
+          whileHover={{ y: -4 }}
+          className="group flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-6 transition-all duration-300 hover:shadow-lg hover:border-emerald-200"
+      >
+        <div>
+          <div className="flex items-start justify-between">
+          <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${isRecruiting ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 'bg-amber-50 text-amber-800 border-amber-100'}`}>
+            {status}
+          </span>
+            <span className="text-xs font-medium text-slate-500">{project.categoryName || 'General'}</span>
+          </div>
+          <h3 className="mt-4 text-lg font-bold text-slate-900 group-hover:text-emerald-800 transition-colors leading-tight">
+            {project.title}
+          </h3>
+          <p className="mt-2 text-sm text-slate-500 line-clamp-2">{project.description}</p>
 
-            {isWarming && (
-              <div className="space-y-2">
-                <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-                  <motion.div
-                    className="h-full bg-gradient-to-r from-amber-500 to-amber-400"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progress}%` }}
-                    transition={{ duration: 0.5 }}
-                  />
+          <div className="mt-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">Skills Needed</p>
+            {skills.length ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {skills.slice(0, 3).map(skill => (
+                      <span key={skill} className="rounded-md bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-600 border border-slate-100">
+                  {skill}
+                </span>
+                  ))}
+                  {skills.length > 3 && (
+                      <span className="rounded-md bg-slate-50 px-2.5 py-1 text-[11px] font-bold text-slate-500 border border-slate-100">
+                  +{skills.length - 3}
+                </span>
+                  )}
                 </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-slate-500 font-mono uppercase tracking-widest">Initialization</span>
-                  <span className="text-[10px] text-slate-400 font-bold">{elapsedSeconds}s / 30s</span>
-                </div>
-              </div>
+            ) : (
+                <p className="text-xs text-slate-400 italic">Open to relevant skills</p>
             )}
           </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+        </div>
+
+        <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-50 text-xs font-bold text-emerald-700 border border-emerald-100">
+              {leadName.charAt(0)}
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-900 leading-none">{leadName}</p>
+              <p className="text-[10px] text-slate-500 mt-1">{project.lead?.branch || 'Student'}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-700 bg-slate-50 px-2.5 py-1.5 rounded-lg">
+            <Users size={14} className="text-slate-500" />
+            <span>{project.currentTeamSize ?? 0}/{project.maxTeamSize ?? 0}</span>
+          </div>
+        </div>
+      </motion.article>
+  );
+}
+
+// --- INTERACTIVE FEATURE MOCKUPS ---
+const FeatureMockup = ({ activeTab }) => {
+  if (activeTab === 'matching') {
+    return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h4 className="text-sm font-bold text-slate-900">Team Skill Coverage</h4>
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-100">2 Gaps Found</span>
+          </div>
+          <div className="mb-5">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Covered</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 border border-emerald-100">React</span>
+              <span className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 border border-emerald-100">Node.js</span>
+            </div>
+          </div>
+          <div className="mb-6">
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-400">Missing</p>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-800 border border-amber-100">UI/UX Design</span>
+              <span className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-800 border border-amber-100">Data Analysis</span>
+            </div>
+          </div>
+          <div className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-xs font-bold text-slate-900">Recommended Match</span>
+              <span className="text-xs font-black text-emerald-700">94% Fit</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-700">A</div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">Alex Chen</p>
+                <p className="text-[10px] text-slate-500">UI/UX · Figma · Prototyping</p>
+              </div>
+              <button className="ml-auto rounded-lg bg-slate-900 px-3 py-1.5 text-[10px] font-bold text-white hover:bg-emerald-800 transition-colors">Invite</button>
+            </div>
+          </div>
+        </div>
+    );
+  }
+
+  if (activeTab === 'workspace') {
+    return (
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Tasks</p>
+              <div className="space-y-2">
+                <div className="rounded-lg bg-slate-50 p-3 border border-slate-100">
+                  <p className="text-xs font-bold text-slate-900">Design landing page</p>
+                  <p className="text-[10px] text-slate-500 mt-1">In Progress · Alex</p>
+                </div>
+                <div className="rounded-lg bg-emerald-50 p-3 border border-emerald-100">
+                  <p className="text-xs font-bold text-emerald-900">Setup database</p>
+                  <p className="text-[10px] text-emerald-700 mt-1">Completed · Sarah</p>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-3 border border-slate-100">
+                  <p className="text-xs font-bold text-slate-900">Write API docs</p>
+                  <p className="text-[10px] text-slate-500 mt-1">To Do · James</p>
+                </div>
+              </div>
+            </div>
+            <div>
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-wider text-slate-400">Project Chat</p>
+              <div className="space-y-2">
+                <div className="rounded-lg bg-slate-50 p-3 border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-500">Sarah</p>
+                  <p className="text-xs text-slate-700 mt-1">API endpoints are ready for review!</p>
+                </div>
+                <div className="rounded-lg bg-indigo-50 p-3 border border-indigo-100 ml-4">
+                  <p className="text-[10px] font-bold text-indigo-500">You</p>
+                  <p className="text-xs text-indigo-900 mt-1">Awesome, I'll check the PR now.</p>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-3 border border-slate-100">
+                  <p className="text-[10px] font-bold text-slate-500">Alex</p>
+                  <p className="text-xs text-slate-700 mt-1">Just pushed the new hero section.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+    );
+  }
+
+  return (
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="flex items-center justify-between mb-4">
+          <span className="rounded-full bg-indigo-50 px-2.5 py-0.5 text-[10px] font-bold text-indigo-700 border border-indigo-100">Portfolio Entry</span>
+          <span className="text-[10px] font-bold text-slate-400">Added 2 days ago</span>
+        </div>
+        <h4 className="text-lg font-bold text-slate-900 mb-2">Backend API Integration</h4>
+        <p className="text-sm text-slate-600 mb-4 leading-relaxed">Designed and implemented RESTful endpoints for user authentication and project management. Reduced API response time by 40%.</p>
+        <div className="flex flex-wrap gap-2 mb-5">
+          <span className="rounded-md bg-slate-50 px-2 py-1 text-[10px] font-bold text-slate-600 border border-slate-100">Node.js</span>
+          <span className="rounded-md bg-slate-50 px-2 py-1 text-[10px] font-bold text-slate-600 border border-slate-100">PostgreSQL</span>
+          <span className="rounded-md bg-slate-50 px-2 py-1 text-[10px] font-bold text-slate-600 border border-slate-100">REST APIs</span>
+        </div>
+        <div className="flex gap-4 pt-4 border-t border-slate-100">
+          <a href="#" className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 transition-colors">
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+            GitHub Repo
+          </a>
+          <a href="#" className="flex items-center gap-1.5 text-xs font-bold text-slate-700 hover:text-emerald-700 transition-colors">
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            Live Demo
+          </a>
+        </div>
+      </div>
   );
 };
 
 // --- MAIN COMPONENT ---
-
 export default function LandingPage() {
-  const [projects, setProjects] = useState(MOCK_PROJECTS);
-  const [serverStatus, setServerStatus] = useState('warming'); // warming, live, live-notified
-  const [loading, setLoading] = useState(true);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [scrolled, setScrolled] = useState(false);
   const navigate = useNavigate();
-  const projectsSectionRef = useRef(null);
+  const [projects, setProjects] = useState(MOCK_PROJECTS);
+  const [serverStatus, setServerStatus] = useState('warming');
+  const [elapsed, setElapsed] = useState(0);
+  const [activeFeature, setActiveFeature] = useState('matching');
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const projectsRef = useRef(null);
+  const pollRef = useRef(null);
+  const startRef = useRef(Date.now());
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  const pollIntervalRef = useRef(null);
-  const startTimeRef = useRef(Date.now());
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - startRef.current) / 1000)), 1000);
+    return () => clearInterval(timer);
   }, []);
 
-  // Timer for elapsed seconds display
   useEffect(() => {
-    if (serverStatus === 'warming') {
-      const timer = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
-        setElapsedSeconds(elapsed);
-      }, 100);
-      return () => clearInterval(timer);
-    }
-  }, [serverStatus]);
-
-  // Health Check Polling
-  useEffect(() => {
-    const checkHealth = async () => {
+    let mounted = true;
+    const fetchRecentProjects = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/health`);
-
-        if (response.ok) {
-          console.log("Backend is live!");
-          setServerStatus('live');
-
-          // Stop polling
-          if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-
-          // Fetch the actual data
-          fetchRealProjects();
-
-          // Backend just came up — if a JWT is already sitting in the
-          // browser from a previous session, try it silently. If it's
-          // still valid, skip the landing page entirely and go straight
-          // to the dashboard. If it's not, just stay here and let the
-          // person log in normally — no error shown, no interruption.
-          attemptSilentLogin();
-
-          // Clear "live" status UI after 5 seconds
-          setTimeout(() => setServerStatus('live-notified'), 5000);
-        }
-      } catch (err) {
-        console.log("Backend warming up... (Spinning up Web Service)");
-      }
+        const response = await projectService.getRecentProjects();
+        const envelope = response?.data ?? response;
+        const body = envelope?.data ?? envelope;
+        const recent = Array.isArray(body) ? body : body?.content || [];
+        if (mounted && recent.length) setProjects(recent.slice(0, 10));
+      } catch (_) {}
     };
 
     const attemptSilentLogin = async () => {
       const token = apiService.getToken();
-      if (!token) return; // nothing stored, nothing to do
-
+      if (!token) return;
       try {
-        const res = await fetch(`${API_BASE_URL}/auth/me`, {
-          headers: apiService.getHeaders(true),
-        });
+        const response = await fetch(`${API_BASE_URL}/auth/me`, { headers: apiService.getHeaders(true) });
+        if (response.ok) navigate('/dashboard');
+        else apiService.clearSession();
+      } catch (_) {}
+    };
 
-        if (res.ok) {
-          // Token still valid — user is already authenticated, take them in.
-          navigate('/dashboard');
-        } else {
-          // Token expired/invalid — clear it so the next login starts clean.
-          apiService.clearSession();
-        }
-      } catch (err) {
-        // Network hiccup right as the backend wakes up — don't clear the
-        // token for this, just let the person log in manually this time.
-        console.log("Silent login check failed, continuing as guest:", err);
+    const checkHealth = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/health`);
+        if (!response.ok) return;
+        setServerStatus('live');
+        if (pollRef.current) clearInterval(pollRef.current);
+        await fetchRecentProjects();
+        await attemptSilentLogin();
+        setTimeout(() => mounted && setServerStatus('live-notified'), 5000);
+      } catch (_) {
+        setServerStatus('warming');
       }
     };
 
-    const fetchRealProjects = async () => {
-      try {
-        const res = await projectService.getRecentProjects();
-        // Handle different possible API response structures
-        const projectData = res.data?.content || res.content || res.data || [];
-
-        if (Array.isArray(projectData) && projectData.length > 0) {
-          setProjects(projectData);
-        }
-      } catch (err) {
-        console.error("Error fetching live projects:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // Initial check
     checkHealth();
+    pollRef.current = setInterval(checkHealth, 3000);
+    return () => { mounted = false; if (pollRef.current) clearInterval(pollRef.current); };
+  }, [API_BASE_URL, navigate]);
 
-    // Poll every 3 seconds
-    pollIntervalRef.current = setInterval(checkHealth, 3000);
-
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    };
-  }, [API_BASE_URL]);
-
-  const scrollToProjects = () => {
-    projectsSectionRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Scrolls to a section by id. Works even if called from a route other than
-  // "/" (e.g. someone lands on /login and the nav is still mounted) by
-  // navigating home first, then scrolling once the page has rendered.
   const scrollToSection = (id) => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      return;
-    }
-    // Section isn't on this route — go home, then scroll after render.
-    navigate('/');
-    setTimeout(() => {
-      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 100);
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
-
-  // On mount, if the URL already has a hash (e.g. someone followed a link
-  // like /#features directly), scroll to it once content has rendered.
-  useEffect(() => {
-    const hash = window.location.hash?.replace('#', '');
-    if (hash) {
-      const timer = setTimeout(() => {
-        document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, []);
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-900">
+      <div className="min-h-screen bg-white text-slate-900 font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900">
+        <StatusNotice status={serverStatus} elapsed={elapsed} />
 
-      <ServerStatusToast status={serverStatus} elapsedSeconds={elapsedSeconds} />
-
-      {/* NAVIGATION */}
-      <nav className={`fixed top-0 w-full z-[100] transition-all duration-300 ${scrolled ? 'bg-white/80 backdrop-blur-xl border-b border-slate-200 py-3' : 'bg-transparent py-6'
-        }`}>
-        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <img
-              src="/Logo.png"
-              alt="Quasar Logo"
-              className="w-10 h-10 object-contain shadow-sm rounded-lg group-hover:scale-110 transition-transform"
-            />
-            <span className="text-2xl font-black tracking-tighter text-slate-900">Quasar</span>
-          </Link>
-
-          <div className="hidden md:flex items-center gap-10">
-            {[
-              { label: 'Features', id: 'features' },
-              { label: 'Projects', id: 'projects' }
-            ].map((item) => (
-              <button
-                key={item.label}
-                onClick={() => scrollToSection(item.id)}
-                className="text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Link to="/login" className="text-sm font-bold text-slate-600 hover:text-slate-900 px-4 py-2">Sign In</Link>
-            <Link to="/register" className="bg-indigo-600 text-white px-6 py-2.5 text-sm font-bold rounded-full hover:bg-indigo-700 hover:shadow-lg hover:shadow-indigo-200 transition-all active:scale-95">
-              Get Started
+        {/* NAVIGATION */}
+        <nav className="fixed top-0 w-full z-40 border-b border-slate-100 bg-white/90 backdrop-blur-md">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+            <Link to="/" className="flex items-center gap-3">
+              <img src="/Logo.png" alt="Quasar" className="h-9 w-9 rounded-lg object-contain" />
+              <span className="text-xl font-bold tracking-tight text-slate-900">Quasar</span>
             </Link>
-          </div>
-        </div>
-      </nav>
 
-      {/* HERO SECTION */}
-      <section className="relative pt-32 pb-20 lg:pt-52 lg:pb-40 overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full -z-10">
-          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-50 rounded-full blur-[120px] opacity-60" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-50 rounded-full blur-[120px] opacity-60" />
-        </div>
+            <div className="hidden md:flex items-center gap-8">
+              <button onClick={() => scrollToSection('features')} className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Features</button>
+              <button onClick={() => scrollToSection('projects')} className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">Projects</button>
+            </div>
 
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="max-w-4xl">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <h1 className="text-6xl md:text-8xl font-black tracking-tight leading-[0.9] text-slate-900 mb-10">
-                Ship Projects. <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-emerald-600">Find Your Tribe.</span>
-              </h1>
+            <div className="hidden md:flex items-center gap-4">
+              <Link to="/login" className="text-sm font-semibold text-slate-600 hover:text-slate-900 px-4 py-2 transition-colors">Sign In</Link>
+              <Link to="/register" className="bg-slate-900 text-white px-5 py-2.5 text-sm font-semibold rounded-lg hover:bg-emerald-800 transition-all">Get Started</Link>
+            </div>
 
-              <p className="text-xl md:text-2xl text-slate-500 max-w-2xl leading-relaxed mb-12 font-medium">
-                Quasar bridges the gap between academic theory and production-ready software by connecting students through verified skill-matching.
-              </p>
-
-              <div className="flex flex-col sm:flex-row gap-5">
-                <button onClick={() => navigate('/register')} className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-bold text-lg hover:bg-slate-800 transition-all flex items-center justify-center gap-3 shadow-xl shadow-slate-200 group">
-                  Start Building <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-                <button onClick={scrollToProjects} className="px-10 py-5 bg-white border-2 border-slate-200 text-slate-700 rounded-2xl font-bold text-lg hover:border-slate-400 hover:bg-slate-50 transition-all flex items-center justify-center gap-3">
-                  Browse Ecosystem
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-      {/* PROBLEM & SOLUTION SECTION */}
-      <section id="features" className="max-w-7xl mx-auto px-6 py-32">
-        <SectionHeading
-          subtitle="Why Quasar?"
-          title="Engineered to Solve the Solo Coder's Dilemma"
-          description="We identified the three biggest hurdles in student project development and built the tools to dismantle them."
-        />
-
-        <div className="space-y-12">
-          <FeatureCard
-            icon={Users}
-            title="The 'Friend Circle' Trap"
-            problem="Your immediate social circle is great for coffee, but they might not have the specific AWS, Rust, or UI/UX skills your vision requires."
-            solution="Quasar's Neural Matching Engine scans the entire campus network to find the exact skill-match for your stack, regardless of social circles."
-            image="https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1200"
-            reverse={false}
-          />
-          <FeatureCard
-            icon={GitMerge}
-            title="The Ghosting Epidemic"
-            problem="Halfway through a hackathon, teammates disappear. Accountability is non-existent in casual Discord groups or WhatsApp chats."
-            solution="Our Proof-of-Contribution system tracks active participation. Students build a 'Collaboration Score' that recruiters actually trust."
-            image="https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&q=80&w=1200"
-            reverse={true}
-          />
-        </div>
-      </section>
-
-      {/* LIVE PROJECTS (Horizontal Scroll) */}
-      <section id="projects" ref={projectsSectionRef} className="bg-slate-50 border-y border-slate-200 py-32 overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6 mb-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
-            <SectionHeading
-              align="left"
-              subtitle="Live Ecosystem"
-              title="What's being shipped right now"
-              description="Real-time projects from the Quasar network. No fluff, just code."
-            />
-            <button onClick={() => navigate('/login')} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-full border border-indigo-600 shadow-sm hover:bg-indigo-700 transition-all font-bold text-sm uppercase tracking-widest">
-              Explore All Projects
-              <ArrowRight size={16} />
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-2 text-slate-600">
+              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
-        </div>
 
-        <style dangerouslySetInnerHTML={{
-          __html: `
-          @keyframes scroll {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(-50%); }
-          }
-          .animate-scroll {
-            animation: scroll 40s linear infinite;
-          }
-          .pause-on-hover:hover .animate-scroll {
-            animation-play-state: paused;
-          }
-        `}} />
-
-        <div className="relative pause-on-hover">
-          <div className="flex w-fit animate-scroll">
-            {[...projects, ...projects].map((project, idx) => (
-              <div
-                key={`${project.id}-${idx}`}
-                className="w-[350px] md:w-[450px] mx-4 flex-shrink-0 bg-white border border-slate-200 rounded-3xl p-8 hover:shadow-2xl hover:border-indigo-200 transition-all duration-500 flex flex-col justify-between group relative overflow-hidden"
-              >
-                <div className="absolute top-0 right-0 p-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <ExternalLink size={20} className="text-slate-300" />
-                </div>
-                <div>
-                  <div className="flex justify-between items-start mb-8">
-                    <div className="p-3 bg-slate-900 rounded-2xl text-white group-hover:bg-indigo-600 transition-colors">
-                      <Cpu size={22} />
-                    </div>
-                    <Badge variant={serverStatus === 'live' ? 'accent' : 'warning'}>
-                      {project.status || 'Active'}
-                    </Badge>
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight group-hover:text-indigo-600 transition-colors">{project.title}</h3>
-                  <p className="text-slate-500 mb-8 leading-relaxed line-clamp-2 font-medium">{project.description}</p>
-                  <div className="flex flex-wrap gap-2 mb-8">
-                    {project.techStack?.map((tech, i) => (
-                      <span key={i} className="text-[11px] font-bold px-3 py-1.5 bg-slate-50 text-slate-600 rounded-lg border border-slate-100">{tech}</span>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between pt-8 border-t border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-indigo-50 border-2 border-white shadow-sm flex items-center justify-center text-indigo-600 font-bold text-xs">
-                      {project.lead?.firstName?.[0] || 'P'}
-                    </div>
-                    <div>
-                      <p className="text-sm font-bold text-slate-900 leading-none mb-1">
-                        {project.lead?.firstName} {project.lead?.lastName !== '---' ? project.lead?.lastName : ''}
-                      </p>
-                      <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
-                        {project.lead?.branch || 'Engineer'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-xl">
-                    <Users size={14} className="text-slate-400" />
-                    <span className="text-sm font-black text-slate-900">{project.currentTeamSize + 1}/{project.maxTeamSize}</span>
-                  </div>
-                </div>
+          {mobileOpen && (
+              <div className="md:hidden border-t border-slate-100 bg-white px-6 py-4 space-y-4">
+                <button onClick={() => { scrollToSection('features'); setMobileOpen(false); }} className="block w-full text-left text-sm font-medium text-slate-600 py-2">Features</button>
+                <button onClick={() => { scrollToSection('projects'); setMobileOpen(false); }} className="block w-full text-left text-sm font-medium text-slate-600 py-2">Projects</button>
+                <Link to="/login" className="block w-full text-center text-sm font-semibold text-slate-600 py-2">Sign In</Link>
+                <Link to="/register" className="block w-full text-center bg-slate-900 text-white px-5 py-3 text-sm font-semibold rounded-lg">Get Started</Link>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+          )}
+        </nav>
 
-      {/* HOW IT WORKS */}
-      <section className="max-w-7xl mx-auto px-6 py-32">
-        <SectionHeading
-          subtitle="The Process"
-          title="Three Steps to Your Next Big Project"
-        />
-
-        <div className="grid md:grid-cols-3 gap-12">
-          {[
-            { step: '01', title: 'Create Your Profile', desc: 'Sign up and list your skills. Our AI analyzes your background to understand what you bring to the table.', icon: UserPlus },
-            { step: '02', title: 'Post or Join', desc: 'Have an idea? Post it. Looking to contribute? Browse active projects and apply with one click.', icon: Target },
-            { step: '03', title: 'Build & Verify', desc: 'Every contribution is tracked and added to your professional portfolio automatically.', icon: Zap }
-          ].map((item, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1 }}
-              className="group"
-            >
-              <div className="w-16 h-16 bg-slate-50 rounded-3xl flex items-center justify-center mb-8 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 shadow-sm border border-slate-100">
-                <item.icon size={28} />
-              </div>
-              <div className="text-4xl font-black text-slate-100 mb-4 group-hover:text-indigo-50 transition-colors">{item.step}</div>
-              <h3 className="text-2xl font-bold text-slate-900 mb-4 tracking-tight">{item.title}</h3>
-              <p className="text-slate-500 leading-relaxed font-medium">{item.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* FINAL CTA */}
-      <section className="max-w-7xl mx-auto px-6 mb-32">
-        <div className="bg-indigo-600 rounded-[3rem] p-12 md:p-24 text-center relative overflow-hidden shadow-2xl shadow-indigo-200">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-400/10 rounded-full -ml-32 -mb-32 blur-3xl" />
-
-          <div className="relative z-10">
-            <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tight">
-              Stop coding in a vacuum. <br />
-              Start building a legacy.
-            </h2>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <button onClick={() => navigate('/register')} className="px-12 py-6 bg-white text-indigo-600 rounded-2xl font-black text-xl hover:bg-slate-50 transition-all shadow-xl active:scale-95">
-                Join the Network
-              </button>
-              <button className="px-12 py-6 bg-indigo-700 text-white rounded-2xl font-black text-xl hover:bg-indigo-800 transition-all border border-indigo-500/30">
-                Contact for Enterprise
-              </button>
+        {/* HERO SECTION */}
+        <section className="relative pt-28 pb-16 lg:pt-36 lg:pb-20 px-6">
+          <div className="max-w-7xl mx-auto">
+            <div className="max-w-3xl">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+                <h1 className="text-4xl md:text-6xl font-serif font-bold text-slate-900 leading-[1.1] tracking-tight mb-6">
+                  Build meaningful projects with the <span className="text-emerald-800">right team.</span>
+                </h1>
+                <p className="text-lg md:text-xl text-slate-600 max-w-2xl leading-relaxed mb-8">
+                  Discover student projects, find teammates based on skills, manage your work in one workspace, and showcase what you build.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <Link to="/discover/projects" className="inline-flex items-center justify-center gap-2 bg-slate-900 text-white px-8 py-4 rounded-lg font-semibold text-base hover:bg-emerald-800 transition-all">
+                    Explore Projects <ArrowRight size={18} />
+                  </Link>
+                  <Link to="/projects/create" className="inline-flex items-center justify-center gap-2 bg-white text-slate-900 border border-slate-300 px-8 py-4 rounded-lg font-semibold text-base hover:border-slate-400 hover:bg-slate-50 transition-all">
+                    Create a Project
+                  </Link>
+                </div>
+              </motion.div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FOOTER */}
-      <footer className="border-t border-slate-100 py-20 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10">
-          <div className="flex items-center gap-3">
-            <img
-              src="/Logo.png"
-              alt="Quasar Logo"
-              className="w-8 h-8 object-contain"
-            />
-            <span className="text-xl font-black tracking-tighter text-slate-900">QUASAR</span>
+        {/* JOURNEY STRIP */}
+        <section className="border-y border-slate-200 bg-slate-50 py-12">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+              {[
+                { step: '01', title: 'Discover', desc: 'Find projects or create a new idea.' },
+                { step: '02', title: 'Connect', desc: 'Find students with the skills you need.' },
+                { step: '03', title: 'Collaborate', desc: 'Work through chat, tasks, and rooms.' },
+                { step: '04', title: 'Showcase', desc: 'Complete the project and build your portfolio.' }
+              ].map(item => (
+                  <motion.div
+                      key={item.step}
+                      initial={{ opacity: 0, y: 10 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                  >
+                    <p className="text-xs font-black text-emerald-700 mb-2">{item.step}</p>
+                    <h3 className="text-lg font-bold text-slate-900 mb-1">{item.title}</h3>
+                    <p className="text-sm text-slate-600">{item.desc}</p>
+                  </motion.div>
+              ))}
+            </div>
           </div>
+        </section>
 
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">
-            Built for Engineers. Designed for the Future.
-          </p>
+        {/* INTERACTIVE FEATURES SECTION */}
+        <section id="features" className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="max-w-2xl mb-10">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-3">Everything you need to ship.</h2>
+              <p className="text-lg text-slate-600">From initial discovery to final showcase, Quasar provides the structure student teams need to succeed.</p>
+            </div>
 
-          <div className="flex gap-8">
-            {['Twitter', 'GitHub', 'LinkedIn'].map(social => (
-              <a key={social} href="#" className="text-sm font-bold text-slate-400 hover:text-indigo-600 transition-colors">
-                {social}
-              </a>
-            ))}
+            <div className="grid lg:grid-cols-[1fr_1.2fr] gap-10 items-start">
+              <div className="space-y-2">
+                {[
+                  { id: 'matching', icon: Users, title: 'Skill Gaps & Matching', desc: 'Build teams around complementary skills, not guesswork. See what your team needs before you invite the next person.' },
+                  { id: 'workspace', icon: Layers, title: 'Project Workspace', desc: 'One project. One shared workspace. Manage tasks, chat with your team, and track progress seamlessly.' },
+                  { id: 'portfolio', icon: Briefcase, title: 'Portfolio Evidence', desc: 'Do not just say you worked on a project. Show what you contributed with verified portfolio entries.' }
+                ].map(feature => (
+                    <button
+                        key={feature.id}
+                        onClick={() => setActiveFeature(feature.id)}
+                        className={`w-full text-left p-5 rounded-xl border transition-all duration-300 ${
+                            activeFeature === feature.id
+                                ? 'bg-emerald-50 border-emerald-200 shadow-sm'
+                                : 'bg-white border-slate-200 hover:border-slate-300'
+                        }`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className={`p-2 rounded-lg ${activeFeature === feature.id ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-600'}`}>
+                          <feature.icon size={20} />
+                        </div>
+                        <div>
+                          <h3 className={`text-lg font-bold mb-1 ${activeFeature === feature.id ? 'text-emerald-900' : 'text-slate-900'}`}>{feature.title}</h3>
+                          <p className={`text-sm leading-relaxed ${activeFeature === feature.id ? 'text-emerald-800' : 'text-slate-600'}`}>{feature.desc}</p>
+                        </div>
+                      </div>
+                    </button>
+                ))}
+              </div>
+
+              <div className="lg:sticky lg:top-24">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                      key={activeFeature}
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      transition={{ duration: 0.2 }}
+                  >
+                    <FeatureMockup activeTab={activeFeature} />
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
           </div>
-        </div>
-      </footer>
-    </div>
+        </section>
+
+        {/* LIVE PROJECTS SECTION */}
+        <section id="projects" ref={projectsRef} className="py-16 bg-slate-50 border-y border-slate-200">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+              <div className="max-w-2xl">
+                <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-3">Live from the community</h2>
+                <p className="text-lg text-slate-600">Real-time projects from students ready to build. Find your next opportunity.</p>
+              </div>
+              <Link to="/discover/projects" className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-800 hover:text-emerald-900 transition-colors whitespace-nowrap">
+                View all projects <ArrowRight size={16} />
+              </Link>
+            </div>
+
+            {/* Status Bar */}
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-200 bg-white px-5 py-3">
+              <div className="flex items-center gap-3">
+                <span className={`h-2.5 w-2.5 rounded-full ${serverStatus === 'warming' ? 'animate-pulse bg-amber-500' : 'bg-emerald-600'}`} />
+                <p className="text-sm font-medium text-slate-700">
+                  {serverStatus === 'warming' ? 'Connecting to live project data...' : 'Live project feed connected.'}
+                </p>
+              </div>
+              {serverStatus === 'warming' ? (
+                  <div className="h-1.5 w-32 overflow-hidden rounded-full bg-slate-200">
+                    <motion.div className="h-full rounded-full bg-amber-500" animate={{ width: `${Math.min((elapsed / 30) * 100, 92)}%` }} />
+                  </div>
+              ) : (
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-100">
+                Showing {projects.length} recent projects
+              </span>
+              )}
+            </div>
+
+            {/* Staggered Grid */}
+            <motion.div
+                className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, margin: "-50px" }}
+                variants={{ visible: { transition: { staggerChildren: 0.08 } } }}
+            >
+              {projects.map((project, index) => (
+                  <ProjectCard key={project.id} project={project} index={index} />
+              ))}
+            </motion.div>
+          </div>
+        </section>
+
+        {/* USE CASES SECTION */}
+        <section className="py-16 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="max-w-2xl mb-10">
+              <h2 className="text-3xl md:text-4xl font-serif font-bold text-slate-900 mb-3">Built for how you actually work.</h2>
+              <p className="text-lg text-slate-600">Whether you are starting a final-year project or forming a hackathon team, Quasar adapts to your goals.</p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-6">
+              {[
+                { title: 'Hackathon Teams', msg: 'Find the missing skill before the timer starts. Combine technical, design, and presentation skills in one place.', icon: Zap },
+                { title: 'Final-Year Projects', msg: 'Make your project easier to manage and explain. Define goals, track tasks, and document contributions for your portfolio.', icon: FolderOpen },
+                { title: 'Student Clubs', msg: 'Give your community a shared place to build. Organize internal projects and connect students across departments.', icon: Users }
+              ].map(useCase => (
+                  <motion.div
+                      key={useCase.title}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      className="p-6 rounded-xl border border-slate-200 hover:border-emerald-200 hover:shadow-md transition-all bg-white"
+                  >
+                    <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-800 mb-4">
+                      <useCase.icon size={20} />
+                    </div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">{useCase.title}</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed">{useCase.msg}</p>
+                  </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
   );
 }
