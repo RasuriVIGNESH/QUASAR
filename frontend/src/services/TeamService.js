@@ -4,20 +4,27 @@ class TeamService {
   // ===== INVITATION MANAGEMENT =====
 
 
-async inviteUserToProject(projectId, invitedId, message = '') {
-  try {
-    if (!projectId) throw new Error('Project ID is required');
-    if (!invitedId) throw new Error('User ID is required');
+  async inviteUserToProject(projectId, invitedId, message = '', roleId) {
+    try {
+      if (!projectId) throw new Error('Project ID is required');
+      if (invitedId && typeof invitedId === 'object') {
+        const invitation = invitedId;
+        invitedId = invitation.invitedId || invitation.InvitedId || invitation.userId;
+        message = invitation.message || '';
+        roleId = invitation.roleId;
+      }
+      if (!invitedId) throw new Error('User ID is required');
 
-    return await apiService.post(`/${projectId}/Invite`, {
-      InvitedId: invitedId,
-      message
-    });
-  } catch (error) {
-    console.error('TeamService: Error inviting user:', error);
-    throw new Error(error.message || 'Failed to invite user to project');
+      return await apiService.post(`/${projectId}/Invite`, {
+        InvitedId: invitedId,
+        ...(roleId ? { roleId } : {}),
+        message
+      });
+    } catch (error) {
+      console.error('TeamService: Error inviting user:', error);
+      throw new Error(error.message || 'Failed to invite user to project');
+    }
   }
-}
 
 // Update project lead - matches TeamController endpoint PUT /projects/{projectId}/members/{memberId}
   async updateProjectLead(projectId, memberId) {
@@ -38,17 +45,17 @@ async inviteUserToProject(projectId, invitedId, message = '') {
   }
   // Respond to invitation (accept/REJECTED) - matches TeamController endpoint
   async respondToInvitation(invitationId, response) {
-  try {
-    if (!invitationId) throw new Error('Invitation ID is required');
-    if (!['ACCEPTED', 'REJECTED'].includes(response))
-      throw new Error('Response must be ACCEPTED or REJECTED');
+    try {
+      if (!invitationId) throw new Error('Invitation ID is required');
+      if (!['ACCEPTED', 'REJECTED'].includes(response))
+        throw new Error('Response must be ACCEPTED or REJECTED');
 
-    return await apiService.put(`/${invitationId}/respond`, null, { response });
-  } catch (error) {
-    console.error('TeamService: Error responding to invitation:', error);
-    throw new Error(error.message || 'Failed to respond to invitation');
+      return await apiService.put(`/${invitationId}/respond`, null, { response });
+    } catch (error) {
+      console.error('TeamService: Error responding to invitation:', error);
+      throw new Error(error.message || 'Failed to respond to invitation');
+    }
   }
-}
 
   // Cancel invitation - matches TeamController endpoint
   async cancelInvitation(invitationId) {
@@ -68,43 +75,43 @@ async inviteUserToProject(projectId, invitedId, message = '') {
   }
 
   // Get project invitations with pagination - matches TeamController endpoint
-async getProjectInvitations(projectId, page = 0, size = 10) {
-  try {
-    if (!projectId) throw new Error('Project ID is required');
-    return await apiService.get(
-      `/projects/${projectId}/invitations-requests`,
-      { page, size }
-    );
-  } catch (error) {
-    console.error('TeamService: Error getting project invitations:', error);
-    throw new Error(error.message || 'Failed to get project invitations');
+  async getProjectInvitations(projectId, page = 0, size = 10) {
+    try {
+      if (!projectId) throw new Error('Project ID is required');
+      return await apiService.get(
+          `/projects/${projectId}/invitations-requests`,
+          { page, size }
+      );
+    } catch (error) {
+      console.error('TeamService: Error getting project invitations:', error);
+      throw new Error(error.message || 'Failed to get project invitations');
+    }
   }
-}
 
   // Get user invitations with optional status filter - matches TeamController endpoint
-async getUserInvitations(status = 'PENDING', page = 0, size = 10) {
-  try {
-    return await apiService.get(
-      '/User/invitations-requests',
-      { page, size, status }
-    );
-  } catch (error) {
-    console.error('TeamService: Error getting user invitations:', error);
-    throw new Error(error.message || 'Failed to get user invitations');
+  async getUserInvitations(status = 'PENDING', page = 0, size = 10) {
+    try {
+      return await apiService.get(
+          '/User/invitations-requests',
+          { page, size, status }
+      );
+    } catch (error) {
+      console.error('TeamService: Error getting user invitations:', error);
+      throw new Error(error.message || 'Failed to get user invitations');
+    }
   }
-}
   // Get pending invitations for current user - matches TeamController endpoint
-async getPendingInvitations(page = 0, size = 10) {
-  try {
-    return await apiService.get(
-      '/User/invitations-requests',
-      { page, size, status: 'PENDING' }
-    );
-  } catch (error) {
-    console.error('TeamService: Error getting pending invitations:', error);
-    throw new Error(error.message || 'Failed to get pending invitations');
+  async getPendingInvitations(page = 0, size = 10) {
+    try {
+      return await apiService.get(
+          '/User/invitations-requests',
+          { page, size, status: 'PENDING' }
+      );
+    } catch (error) {
+      console.error('TeamService: Error getting pending invitations:', error);
+      throw new Error(error.message || 'Failed to get pending invitations');
+    }
   }
-}
 
   // ===== MEMBER MANAGEMENT =====
 
@@ -335,8 +342,8 @@ async getPendingInvitations(page = 0, size = 10) {
           memberCount: (members?.data || []).length,
           pendingInvitations: stats?.data?.pending || 0,
           responseRate: stats?.data?.total > 0
-            ? Math.round(((stats?.data?.accepted + stats?.data?.REJECTED) / stats?.data?.total) * 100)
-            : 0
+              ? Math.round(((stats?.data?.accepted + stats?.data?.REJECTED) / stats?.data?.total) * 100)
+              : 0
         }
       };
 
@@ -449,7 +456,7 @@ async getPendingInvitations(page = 0, size = 10) {
       const members = membersResponse?.data || [];
 
       const filteredMembers = members.filter(member =>
-        (member.role || 'MEMBER').toUpperCase() === role.toUpperCase()
+          (member.role || 'MEMBER').toUpperCase() === role.toUpperCase()
       );
 
       return {

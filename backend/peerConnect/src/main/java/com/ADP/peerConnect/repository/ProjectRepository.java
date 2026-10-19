@@ -3,11 +3,13 @@ package com.ADP.peerConnect.repository;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.ProjectSkill;
 import com.ADP.peerConnect.model.enums.ProjectStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -21,14 +23,19 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
     @Query("SELECT p.status FROM Project p WHERE p.id = :id")
     Optional<ProjectStatus> findStatusById(@Param("id") String id);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Project p WHERE p.id = :id")
+    Optional<Project> findByIdForMembershipUpdate(@Param("id") String id);
+
     // ── Single project ────────────────────────────────────────────────────────
 
     @Query("""
-        SELECT p FROM Project p
+        SELECT DISTINCT p FROM Project p
         JOIN FETCH p.team t
         JOIN FETCH t.lead
         LEFT JOIN FETCH p.category
         LEFT JOIN FETCH p.event
+        LEFT JOIN FETCH p.requiredRoles
         WHERE p.id = :id
         """)
     Optional<Project> findByIdWithAssociations(@Param("id") String id);

@@ -1,6 +1,7 @@
 package com.ADP.peerConnect.model.dto.response.Project;
 
 import com.ADP.peerConnect.model.dto.response.UserResponse;
+import com.ADP.peerConnect.model.dto.response.ProjectRoleResponse;
 import com.ADP.peerConnect.model.entity.Event;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.enums.ProjectStatus;
@@ -35,6 +36,7 @@ public class ProjectResponse {
     private String problemStatement;
     private List<String> techStack;
     private List<String> skillsRequired;
+    private List<ProjectRoleResponse> requiredRoles;
     private String githubRepo;
     private String demoUrl;
     private String notepadContent;
@@ -73,5 +75,10 @@ public class ProjectResponse {
                     .map(ps -> ps.getSkill().getName())
                     .collect(Collectors.toList());
         }
+        this.requiredRoles = project.getRequiredRoles() == null
+                ? List.of()
+                : project.getRequiredRoles().stream()
+                    .map(ProjectRoleResponse::from)
+                    .toList();
     }
 }

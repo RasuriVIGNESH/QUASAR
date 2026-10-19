@@ -168,6 +168,15 @@ class ProjectService {
   }
 
   // Delete project - matches ProjectController endpoint
+  async fillProjectRole(projectId, roleId) {
+    if (!projectId || !roleId) throw new Error('Project ID and role ID are required');
+    try {
+      return await apiService.patch(`/projects/${projectId}/roles/${roleId}/fill`);
+    } catch (error) {
+      throw new Error(error.message || 'Failed to mark role as filled');
+    }
+  }
+
   async deleteProject(projectId) {
     try {
       if (!projectId) {

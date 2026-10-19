@@ -3,8 +3,9 @@ import apiService from './api.js';
 class JoinRequestService {
 
   // POST /api/projects/{projectId}/join-request
-  async sendJoinRequest(projectId, message) {
-    return apiService.post(`/projects/${projectId}/join-request`, message);
+  async sendJoinRequest(projectId, message, roleId) {
+    const params = roleId ? { roleId } : {};
+    return apiService.post(`/projects/${projectId}/join-request`, message || '', { params });
   }
 
   // GET /api/User/invitations-requests?status=PENDING
@@ -20,17 +21,13 @@ class JoinRequestService {
   }
 
   // GET /api/User/invitations-requests  (all statuses, for history)
-  async getUserInvitationsAndRequests({
-          status = 'PENDING',
-          page = 0,
-          size = 20
-      } = {}) {
-          return apiService.get('/User/invitations-requests', {
-            page,
-            size,
-            status  
-        });
-    }
+  async getUserInvitationsAndRequests({ status = 'PENDING', page = 0, size = 20, all = false } = {}) {
+    return apiService.get('/User/invitations-requests', {
+      page,
+      size,
+      ...(all ? { all: true } : { status })
+    });
+  }
 
   // PUT /api/{requestId}/respond?response=ACCEPTED
   async acceptJoinRequest(requestId) {
@@ -52,13 +49,13 @@ class JoinRequestService {
   }
 
   // PUT /api/projects/invitations/{invitationId}/cancel
-  async cancelJoinRequest(invitationId) {
-    return apiService.put(`/projects/invitations/${invitationId}/cancel`, null);
+  async cancelJoinRequest(requestId) {
+    return apiService.delete(`/User/join-requests/${requestId}`);
   }
 
   // POST /api/{projectId}/Invite  — lead invites a user
-  async inviteUser(projectId, invitedId, message = '') {
-    return apiService.post(`/${projectId}/Invite`, { InvitedId: invitedId, message });
+  async inviteUser(projectId, invitedId, message = '', roleId) {
+    return apiService.post(`/${projectId}/Invite`, { InvitedId: invitedId, ...(roleId ? { roleId } : {}), message });
   }
 }
 

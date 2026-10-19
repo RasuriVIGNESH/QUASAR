@@ -1,6 +1,6 @@
 package com.ADP.peerConnect.controller.project;
 
-import com.ADP.peerConnect.exception.UnauthorizedException;
+import com.ADP.peerConnect.exception.ForbiddenException;
 import com.ADP.peerConnect.model.dto.request.Project.*;
 import com.ADP.peerConnect.model.dto.response.*;
 import com.ADP.peerConnect.model.dto.response.Project.*;
@@ -15,6 +15,7 @@ import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.PrivateKey;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
 
 @Tag(name = "Project Management", description = "Project management APIs")
 @RestController
+@Validated
 @RequestMapping("/api/projects")
 public class ProjectController {
 
@@ -55,14 +58,9 @@ public class ProjectController {
     public ResponseEntity<ApiResponse> createProject(
             @Valid @RequestBody CreateProject request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            Project project = projectService.createProject(request, currentUser.getId());
-            return ResponseEntity.ok(
-                    new ApiResponse(true, "Project created successfully", new ProjectResponse(project))
-            );
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        Project project = projectService.createProject(request, currentUser.getId());
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Project created successfully", new ProjectResponse(project)));
     }
 
     @Operation(summary = "Get project by ID")
@@ -70,7 +68,8 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> getProject(
             @PathVariable String projectId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        if(!teamService.isProjectMember(projectId,currentUser.getId()))throw new UnauthorizedException("only project members can access");
+        if (!teamService.isProjectMember(projectId, currentUser.getId()))
+            throw new ForbiddenException("Only project members can access this project.");
         Project project = projectService.findById(projectId);
         return new ResponseEntity<>(new ProjectResponse(project),HttpStatus.OK );
     }
@@ -81,14 +80,9 @@ public class ProjectController {
             @PathVariable String projectId,
             @Valid @RequestBody UpdateProject request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            Project project = projectService.updateProject(projectId, request, currentUser.getId());
-            return ResponseEntity.ok(
-                    new ApiResponse(true, "Project updated successfully", new ProjectResponse(project))
-            );
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        Project project = projectService.updateProject(projectId, request, currentUser.getId());
+        return ResponseEntity.ok(
+                new ApiResponse(true, "Project updated successfully", new ProjectResponse(project)));
     }
 
     @Operation(summary = "Delete project")
@@ -96,12 +90,18 @@ public class ProjectController {
     public ResponseEntity<ApiResponse> deleteProject(
             @PathVariable String projectId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            projectService.deleteProject(projectId, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Project marked as deleted; its history has been preserved."));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        projectService.deleteProject(projectId, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Project marked as deleted; its history has been preserved."));
+    }
+
+    @Operation(summary = "Mark a required role as filled")
+    @PatchMapping("/{projectId}/roles/{roleId}/fill")
+    public ResponseEntity<ApiResponse<Void>> markRoleFilled(
+            @PathVariable String projectId,
+            @PathVariable @Positive Long roleId,
+            @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
+        projectService.markRoleFilled(projectId, roleId, currentUser.getId());
+        return ResponseEntity.ok(ApiResponse.success("Role marked as filled."));
     }
 
 

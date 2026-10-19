@@ -1,6 +1,7 @@
 package com.ADP.peerConnect.model.dto.response.Project;
 
 import com.ADP.peerConnect.model.dto.response.UserCardResponse;
+import com.ADP.peerConnect.model.dto.response.ProjectRoleResponse;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.ProjectSkill;
 import lombok.Data;
@@ -19,6 +20,7 @@ public class ProjectCardResponse {
     private Integer maxTeamSize;
     private Integer currentTeamSize;
     private List<String> skillsRequired;
+    private List<ProjectRoleResponse> requiredRoles;
     private String status;
     private UserCardResponse Lead;
     private List<String> memberProfileImageUrls;
@@ -59,5 +61,10 @@ public class ProjectCardResponse {
                 .collect(Collectors.toList());
 
         this.memberProfileImageUrls = new ArrayList<>();
+        this.requiredRoles = project.getRequiredRoles() == null
+                ? List.of()
+                : project.getRequiredRoles().stream()
+                    .map(ProjectRoleResponse::from)
+                    .collect(Collectors.toList());
     }
 }

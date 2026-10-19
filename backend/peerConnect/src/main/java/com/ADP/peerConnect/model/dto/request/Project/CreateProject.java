@@ -22,7 +22,7 @@ public class CreateProject {
     private String categoryName;
 
     @NotNull
-    @Min(1)
+    @Min(value = 2, message = "Team size must include the lead and at least one other member")
     @Max(20)
     private Integer maxTeamSize;
 
@@ -41,6 +41,10 @@ public class CreateProject {
     @NotEmpty(message = "At least one skill is required")
     @Valid
     private List<ProjectSkill> skills;
+
+    @Valid
+    @Size(max = 20, message = "A project may define at most 20 required roles")
+    private List<ProjectRoleRequest> requiredRoles;
 
     private List<@NotBlank String> techStack;
 

@@ -23,7 +23,9 @@ export default function RequestCard({ item, type, onAccept, onReject, onCancel }
     PENDING: "bg-amber-50 text-amber-600 border-amber-100",
     ACCEPTED: "bg-emerald-50 text-emerald-600 border-emerald-100",
     REJECTED: "bg-rose-50 text-rose-600 border-rose-100",
-    CANCELED: "bg-slate-50 text-slate-500 border-slate-100"
+    CANCELLED: "bg-slate-50 text-slate-500 border-slate-100",
+    CANCELED: "bg-slate-50 text-slate-500 border-slate-100",
+    EXPIRED: "bg-slate-50 text-slate-500 border-slate-100"
   };
 
   const handleAction = async (action) => {
@@ -71,12 +73,8 @@ export default function RequestCard({ item, type, onAccept, onReject, onCancel }
           </div>
 
           <div className="mb-4">
-            <Link
-                to={`/projects/${item.projectId}`}
-                className="text-base font-bold text-slate-900 hover:text-indigo-600 transition-colors leading-tight block mb-1"
-            >
-              {item.projectTitle}
-            </Link>
+            {item.projectStatus === 'DELETED' ? <p className="text-base font-bold text-slate-500 leading-tight block mb-1">{item.projectTitle} <span className="text-xs font-semibold">(Deleted)</span></p> : <Link to={`/projects/${item.projectId}`} className="text-base font-bold text-slate-900 hover:text-indigo-600 transition-colors leading-tight block mb-1">{item.projectTitle}</Link>}
+            {item.projectRole?.name && <p className="mt-2 text-xs font-bold text-indigo-700">Role: {item.projectRole.name} · {item.projectRole.filled ? 'Filled' : 'Open'}</p>}
             <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-400">
               <Clock size={12} />
               {new Date(item.createdAt).toLocaleDateString()}

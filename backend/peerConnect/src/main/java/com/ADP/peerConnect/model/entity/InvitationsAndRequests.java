@@ -23,9 +23,8 @@ import java.time.LocalDateTime;
         @Index(name = "idx_iar_target_user", columnList = "target_user_id"),
         @Index(name = "idx_iar_status", columnList = "status"),
         @Index(name = "idx_iar_type", columnList = "request_type"),
-        @Index(name = "idx_iar_created", columnList = "created_at")
-}, uniqueConstraints = {
-        @UniqueConstraint(name = "uk_project_target_user", columnNames = {"project_id", "target_user_id"})
+        @Index(name = "idx_iar_created", columnList = "created_at"),
+        @Index(name = "idx_iar_project_role", columnList = "project_role_id")
 })
 public class InvitationsAndRequests {
 
@@ -53,6 +52,10 @@ public class InvitationsAndRequests {
     @JoinColumn(name = "target_user_id", nullable = false)
     @NotNull(message = "Target user is required")
     private User targetUser;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_role_id")
+    private ProjectRole projectRole;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
@@ -110,6 +113,16 @@ public class InvitationsAndRequests {
 
     public void reject() {
         setStatus(Status.REJECTED);
+        setRespondedAt(LocalDateTime.now());
+    }
+
+    public void cancel() {
+        setStatus(Status.CANCELLED);
+        setRespondedAt(LocalDateTime.now());
+    }
+
+    public void expire() {
+        setStatus(Status.EXPIRED);
         setRespondedAt(LocalDateTime.now());
     }
 }

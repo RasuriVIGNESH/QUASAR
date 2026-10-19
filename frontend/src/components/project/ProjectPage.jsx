@@ -230,7 +230,7 @@ export default function ProjectPage() {
               )}
               {activeTab === 'tasks' && <TaskBoard projectId={projectId} isProjectLead={isProjectLead} members={members} />}
               {activeTab === 'chat' && <ChatSection projectId={projectId} currentUserId={currentUserId} />}
-              {activeTab === 'team' && <TeamSection lead={teamLead} members={members} isProjectLead={isProjectLead} isMember={isMember} projectId={projectId} onUpdate={loadData} />}
+              {activeTab === 'team' && <TeamSection project={project} lead={teamLead} members={members} isProjectLead={isProjectLead} isMember={isMember} projectId={projectId} onUpdate={loadData} />}
               {activeTab === 'portfolio' && <PortfolioSection projectId={projectId} canEdit={isMember} currentUserId={currentUserId} />}
               {activeTab === 'manage' && <SettingsTab project={project} isProjectLead={isProjectLead} onPurge={() => setIsDeleteDialogOpen(true)} onUpdate={loadData} onStatusChange={handleStatusChange} currentStatus={project.status} />}
             </div>
@@ -309,6 +309,7 @@ const OverviewTab = memo(({ project, members }) => (
         <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-3">Description</h3>
         <p className="text-slate-700 leading-relaxed">{project.description || 'No description provided.'}</p>
       </Card>
+      {Array.isArray(project.requiredRoles) && project.requiredRoles.length > 0 && <Card className="p-6 bg-white border-slate-200 rounded-2xl"><div className="flex items-center justify-between mb-4"><h3 className="text-xs font-black text-slate-400 uppercase tracking-wider">Required roles</h3><span className="text-xs font-bold text-slate-500">{project.requiredRoles.filter(role => !role.filled).length} of {project.requiredRoles.length} open</span></div><div className="flex flex-wrap gap-2">{project.requiredRoles.map(role => <span key={role.id} className={`rounded-lg border px-3 py-1.5 text-xs font-bold ${role.filled ? 'border-slate-200 bg-slate-50 text-slate-500' : 'border-emerald-100 bg-emerald-50 text-emerald-700'}`}>{role.name} · {role.filled ? 'Filled' : 'Needed'}</span>)}</div></Card>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card className="p-6 bg-white border-slate-200 rounded-2xl">
           <h3 className="text-xs font-black text-slate-400 uppercase tracking-wider mb-4">Tech Stack</h3>
@@ -885,10 +886,25 @@ const ChatSection = ({ projectId, currentUserId }) => {
 };
 
 /* ─── TEAM SECTION (Added Recruit & Join Requests) ──── */
-const TeamSection = memo(({ lead, members, isProjectLead, isMember, projectId, onUpdate }) => {
+const TeamSection = memo(({ project, lead, members, isProjectLead, isMember, projectId, onUpdate }) => {
   const navigate = useNavigate();
   const [removingId, setRemovingId] = useState(null);
   const [promotingId, setPromotingId] = useState(null);
+  const [fillingRoleId, setFillingRoleId] = useState(null);
+
+  const handleFillRole = async (role) => {
+    if (!window.confirm(`Mark ${role.name} as filled? This cannot be undone.`)) return;
+    setFillingRoleId(role.id);
+    try {
+      await projectService.fillProjectRole(projectId, role.id);
+      toast.success(`${role.name} marked as filled`);
+      onUpdate();
+    } catch (error) {
+      toast.error(error.message || 'Failed to mark role as filled');
+    } finally {
+      setFillingRoleId(null);
+    }
+  };
 
   const handleRemove = async (memberId, memberName) => {
     if (!window.confirm(`Remove ${memberName} from the project?`)) return;
@@ -992,7 +1008,8 @@ const TeamSection = memo(({ lead, members, isProjectLead, isMember, projectId, o
           ))}
           {totalCount === 0 && <p className="text-sm text-slate-400 col-span-3">No team members yet.</p>}
         </div>
-        {isProjectLead && <div className="pt-4 border-t border-slate-200"><RecruitingPanel projectId={projectId} /></div>}
+        {isProjectLead && <div className="pt-4 border-t border-slate-200"><RecruitingPanel projectId={projectId} requiredRoles={project?.requiredRoles || []} /></div>}
+        {Array.isArray(project?.requiredRoles) && project.requiredRoles.length > 0 && <div className="pt-4 border-t border-slate-200"><div className="flex items-center justify-between mb-3"><h3 className="text-sm font-black text-slate-800">Required roles</h3><span className="text-xs text-slate-500">{project.requiredRoles.filter(role => !role.filled).length} open</span></div><div className="grid gap-2 sm:grid-cols-2">{project.requiredRoles.map(role => <div key={role.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3"><div><p className="text-sm font-bold text-slate-800">{role.name}</p><p className={`text-[11px] font-semibold ${role.filled ? 'text-slate-400' : 'text-emerald-600'}`}>{role.filled ? 'Filled' : 'Open seat'}</p></div>{isProjectLead && !role.filled && project.status === 'RECRUITING' && <Button size="sm" variant="outline" disabled={fillingRoleId === role.id} onClick={() => handleFillRole(role)} className="text-xs">Mark filled</Button>}</div>)}</div></div>}
       </div>
   );
 });
@@ -1005,6 +1022,7 @@ const SettingsTab = ({ project, isProjectLead, onPurge, onUpdate, onStatusChange
     categoryId: project.category?.id || '',
     categoryName: project.category?.name || project.categoryName || '',
     techStack: project.techStack || [],
+    requiredRoles: (project.requiredRoles || []).map(role => ({ id: role.id, name: role.name })),
     skills: project.requiredSkills?.map(ps => ({
       skillId: ps.skill?.id || ps.id || '',
       skillName: ps.skill?.name || ps,
@@ -1019,6 +1037,9 @@ const SettingsTab = ({ project, isProjectLead, onPurge, onUpdate, onStatusChange
   const [projectCategories, setProjectCategories] = useState([]);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const addRole = () => setFormData(prev => prev.requiredRoles.length >= Math.max(0, Number(project.maxTeamSize || 1) - 1) ? prev : ({ ...prev, requiredRoles: [...prev.requiredRoles, { name: '' }] }));
+  const updateRole = (index, name) => setFormData(prev => ({ ...prev, requiredRoles: prev.requiredRoles.map((role, i) => i === index ? { ...role, name } : role) }));
+  const removeRole = index => setFormData(prev => ({ ...prev, requiredRoles: prev.requiredRoles.filter((_, i) => i !== index) }));
 
   useEffect(() => {
     projectService.getProjectCategories()
@@ -1034,6 +1055,7 @@ const SettingsTab = ({ project, isProjectLead, onPurge, onUpdate, onStatusChange
         title: formData.title,
         description: formData.description,
         techStack: formData.techStack,
+        requiredRoles: formData.requiredRoles.map(role => role.id ? { id: role.id, name: role.name } : { name: role.name }),
         skills: formData.skills.map(s => ({
           skillId: s.skillId || undefined,
           skillName: s.skillName,
@@ -1044,8 +1066,10 @@ const SettingsTab = ({ project, isProjectLead, onPurge, onUpdate, onStatusChange
       await projectService.updateProject(project.id, payload);
       toast.success('Project updated');
       onUpdate();
-    } catch {
-      toast.error('Failed to update project');
+    } catch (error) {
+      const message = error?.data?.message || error?.message || 'Failed to update project';
+      toast.error(error?.status === 409 ? `${message} This role is kept for collaboration history.` : message);
+      if (error?.status === 409) onUpdate();
     } finally {
       setIsUpdating(false);
     }
@@ -1122,6 +1146,7 @@ const SettingsTab = ({ project, isProjectLead, onPurge, onUpdate, onStatusChange
                 )}
               </div>
             </div>
+            <div className="col-span-2 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4"><div className="flex items-start justify-between gap-3"><div><Label className="text-xs font-bold text-slate-500">Required Roles</Label><p className="mt-1 text-[11px] text-slate-500">One role is one seat; the lead uses one team seat.</p></div><button type="button" onClick={addRole} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600">Add role</button></div>{formData.requiredRoles.map((role, index) => <div key={role.id || index} className="flex gap-2"><Input maxLength={100} value={role.name} onChange={e => updateRole(index, e.target.value)} placeholder="e.g. Backend Developer" className="h-10 rounded-xl border-slate-200 bg-white text-sm" /><button type="button" onClick={() => removeRole(index)} className="px-2 text-xs font-bold text-slate-500 hover:text-rose-600">Remove</button></div>)}</div>
             <div className="space-y-2">
               <Label className="text-xs font-bold text-slate-500">Tech Stack</Label>
               <div className="flex gap-2">

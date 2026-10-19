@@ -1,26 +1,28 @@
 package com.ADP.peerConnect.repository;
 
-import com.ADP.peerConnect.model.dto.response.Project.InvitationsAndRequestsResponse;
 import com.ADP.peerConnect.model.entity.InvitationsAndRequests;
 import com.ADP.peerConnect.model.enums.RequestType;
 import com.ADP.peerConnect.model.enums.Status;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 @Repository
-public interface InvitationsAndRequestsRepository
-        extends JpaRepository<InvitationsAndRequests, Long> {
+public interface InvitationsAndRequestsRepository extends JpaRepository<InvitationsAndRequests, Long> {
 
-    /*
-     * Used when opening or processing a single invitation/request.
-     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM InvitationsAndRequests r WHERE r.id = :id")
+    Optional<InvitationsAndRequests> findByIdForUpdate(@Param("id") Long id);
+
     @Query("""
             SELECT r
             FROM InvitationsAndRequests r
@@ -32,155 +34,145 @@ public interface InvitationsAndRequestsRepository
             LEFT JOIN FETCH tu.college
             LEFT JOIN FETCH r.initiatedBy ib
             LEFT JOIN FETCH ib.college
+            LEFT JOIN FETCH r.projectRole
             WHERE r.id = :id
             """)
-    Optional<InvitationsAndRequests> findByIdWithAssociations(
-            @Param("id") Long id
-    );
+    Optional<InvitationsAndRequests> findByIdWithAssociations(@Param("id") Long id);
 
-    /*
-     * Project-level paginated query.
-     *
-     * Do not fetch-join p.projectSkills here because this method returns Page.
-     * Fetch-joining a collection with pagination can produce incorrect pagination
-     * or in-memory pagination in Hibernate.
-     */
-    @Query(
-            value = """
-                    SELECT r
-                    FROM InvitationsAndRequests r
-                    JOIN FETCH r.project p
-                    LEFT JOIN FETCH p.team t
-                    LEFT JOIN FETCH t.lead tl
-                    LEFT JOIN FETCH tl.college
-                    LEFT JOIN FETCH p.category
-                    LEFT JOIN FETCH p.event
-                    JOIN FETCH r.targetUser tu
-                    LEFT JOIN FETCH tu.college
-                    LEFT JOIN FETCH r.initiatedBy ib
-                    LEFT JOIN FETCH ib.college
-                    WHERE r.project.id = :projectId
-                      AND r.requestType = :requestType
-                    ORDER BY r.createdAt DESC
-                    """,
+    @Query(value = """
+            SELECT r
+            FROM InvitationsAndRequests r
+            JOIN FETCH r.project p
+            LEFT JOIN FETCH p.team t
+            LEFT JOIN FETCH t.lead tl
+            LEFT JOIN FETCH tl.college
+            LEFT JOIN FETCH p.category
+            LEFT JOIN FETCH p.event
+            JOIN FETCH r.targetUser tu
+            LEFT JOIN FETCH tu.college
+            LEFT JOIN FETCH r.initiatedBy ib
+            LEFT JOIN FETCH ib.college
+            LEFT JOIN FETCH r.projectRole
+            WHERE r.project.id = :projectId
+              AND r.requestType = :requestType
+            ORDER BY r.createdAt DESC
+            """,
             countQuery = """
-                    SELECT COUNT(r)
-                    FROM InvitationsAndRequests r
-                    WHERE r.project.id = :projectId
-                      AND r.requestType = :requestType
-                    """
-    )
+            SELECT COUNT(r)
+            FROM InvitationsAndRequests r
+            WHERE r.project.id = :projectId
+              AND r.requestType = :requestType
+            """)
     Page<InvitationsAndRequests> findByProjectIdAndTypeWithAssociations(
             @Param("projectId") String projectId,
             @Param("requestType") RequestType requestType,
-            Pageable pageable
-    );
+            Pageable pageable);
 
-    /*
-     * Returns all invitations/requests for a target user by type.
-     */
-    @Query(
-            value = """
-                    SELECT r
-                    FROM InvitationsAndRequests r
-                    JOIN FETCH r.project p
-                    LEFT JOIN FETCH p.category
-                    LEFT JOIN FETCH p.event
-                    JOIN FETCH r.targetUser tu
-                    LEFT JOIN FETCH tu.college
-                    LEFT JOIN FETCH r.initiatedBy ib
-                    LEFT JOIN FETCH ib.college
-                    WHERE r.targetUser.id = :uid
-                      AND r.requestType = :requestType
-                    ORDER BY r.createdAt DESC
-                    """,
+    @Query(value = """
+            SELECT r
+            FROM InvitationsAndRequests r
+            JOIN FETCH r.project p
+            LEFT JOIN FETCH p.category
+            LEFT JOIN FETCH p.event
+            JOIN FETCH r.targetUser tu
+            LEFT JOIN FETCH tu.college
+            LEFT JOIN FETCH r.initiatedBy ib
+            LEFT JOIN FETCH ib.college
+            LEFT JOIN FETCH r.projectRole
+            WHERE r.targetUser.id = :uid
+              AND r.requestType = :requestType
+            ORDER BY r.createdAt DESC
+            """,
             countQuery = """
-                    SELECT COUNT(r)
-                    FROM InvitationsAndRequests r
-                    WHERE r.targetUser.id = :uid
-                      AND r.requestType = :requestType
-                    """
-    )
+            SELECT COUNT(r)
+            FROM InvitationsAndRequests r
+            WHERE r.targetUser.id = :uid
+              AND r.requestType = :requestType
+            """)
     Page<InvitationsAndRequests> findByTargetUserIdAndTypeWithAssociations(
             @Param("uid") String uid,
             @Param("requestType") RequestType requestType,
-            Pageable pageable
-    );
+            Pageable pageable);
 
-    /*
-     * Corrected method:
-     * r.status = :status was missing from your original query.
-     */
-    @Query(
-            value = """
-                SELECT new com.ADP.peerConnect.model.dto.response.Project.InvitationsAndRequestsResponse(
-                    r.id,
-                    r.requestType,
-                    p.id,
-                    p.title,
-                    p.status,
-                    ib.id,
-                    ib.firstName,
-                    tu.id,
-                    tu.firstName,
-                    r.status,
-                    r.message,
-                    r.createdAt,
-                    r.respondedAt
-                )
-                FROM InvitationsAndRequests r
-                JOIN r.project p
-                JOIN r.targetUser tu
-                LEFT JOIN r.initiatedBy ib
-                WHERE tu.id = :uid
-                  AND r.requestType = :requestType
-                  AND r.status = :status
-                ORDER BY r.createdAt DESC
-                """,
+    @Query(value = """
+            SELECT r
+            FROM InvitationsAndRequests r
+            JOIN FETCH r.project p
+            LEFT JOIN FETCH p.team t
+            LEFT JOIN FETCH t.lead tl
+            LEFT JOIN FETCH tl.college
+            LEFT JOIN FETCH p.category
+            LEFT JOIN FETCH p.event
+            JOIN FETCH r.targetUser tu
+            LEFT JOIN FETCH tu.college
+            LEFT JOIN FETCH r.initiatedBy ib
+            LEFT JOIN FETCH ib.college
+            LEFT JOIN FETCH r.projectRole
+            WHERE r.targetUser.id = :uid
+              AND r.requestType = :requestType
+              AND r.status = :status
+            ORDER BY r.createdAt DESC
+            """,
             countQuery = """
-                SELECT COUNT(r)
-                FROM InvitationsAndRequests r
-                WHERE r.targetUser.id = :uid
-                  AND r.requestType = :requestType
-                  AND r.status = :status
-                """
-    )
-    Page<InvitationsAndRequestsResponse>
-    findByTargetUserIdAndTypeAndStatusResponse(
+            SELECT COUNT(r)
+            FROM InvitationsAndRequests r
+            WHERE r.targetUser.id = :uid
+              AND r.requestType = :requestType
+              AND r.status = :status
+            """)
+    Page<InvitationsAndRequests> findByTargetUserIdAndTypeAndStatusWithAssociations(
             @Param("uid") String uid,
             @Param("requestType") RequestType requestType,
             @Param("status") Status status,
-            Pageable pageable
-    );
+            Pageable pageable);
 
+    boolean existsByProjectIdAndTargetUserIdAndStatus(String projectId, String targetUserId, Status status);
 
-    boolean existsByProjectIdAndTargetUserIdAndStatus(
-            String projectId,
-            String targetUserId,
-            Status status
-    );
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END " +
+            "FROM InvitationsAndRequests r WHERE r.projectRole.id = :roleId AND r.status = :status")
+    boolean existsByProjectRoleIdAndStatus(@Param("roleId") Long roleId, @Param("status") Status status);
 
-    boolean existsByProjectIdAndTargetUserIdAndRequestTypeAndStatus(
-            String projectId,
-            String targetUserId,
-            RequestType requestType,
-            Status status
-    );
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT r FROM InvitationsAndRequests r
+            JOIN FETCH r.targetUser
+            JOIN FETCH r.project
+            WHERE r.project.id = :projectId
+              AND r.projectRole.id = :roleId
+              AND r.status = :status
+              AND (:excludedId IS NULL OR r.id <> :excludedId)
+            """)
+    List<InvitationsAndRequests> findPendingByProjectAndRoleExcept(
+            @Param("projectId") String projectId,
+            @Param("roleId") Long roleId,
+            @Param("status") Status status,
+            @Param("excludedId") Long excludedId);
 
-    List<InvitationsAndRequests> findByProjectIdAndRequestType(
-            String projectId,
-            RequestType requestType
-    );
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            SELECT r FROM InvitationsAndRequests r
+            JOIN FETCH r.targetUser
+            JOIN FETCH r.project
+            WHERE r.project.id = :projectId
+              AND r.status = :status
+              AND (:excludedId IS NULL OR r.id <> :excludedId)
+            """)
+    List<InvitationsAndRequests> findPendingByProjectExcept(
+            @Param("projectId") String projectId,
+            @Param("status") Status status,
+            @Param("excludedId") Long excludedId);
+
+    @Query("SELECT DISTINCT r.projectRole.id FROM InvitationsAndRequests r " +
+            "WHERE r.projectRole.id IN :roleIds")
+    List<Long> findReferencedProjectRoleIds(@Param("roleIds") Collection<Long> roleIds);
 
     @Query("SELECT DISTINCT r.project.id FROM InvitationsAndRequests r " +
             "WHERE r.targetUser.id = :userId AND r.status = :status")
     List<String> findProjectIdsByTargetUserIdAndStatus(
-            @Param("userId") String userId,
-            @Param("status") Status status);
+            @Param("userId") String userId, @Param("status") Status status);
 
     @Query("SELECT DISTINCT r.targetUser.id FROM InvitationsAndRequests r " +
             "WHERE r.project.id = :projectId AND r.status = :status")
     List<String> findTargetUserIdsByProjectIdAndStatus(
-            @Param("projectId") String projectId,
-            @Param("status") Status status);
+            @Param("projectId") String projectId, @Param("status") Status status);
 }

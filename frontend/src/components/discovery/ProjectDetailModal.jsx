@@ -15,6 +15,24 @@ import {
 import { joinRequestService } from '../../services/JoinRequestService';
 import { useAuth } from '../../contexts/AuthContext';
 import recommendationService from '../../services/recommendationService';
+import { toast } from 'sonner';
+
+const unwrapProject = (response) => {
+    let value = response;
+    for (let index = 0; index < 4; index += 1) {
+        if (!value || typeof value !== 'object' || Array.isArray(value)) break;
+        if (value.project && typeof value.project === 'object') {
+            value = value.project;
+            continue;
+        }
+        if (value.data && typeof value.data === 'object' && !Array.isArray(value.data)) {
+            value = value.data;
+            continue;
+        }
+        break;
+    }
+    return value || {};
+};
 
 export default function ProjectDetailModal({ project, open, onOpenChange, onJoinSuccess }) {
     const { currentUser } = useAuth();
@@ -22,6 +40,7 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasApplied, setHasApplied] = useState(false);
     const [checkingStatus, setCheckingStatus] = useState(false);
+    const [selectedRoleId, setSelectedRoleId] = useState('');
     const [safeProject, setSafeProject] = useState(null);
     const [loadingProject, setLoadingProject] = useState(false);
 
@@ -31,10 +50,23 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
             setLoadingProject(true);
             try {
                 const response = await recommendationService.getDiscoveryProject(project.id);
-                const envelope = response?.data ?? response;
-                setSafeProject(envelope?.data ?? envelope);
+                const fetchedProject = unwrapProject(response);
+                const mergedProject = {
+                    ...project,
+                    ...fetchedProject,
+                    requiredRoles: Array.isArray(fetchedProject.requiredRoles)
+                        ? fetchedProject.requiredRoles
+                        : (Array.isArray(project.requiredRoles) ? project.requiredRoles : [])
+                };
+                setSafeProject(mergedProject);
+                const firstOpenRole = mergedProject.requiredRoles.find(role => !role.filled);
+                setSelectedRoleId(firstOpenRole ? String(firstOpenRole.id) : '');
             }
-            catch { setSafeProject(project); }
+            catch {
+                setSafeProject(project);
+                const firstOpenRole = (project.requiredRoles || []).find(role => !role.filled);
+                setSelectedRoleId(firstOpenRole ? String(firstOpenRole.id) : '');
+            }
             finally { setLoadingProject(false); }
         };
         loadSafeProject();
@@ -50,11 +82,12 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
             } finally {
                 setCheckingStatus(false);
             }
-            };
+        };
 
         checkApplicationStatus();
         if (open) {
             setJoinRequestMessage('');
+            setSelectedRoleId('');
         }
     }, [project?.id, open, currentUser]);
 
@@ -63,14 +96,16 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
 
         setIsSubmitting(true);
         try {
-            await joinRequestService.sendJoinRequest(project.id, joinRequestMessage);
+            const openRoles = (displayProject.requiredRoles || []).filter(role => !role.filled);
+            if (openRoles.length > 0 && !selectedRoleId) { throw new Error('Choose an open project role before applying.'); }
+            await joinRequestService.sendJoinRequest(project.id, joinRequestMessage, selectedRoleId || undefined);
             setHasApplied(true);
             setJoinRequestMessage('');
             if (onJoinSuccess) {
                 onJoinSuccess(project.id);
             }
         } catch (e) {
-            console.error("Error sending request:", e);
+            toast.error(e?.data?.message || e?.message || 'Could not submit your join request.');
         } finally {
             setIsSubmitting(false);
         }
@@ -79,6 +114,9 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
     if (!project) return null;
     const displayProject = safeProject || project;
     const requestedSkills = displayProject.requestedSkills || displayProject.projectCard?.skillsRequired || displayProject.skillsRequired || displayProject.requiredSkills || [];
+    const requiredRoles = Array.isArray(displayProject.requiredRoles) ? displayProject.requiredRoles : [];
+    const openRoles = requiredRoles.filter(role => !role.filled);
+    const isRecruiting = displayProject.status === 'RECRUITING' && (displayProject.currentTeamSize ?? 0) < (displayProject.maxTeamSize ?? Number.MAX_SAFE_INTEGER);
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -90,7 +128,7 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
                             <div className="flex items-center gap-2 mb-3">
                                 {displayProject.categoryName && (
                                     <Badge className="bg-indigo-100 text-indigo-700 border-none font-bold text-xs px-2 py-0">
-                                    {displayProject.categoryName}
+                                        {displayProject.categoryName}
                                     </Badge>
                                 )}
                                 {displayProject.status && (
@@ -150,6 +188,8 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
                             </div>
                         )}
 
+                        {requiredRoles.length > 0 && <div className="space-y-3"><div className="flex items-center justify-between"><h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Choose a role</h4><span className="text-xs font-semibold text-slate-500">{openRoles.length} open</span></div>{openRoles.length > 0 ? <div className="space-y-2">{openRoles.map(role => <label key={role.id} className={`flex cursor-pointer items-center gap-2 rounded-lg border p-3 ${selectedRoleId === String(role.id) ? 'border-indigo-300 bg-indigo-50' : 'border-slate-200 bg-white'}`}><input type="radio" name="project-role" checked={selectedRoleId === String(role.id)} onChange={() => setSelectedRoleId(String(role.id))} /><span className="text-sm font-semibold text-slate-700">{role.name}</span><Badge className="ml-auto bg-emerald-50 text-emerald-700">Needed</Badge></label>)}</div> : <p className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-800">All roles are filled. This project is not accepting role applications.</p>}</div>}
+
                         {/* Application Form */}
                         {!hasApplied && !checkingStatus && (
                             <div className="space-y-3 pt-4 border-t border-slate-100">
@@ -178,7 +218,7 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
                         {displayProject.lead && (
                             <div className="flex items-center gap-3">
                                 <Avatar className="w-9 h-9 border border-slate-200 shadow-sm">
-                            <AvatarImage src={displayProject.lead.profilePictureUrl} />
+                                    <AvatarImage src={displayProject.lead.profilePictureUrl} />
                                     <AvatarFallback className="bg-indigo-100 text-indigo-700 font-bold text-xs">
                                         {displayProject.lead.firstName?.[0]}
                                     </AvatarFallback>
@@ -193,11 +233,11 @@ export default function ProjectDetailModal({ project, open, onOpenChange, onJoin
 
                     <Button
                         onClick={handleJoinRequest}
-                        disabled={isSubmitting || hasApplied || checkingStatus}
+                        disabled={isSubmitting || hasApplied || checkingStatus || !isRecruiting || (requiredRoles.length > 0 && (!openRoles.length || !selectedRoleId))}
                         className={`rounded-lg px-6 h-10 font-bold text-sm transition-all ${hasApplied
                             ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
                             : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                            }`}
+                        }`}
                     >
                         {isSubmitting || checkingStatus ? (
                             <Loader2 className="animate-spin h-4 w-4" />

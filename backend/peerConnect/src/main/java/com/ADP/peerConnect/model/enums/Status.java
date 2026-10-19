@@ -10,7 +10,8 @@ public enum Status {
     PENDING("Pending response"),
     ACCEPTED("Invitation accepted"),
     REJECTED("Invitation rejected"),
-    EXPIRED("Invitation expired"), ;
+    EXPIRED("Invitation expired"),
+    CANCELLED("Request or invitation cancelled");
 
     private final String description;
 
@@ -21,6 +22,6 @@ public enum Status {
      * Check if invitation is final (cannot be changed)
      */
     public boolean isFinal() {
-        return this == ACCEPTED || this == REJECTED || this == EXPIRED;
+        return this == ACCEPTED || this == REJECTED || this == EXPIRED || this == CANCELLED;
     }
 }

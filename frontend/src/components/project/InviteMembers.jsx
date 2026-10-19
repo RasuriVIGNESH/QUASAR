@@ -33,10 +33,10 @@ const AVAILABILITY_STYLES = {
 const formatAvailability = (status) => {
   if (!status) return 'Unknown';
   return status
-    .toLowerCase()
-    .split('_')
-    .map((w) => w[0].toUpperCase() + w.slice(1))
-    .join(' ');
+      .toLowerCase()
+      .split('_')
+      .map((w) => w[0].toUpperCase() + w.slice(1))
+      .join(' ');
 };
 
 // Builds a windowed list of 0-based page numbers with '...' gaps, e.g. [0, '...', 4, 5, 6, '...', 11]
@@ -78,6 +78,8 @@ export default function InviteMembers() {
   const [applyLoading, setApplyLoading] = useState(false);
   const [excludedIds, setExcludedIds] = useState(new Set()); // current members + lead
   const [pageMeta, setPageMeta] = useState(emptyPageMeta);
+  const [projectRoles, setProjectRoles] = useState([]);
+  const [selectedRoleId, setSelectedRoleId] = useState('');
 
   const [filters, setFilters] = useState({
     branch: '',
@@ -97,20 +99,43 @@ export default function InviteMembers() {
       try {
         setInitializing(true);
         setError(null);
-        const [membersRes, projectRes, invitesRes] = await Promise.all([
-  teamService.getProjectMembers(projectId),
-  projectService.getProject(projectId),
-  teamService.getProjectInvitations(projectId)
-]);
+        const [membersResult, projectResult, invitesResult] = await Promise.allSettled([
+          teamService.getProjectMembers(projectId),
+          projectService.getProject(projectId),
+          teamService.getProjectInvitations(projectId)
+        ]);
+        const membersRes = membersResult.status === 'fulfilled' ? membersResult.value : null;
+        const projectRes = projectResult.status === 'fulfilled' ? projectResult.value : null;
+        const invitesRes = invitesResult.status === 'fulfilled' ? invitesResult.value : null;
 
-        const currentMembers = membersRes?.data || (Array.isArray(membersRes) ? membersRes : []);
+        if (membersResult.status === 'rejected') console.warn('Could not load project members; continuing with roles.', membersResult.reason);
+        if (invitesResult.status === 'rejected') console.warn('Could not load pending invitations; continuing without exclusions.', invitesResult.reason);
+        if (projectResult.status === 'rejected') throw projectResult.reason;
+
+        const membersBody = membersRes?.data?.data || membersRes?.data || membersRes || {};
+        const currentMembers = Array.isArray(membersBody)
+            ? membersBody
+            : Array.isArray(membersBody.content)
+                ? membersBody.content
+                : Array.isArray(membersBody.members)
+                    ? membersBody.members
+                    : [];
         const ids = new Set(currentMembers.map(m => m.user?.id || m.userId || m.id));
 
-        const projectData = projectRes?.data || projectRes || {};
+        const projectData = projectRes?.data?.data || projectRes?.data || projectRes || {};
+        const roles = Array.isArray(projectData.requiredRoles) ? projectData.requiredRoles : [];
+        setProjectRoles(roles);
+        const firstOpenRole = roles.find(role => !role.filled);
+        setSelectedRoleId(firstOpenRole ? String(firstOpenRole.id) : '');
         const leadId = projectData.lead?.id || projectData.Lead?.id || projectData.leadId;
         if (leadId) ids.add(leadId);
 
-        const invites = invitesRes?.data?.content || invitesRes?.data || (Array.isArray(invitesRes) ? invitesRes : []);
+        const invitesBody = invitesRes?.data?.data || invitesRes?.data || invitesRes || {};
+        const invites = Array.isArray(invitesBody)
+            ? invitesBody
+            : Array.isArray(invitesBody.content)
+                ? invitesBody.content
+                : [];
         const newInvitesMap = {};
         if (Array.isArray(invites)) {
           invites.forEach(inv => {
@@ -150,28 +175,28 @@ export default function InviteMembers() {
       const usersRes = await userService.discoverUsers(apiParams);
       const pageData = usersRes?.data || usersRes || {};
       const rawContent = Array.isArray(pageData.content)
-        ? pageData.content
-        : (Array.isArray(pageData) ? pageData : []);
+          ? pageData.content
+          : (Array.isArray(pageData) ? pageData : []);
 
       const processed = rawContent
-        .filter(s => {
-          const sid = s.id || s.userId || s._id;
-          return sid && !excluded.has(sid);
-        })
-        .map(s => ({
-          ...s,
-          id: s.id || s.userId || s._id,
-          displayName: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
-          studentSkills: s.skills?.map(sk => {
-            if (typeof sk === 'string') return { name: sk };
-            if (sk.skill?.name) return { name: sk.skill.name, level: sk.level };
-            if (sk.name) return { name: sk.name, level: sk.level };
-            return { name: 'Unknown' };
-          }) || [],
-          collegeName: s.college?.name || s.collage?.name,
-          profilePictureUrl: s.profilePictureUrl ||
-            (s.profilePhoto ? (s.profilePhoto.startsWith('data:') ? s.profilePhoto : `data:image/jpeg;base64,${s.profilePhoto}`) : null)
-        }));
+          .filter(s => {
+            const sid = s.id || s.userId || s._id;
+            return sid && !excluded.has(sid);
+          })
+          .map(s => ({
+            ...s,
+            id: s.id || s.userId || s._id,
+            displayName: s.name || `${s.firstName || ''} ${s.lastName || ''}`.trim(),
+            studentSkills: s.skills?.map(sk => {
+              if (typeof sk === 'string') return { name: sk };
+              if (sk.skill?.name) return { name: sk.skill.name, level: sk.level };
+              if (sk.name) return { name: sk.name, level: sk.level };
+              return { name: 'Unknown' };
+            }) || [],
+            collegeName: s.college?.name || s.collage?.name,
+            profilePictureUrl: s.profilePictureUrl ||
+                (s.profilePhoto ? (s.profilePhoto.startsWith('data:') ? s.profilePhoto : `data:image/jpeg;base64,${s.profilePhoto}`) : null)
+          }));
 
       setStudents(processed);
       setFilteredStudents(processed);
@@ -204,8 +229,8 @@ export default function InviteMembers() {
   useEffect(() => {
     const term = searchTerm.toLowerCase();
     setFilteredStudents(students.filter(s =>
-      (s.displayName || '').toLowerCase().includes(term) ||
-      (s.studentSkills || []).some(sk => (sk.name || '').toLowerCase().includes(term))
+        (s.displayName || '').toLowerCase().includes(term) ||
+        (s.studentSkills || []).some(sk => (sk.name || '').toLowerCase().includes(term))
     ));
   }, [searchTerm, students]);
 
@@ -227,28 +252,37 @@ export default function InviteMembers() {
   };
 
 
-const handleInvite = async (student) => {
-  try {
-    const resp = await teamService.inviteUserToProject(
-      projectId,
-      student.id,
-      'Join our team for this project!'
-    );
-    const invId = resp?.data?.id || resp?.id;
-    if (invId) setInvitationsMap(prev => ({ ...prev, [student.id]: invId }));
-    setInvitedUserIds(prev => [...prev, student.id]);
-    toast.success(`Invitation sent to ${student.displayName}`);
-  } catch {
-    toast.error('Failed to send invitation.');
-  }
-};
+  const handleInvite = async (student) => {
+    if (openRoles.length > 0 && !selectedRoleId) {
+      toast.error('Select an open project role before sending an invitation.');
+      return;
+    }
+    if (projectRoles.length > 0 && openRoles.length === 0) {
+      toast.error('All project roles are filled. No more invitations can be sent.');
+      return;
+    }
+    try {
+      const resp = await teamService.inviteUserToProject(
+          projectId,
+          student.id,
+          'Join our team for this project!',
+          selectedRoleId || undefined
+      );
+      const invId = resp?.data?.id || resp?.id;
+      if (invId) setInvitationsMap(prev => ({ ...prev, [student.id]: invId }));
+      setInvitedUserIds(prev => [...prev, student.id]);
+      toast.success(`Invitation sent to ${student.displayName}`);
+    } catch (error) {
+      toast.error(error?.message || error?.data?.message || 'Failed to send invitation.');
+    }
+  };
 
   const handleCancelInvite = async (studentId) => {
     const invId = invitationsMap[studentId];
     if (!invId) return;
     try {
-      await 
-      await teamService.cancelInvitation(invId);
+      await
+          await teamService.cancelInvitation(invId);
       setInvitedUserIds(prev => prev.filter(id => id !== studentId.toString() && id !== studentId));
       setInvitationsMap(prev => { const next = { ...prev }; delete next[studentId]; return next; });
       toast.success('Invitation cancelled');
@@ -257,322 +291,325 @@ const handleInvite = async (student) => {
     }
   };
 
+  const openRoles = projectRoles.filter(role => !role.filled);
   const loading = initializing || usersLoading;
   const pageRangeStart = pageMeta.totalElements === 0 ? 0 : pageMeta.pageNumber * PAGE_SIZE + 1;
   const pageRangeEnd = pageMeta.pageNumber * PAGE_SIZE + pageMeta.numberOfElements;
 
   return (
-    <div className="min-h-screen bg-slate-50/50">
-      {/* STICKY HEADER - Professional Minimalist */}
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 h-16 px-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(`/projects/${projectId}`)}
-            className="text-slate-600 hover:text-indigo-600 font-bold text-xs px-2 h-9 rounded-lg"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" /> Project
-          </Button>
-          <div className="h-4 w-px bg-slate-200" />
-          <h1 className="text-sm font-bold text-slate-900 tracking-tight">
-            Find Talent
-          </h1>
-        </div>
-        <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold px-3 py-1 text-[10px] rounded-full">
-          {invitedUserIds.length} Sent
-        </Badge>
-      </header>
-
-      <main className="max-w-6xl mx-auto px-4 lg:px-6 py-8">
-        {/* SEARCH & FILTER - Professional UI */}
-        <div className="mb-6 space-y-3">
-          <div className="flex gap-2">
-            <div className="relative flex-1 group">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
-              <Input
-                placeholder="Search by name or skill..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="h-10 pl-10 rounded-lg bg-white border-slate-200 text-sm shadow-sm"
-              />
-            </div>
+      <div className="min-h-screen bg-slate-50/50">
+        {/* STICKY HEADER - Professional Minimalist */}
+        <header className="sticky top-0 z-50 bg-white border-b border-slate-200 h-16 px-6 flex items-center justify-between">
+          <div className="flex items-center gap-4">
             <Button
-              onClick={() => setShowFilters(!showFilters)}
-              variant="outline"
-              className={`h-10 px-4 rounded-lg font-bold text-xs border-slate-200 bg-white text-slate-700 ${showFilters ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : ''}`}
+                variant="ghost"
+                onClick={() => navigate(`/projects/${projectId}`)}
+                className="text-slate-600 hover:text-indigo-600 font-bold text-xs px-2 h-9 rounded-lg"
             >
-              <Filter className="w-3.5 h-3.5 mr-2" /> Filters
+              <ArrowLeft className="w-4 h-4 mr-2" /> Project
             </Button>
+            <div className="h-4 w-px bg-slate-200" />
+            <h1 className="text-sm font-bold text-slate-900 tracking-tight">
+              Find Talent
+            </h1>
           </div>
+          <Badge className="bg-indigo-50 text-indigo-600 border-none font-bold px-3 py-1 text-[10px] rounded-full">
+            {invitedUserIds.length} Sent
+          </Badge>
+        </header>
 
-          {showFilters && (
-            <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-md space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Branch</Label>
-                  <Select value={filters.branch} onValueChange={(v) => setFilters(p => ({ ...p, branch: v }))}>
-                    <SelectTrigger className="h-9 rounded-lg border-slate-200 text-xs">
-                      <SelectValue placeholder="All Branches" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-slate-200">
-                      <SelectItem value="ALL">All Branches</SelectItem>
-                      {branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Graduation</Label>
-                  <Select value={filters.graduationYear} onValueChange={(v) => setFilters(p => ({ ...p, graduationYear: v }))}>
-                    <SelectTrigger className="h-9 rounded-lg border-slate-200 text-xs">
-                      <SelectValue placeholder="Any Year" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-slate-200">
-                      <SelectItem value="ALL">Any Year</SelectItem>
-                      {graduationYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Availability</Label>
-                  <Select value={filters.availabilityStatus} onValueChange={(v) => setFilters(p => ({ ...p, availabilityStatus: v }))}>
-                    <SelectTrigger className="h-9 rounded-lg border-slate-200 text-xs">
-                      <SelectValue placeholder="Any Status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-white border-slate-200">
-                      <SelectItem value="ALL">Any Status</SelectItem>
-                      {availabilityStatuses.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, ' ')}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Skills</Label>
-                  <Input
-                    value={filters.skills}
-                    onChange={(e) => setFilters(p => ({ ...p, skills: e.target.value }))}
-                    placeholder="React, UI/UX..."
-                    className="h-9 border-slate-200 rounded-lg text-xs"
-                  />
-                </div>
+        <main className="max-w-6xl mx-auto px-4 lg:px-6 py-8">
+          {projectRoles.length > 0 && <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><p className="text-xs font-black uppercase tracking-wider text-slate-500">Choose an open role</p><span className="text-xs font-semibold text-slate-500">{openRoles.length} open</span></div>{openRoles.length > 0 ? <div className="mt-3 flex flex-wrap gap-2">{openRoles.map(role => <button type="button" key={role.id} onClick={() => setSelectedRoleId(String(role.id))} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedRoleId === String(role.id) ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-600'}`}>{role.name}</button>)}</div> : <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs font-semibold text-amber-800">All project roles are filled. New invitations are unavailable.</p>}</div>}
+          {/* SEARCH & FILTER - Professional UI */}
+          <div className="mb-6 space-y-3">
+            <div className="flex gap-2">
+              <div className="relative flex-1 group">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                <Input
+                    placeholder="Search by name or skill..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="h-10 pl-10 rounded-lg bg-white border-slate-200 text-sm shadow-sm"
+                />
               </div>
-
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-50">
-                <Button variant="ghost" onClick={resetFilters} size="sm" className="font-bold text-xs text-slate-500">
-                  Reset
-                </Button>
-                <Button
-                  onClick={handleApplyFilters}
-                  size="sm"
-                  className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 h-9 rounded-lg font-bold text-xs"
-                >
-                  {applyLoading ? <Loader2 className="animate-spin h-3 w-3 mr-2" /> : 'Apply'}
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {error && (
-          <Alert variant="destructive" className="mb-6 rounded-lg bg-red-50 text-red-800 border-red-100">
-            <AlertDescription className="text-xs font-medium">{error}</AlertDescription>
-          </Alert>
-        )}
-
-        {/* STUDENT GRID - Professional & Minimalist */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {loading ? (
-            [1, 2, 3, 4, 5, 6].map((i) => (
-              <Card key={i} className="border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
-                <CardContent className="p-5 space-y-4">
-                  <div className="flex items-center gap-3">
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-3 w-32" />
-                    </div>
-                  </div>
-                  <div className="flex gap-1.5 pt-2">
-                    <Skeleton className="h-4 w-10 rounded" />
-                    <Skeleton className="h-4 w-10 rounded" />
-                    <Skeleton className="h-4 w-10 rounded" />
-                  </div>
-                  <div className="pt-4 border-t border-slate-50">
-                    <Skeleton className="h-9 w-full rounded-lg" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          ) : filteredStudents.length === 0 ? (
-            <div className="col-span-full py-20 text-center bg-white rounded-xl border border-dashed border-slate-200">
-              <Users className="w-10 h-10 text-slate-200 mx-auto mb-3" />
-              <p className="text-slate-500 font-bold text-sm">No talent found matching your criteria</p>
-              <p className="text-slate-400 text-xs mt-1">Try adjusting your filters or search term.</p>
-            </div>
-          ) : (
-            filteredStudents.map((student) => {
-              const isInvited = invitedUserIds.includes(student.id.toString()) || invitedUserIds.includes(student.id);
-              const hasSocialLinks = student.githubUrl || student.linkedinUrl || student.portfolioUrl;
-              return (
-                <Card key={student.id} className="border-slate-200 rounded-xl bg-white hover:border-indigo-200 hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden group">
-                  <CardContent className="p-5 flex flex-col h-full">
-                    <div className="flex items-start justify-between gap-2 mb-4">
-                      <div className="flex items-start gap-3 min-w-0">
-                        <Avatar className="h-12 w-12 border border-slate-100 group-hover:border-indigo-100 transition-colors">
-                          <AvatarImage src={student.profilePictureUrl} />
-                          <AvatarFallback className="bg-indigo-50 text-indigo-700 text-sm font-bold">
-                            {student.displayName?.[0]}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-indigo-600 transition-colors">
-                            {student.displayName}
-                          </h3>
-                          <p className="text-[11px] text-slate-500 font-medium truncate">
-                            {student.branch} • {student.graduationYear}
-                          </p>
-                          <div className="flex items-center gap-1 mt-1">
-                            <MapPin size={10} className="text-slate-300" />
-                            <span className="text-[10px] text-slate-400 font-medium truncate">{student.collegeName || 'Campus'}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <span
-                        title={`Availability: ${formatAvailability(student.availabilityStatus)}`}
-                        className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold whitespace-nowrap ${AVAILABILITY_STYLES[student.availabilityStatus] || AVAILABILITY_STYLES.OFFLINE}`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                        {formatAvailability(student.availabilityStatus)}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-1 mb-4 min-h-[20px]">
-                      {student.studentSkills?.slice(0, 4).map((skill, idx) => (
-                        <Badge key={idx} variant="secondary" className="bg-slate-50 text-slate-500 border-none font-bold text-[9px] px-1.5 py-0">
-                          {skill.name}
-                        </Badge>
-                      ))}
-                      {student.studentSkills?.length > 4 && (
-                        <span className="text-[9px] font-bold text-slate-300">+{student.studentSkills.length - 4} more</span>
-                      )}
-                    </div>
-
-                    {hasSocialLinks && (
-                      <div className="flex items-center gap-2 mb-4">
-                        {student.githubUrl && (
-                          <a
-                            href={student.githubUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="GitHub"
-                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
-                          >
-                            <Github size={13} />
-                          </a>
-                        )}
-                        {student.linkedinUrl && (
-                          <a
-                            href={student.linkedinUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="LinkedIn"
-                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
-                          >
-                            <Linkedin size={13} />
-                          </a>
-                        )}
-                        {student.portfolioUrl && (
-                          <a
-                            href={student.portfolioUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title="Portfolio"
-                            className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
-                          >
-                            <Globe size={13} />
-                          </a>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="mt-auto pt-4 border-t border-slate-50">
-                      {isInvited ? (
-                        <Button
-                          variant="outline"
-                          onClick={() => handleCancelInvite(student.id)}
-                          className="w-full h-9 rounded-lg border-indigo-100 text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 hover:text-indigo-700 font-bold text-xs"
-                        >
-                          <Check className="w-3.5 h-3.5 mr-1.5" /> Invited
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => handleInvite(student)}
-                          className="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-sm"
-                        >
-                          <UserPlus className="w-3.5 h-3.5 mr-1.5" /> Invite to Team
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-          )}
-        </div>
-
-        {/* PAGINATION - server-driven via PagedResponse (pageNumber, totalPages, totalElements, first, last, numberOfElements) */}
-        {!loading && pageMeta.totalElements > 0 && (
-          <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-xs font-medium text-slate-400">
-              Showing {pageRangeStart}–{pageRangeEnd} of {pageMeta.totalElements} results
-            </p>
-
-            {pageMeta.totalPages > 1 && (
-              <div className="flex items-center gap-1">
-                <Button
+              <Button
+                  onClick={() => setShowFilters(!showFilters)}
                   variant="outline"
-                  size="sm"
-                  disabled={pageMeta.first}
-                  onClick={() => goToPage(pageMeta.pageNumber - 1)}
-                  className="h-8 px-3 rounded-lg border-slate-200 text-xs font-bold text-slate-600 disabled:opacity-40"
-                >
-                  <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Prev
-                </Button>
+                  className={`h-10 px-4 rounded-lg font-bold text-xs border-slate-200 bg-white text-slate-700 ${showFilters ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : ''}`}
+              >
+                <Filter className="w-3.5 h-3.5 mr-2" /> Filters
+              </Button>
+            </div>
 
-                {getPageNumbers(pageMeta.pageNumber, pageMeta.totalPages).map((p, idx) =>
-                  p === '...' ? (
-                    <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-slate-300 font-bold">…</span>
-                  ) : (
-                    <Button
-                      key={p}
-                      size="sm"
-                      onClick={() => goToPage(p)}
-                      className={`h-8 w-8 rounded-lg text-xs font-bold ${p === pageMeta.pageNumber
-                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                        : 'bg-white border border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600'
-                        }`}
-                    >
-                      {p + 1}
+            {showFilters && (
+                <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-md space-y-5 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Branch</Label>
+                      <Select value={filters.branch} onValueChange={(v) => setFilters(p => ({ ...p, branch: v }))}>
+                        <SelectTrigger className="h-9 rounded-lg border-slate-200 text-xs">
+                          <SelectValue placeholder="All Branches" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-slate-200">
+                          <SelectItem value="ALL">All Branches</SelectItem>
+                          {branches.map(b => <SelectItem key={b} value={b}>{b}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Graduation</Label>
+                      <Select value={filters.graduationYear} onValueChange={(v) => setFilters(p => ({ ...p, graduationYear: v }))}>
+                        <SelectTrigger className="h-9 rounded-lg border-slate-200 text-xs">
+                          <SelectValue placeholder="Any Year" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-slate-200">
+                          <SelectItem value="ALL">Any Year</SelectItem>
+                          {graduationYears.map(y => <SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Availability</Label>
+                      <Select value={filters.availabilityStatus} onValueChange={(v) => setFilters(p => ({ ...p, availabilityStatus: v }))}>
+                        <SelectTrigger className="h-9 rounded-lg border-slate-200 text-xs">
+                          <SelectValue placeholder="Any Status" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-white border-slate-200">
+                          <SelectItem value="ALL">Any Status</SelectItem>
+                          {availabilityStatuses.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, ' ')}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Skills</Label>
+                      <Input
+                          value={filters.skills}
+                          onChange={(e) => setFilters(p => ({ ...p, skills: e.target.value }))}
+                          placeholder="React, UI/UX..."
+                          className="h-9 border-slate-200 rounded-lg text-xs"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-2 pt-4 border-t border-slate-50">
+                    <Button variant="ghost" onClick={resetFilters} size="sm" className="font-bold text-xs text-slate-500">
+                      Reset
                     </Button>
-                  )
-                )}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  disabled={pageMeta.last}
-                  onClick={() => goToPage(pageMeta.pageNumber + 1)}
-                  className="h-8 px-3 rounded-lg border-slate-200 text-xs font-bold text-slate-600 disabled:opacity-40"
-                >
-                  Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
-                </Button>
-              </div>
+                    <Button
+                        onClick={handleApplyFilters}
+                        size="sm"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 h-9 rounded-lg font-bold text-xs"
+                    >
+                      {applyLoading ? <Loader2 className="animate-spin h-3 w-3 mr-2" /> : 'Apply'}
+                    </Button>
+                  </div>
+                </div>
             )}
           </div>
-        )}
-      </main>
-    </div>
+
+          {error && (
+              <Alert variant="destructive" className="mb-6 rounded-lg bg-red-50 text-red-800 border-red-100">
+                <AlertDescription className="text-xs font-medium">{error}</AlertDescription>
+              </Alert>
+          )}
+
+          {/* STUDENT GRID - Professional & Minimalist */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {loading ? (
+                [1, 2, 3, 4, 5, 6].map((i) => (
+                    <Card key={i} className="border-slate-200 rounded-xl bg-white shadow-sm overflow-hidden">
+                      <CardContent className="p-5 space-y-4">
+                        <div className="flex items-center gap-3">
+                          <Skeleton className="h-12 w-12 rounded-full" />
+                          <div className="space-y-2">
+                            <Skeleton className="h-4 w-24" />
+                            <Skeleton className="h-3 w-32" />
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5 pt-2">
+                          <Skeleton className="h-4 w-10 rounded" />
+                          <Skeleton className="h-4 w-10 rounded" />
+                          <Skeleton className="h-4 w-10 rounded" />
+                        </div>
+                        <div className="pt-4 border-t border-slate-50">
+                          <Skeleton className="h-9 w-full rounded-lg" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                ))
+            ) : filteredStudents.length === 0 ? (
+                <div className="col-span-full py-20 text-center bg-white rounded-xl border border-dashed border-slate-200">
+                  <Users className="w-10 h-10 text-slate-200 mx-auto mb-3" />
+                  <p className="text-slate-500 font-bold text-sm">No talent found matching your criteria</p>
+                  <p className="text-slate-400 text-xs mt-1">Try adjusting your filters or search term.</p>
+                </div>
+            ) : (
+                filteredStudents.map((student) => {
+                  const isInvited = invitedUserIds.includes(student.id.toString()) || invitedUserIds.includes(student.id);
+                  const hasSocialLinks = student.githubUrl || student.linkedinUrl || student.portfolioUrl;
+                  return (
+                      <Card key={student.id} className="border-slate-200 rounded-xl bg-white hover:border-indigo-200 hover:shadow-md transition-all duration-200 flex flex-col overflow-hidden group">
+                        <CardContent className="p-5 flex flex-col h-full">
+                          <div className="flex items-start justify-between gap-2 mb-4">
+                            <div className="flex items-start gap-3 min-w-0">
+                              <Avatar className="h-12 w-12 border border-slate-100 group-hover:border-indigo-100 transition-colors">
+                                <AvatarImage src={student.profilePictureUrl} />
+                                <AvatarFallback className="bg-indigo-50 text-indigo-700 text-sm font-bold">
+                                  {student.displayName?.[0]}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-slate-900 text-sm truncate group-hover:text-indigo-600 transition-colors">
+                                  {student.displayName}
+                                </h3>
+                                <p className="text-[11px] text-slate-500 font-medium truncate">
+                                  {student.branch} • {student.graduationYear}
+                                </p>
+                                <div className="flex items-center gap-1 mt-1">
+                                  <MapPin size={10} className="text-slate-300" />
+                                  <span className="text-[10px] text-slate-400 font-medium truncate">{student.collegeName || 'Campus'}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <span
+                                title={`Availability: ${formatAvailability(student.availabilityStatus)}`}
+                                className={`shrink-0 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold whitespace-nowrap ${AVAILABILITY_STYLES[student.availabilityStatus] || AVAILABILITY_STYLES.OFFLINE}`}
+                            >
+                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                              {formatAvailability(student.availabilityStatus)}
+                      </span>
+                          </div>
+
+                          <div className="flex flex-wrap gap-1 mb-4 min-h-[20px]">
+                            {student.studentSkills?.slice(0, 4).map((skill, idx) => (
+                                <Badge key={idx} variant="secondary" className="bg-slate-50 text-slate-500 border-none font-bold text-[9px] px-1.5 py-0">
+                                  {skill.name}
+                                </Badge>
+                            ))}
+                            {student.studentSkills?.length > 4 && (
+                                <span className="text-[9px] font-bold text-slate-300">+{student.studentSkills.length - 4} more</span>
+                            )}
+                          </div>
+
+                          {hasSocialLinks && (
+                              <div className="flex items-center gap-2 mb-4">
+                                {student.githubUrl && (
+                                    <a
+                                        href={student.githubUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title="GitHub"
+                                        className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
+                                    >
+                                      <Github size={13} />
+                                    </a>
+                                )}
+                                {student.linkedinUrl && (
+                                    <a
+                                        href={student.linkedinUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title="LinkedIn"
+                                        className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
+                                    >
+                                      <Linkedin size={13} />
+                                    </a>
+                                )}
+                                {student.portfolioUrl && (
+                                    <a
+                                        href={student.portfolioUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title="Portfolio"
+                                        className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:text-indigo-600 hover:border-indigo-200 transition-colors"
+                                    >
+                                      <Globe size={13} />
+                                    </a>
+                                )}
+                              </div>
+                          )}
+
+                          <div className="mt-auto pt-4 border-t border-slate-50">
+                            {isInvited ? (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => handleCancelInvite(student.id)}
+                                    className="w-full h-9 rounded-lg border-indigo-100 text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 hover:text-indigo-700 font-bold text-xs"
+                                >
+                                  <Check className="w-3.5 h-3.5 mr-1.5" /> Invited
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={() => handleInvite(student)}
+                                    disabled={openRoles.length > 0 && !selectedRoleId}
+                                    className="w-full h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-all shadow-sm disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                  <UserPlus className="w-3.5 h-3.5 mr-1.5" /> {openRoles.length > 0 && !selectedRoleId ? 'Select a role first' : openRoles.length === 0 && projectRoles.length > 0 ? 'No open roles' : 'Invite to Team'}
+                                </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                  );
+                })
+            )}
+          </div>
+
+          {/* PAGINATION - server-driven via PagedResponse (pageNumber, totalPages, totalElements, first, last, numberOfElements) */}
+          {!loading && pageMeta.totalElements > 0 && (
+              <div className="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p className="text-xs font-medium text-slate-400">
+                  Showing {pageRangeStart}–{pageRangeEnd} of {pageMeta.totalElements} results
+                </p>
+
+                {pageMeta.totalPages > 1 && (
+                    <div className="flex items-center gap-1">
+                      <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={pageMeta.first}
+                          onClick={() => goToPage(pageMeta.pageNumber - 1)}
+                          className="h-8 px-3 rounded-lg border-slate-200 text-xs font-bold text-slate-600 disabled:opacity-40"
+                      >
+                        <ChevronLeft className="w-3.5 h-3.5 mr-1" /> Prev
+                      </Button>
+
+                      {getPageNumbers(pageMeta.pageNumber, pageMeta.totalPages).map((p, idx) =>
+                          p === '...' ? (
+                              <span key={`ellipsis-${idx}`} className="px-1.5 text-xs text-slate-300 font-bold">…</span>
+                          ) : (
+                              <Button
+                                  key={p}
+                                  size="sm"
+                                  onClick={() => goToPage(p)}
+                                  className={`h-8 w-8 rounded-lg text-xs font-bold ${p === pageMeta.pageNumber
+                                      ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                                      : 'bg-white border border-slate-200 text-slate-600 hover:border-indigo-200 hover:text-indigo-600'
+                                  }`}
+                              >
+                                {p + 1}
+                              </Button>
+                          )
+                      )}
+
+                      <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={pageMeta.last}
+                          onClick={() => goToPage(pageMeta.pageNumber + 1)}
+                          className="h-8 px-3 rounded-lg border-slate-200 text-xs font-bold text-slate-600 disabled:opacity-40"
+                      >
+                        Next <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                      </Button>
+                    </div>
+                )}
+              </div>
+          )}
+        </main>
+      </div>
   );
 }

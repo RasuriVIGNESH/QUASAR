@@ -41,7 +41,7 @@ export const RequestProvider = ({ children }) => {
     try {
       const [joinRequestsRes, invitationsRes, myProjectsResponse] = await Promise.all([
         joinRequestService.getMyJoinRequests(),
-        joinRequestService.getUserInvitationsAndRequests(0, 10),
+        joinRequestService.getUserInvitationsAndRequests({ all: true, page: 0, size: 10 }),
         projectService.getMyProjects()
       ]);
 
@@ -61,9 +61,9 @@ export const RequestProvider = ({ children }) => {
 
       if (limitedProjects.length > 0) {
         const results = await Promise.all(
-          limitedProjects.map(project =>
-            joinRequestService.getProjectJoinRequests(project.id)
-          )
+            limitedProjects.map(project =>
+                joinRequestService.getProjectJoinRequests(project.id)
+            )
         );
 
         allJoinRequests = results.map(res => { const body = unwrap(res); return Array.isArray(body) ? body : body?.content || []; }).flat();
@@ -104,22 +104,22 @@ export const RequestProvider = ({ children }) => {
   };
 
   const pendingInvitationCount =
-    receivedInvitations.filter(inv => inv.status === 'PENDING').length;
+      receivedInvitations.filter(inv => inv.status === 'PENDING').length;
 
   const pendingJoinRequestCount =
-    receivedJoinRequests.filter(req => req.status === 'PENDING').length;
+      receivedJoinRequests.filter(req => req.status === 'PENDING').length;
 
   return (
-    <RequestContext.Provider value={{
-      loading,
-      error,
-      sentJoinRequests,
-      receivedInvitations,
-      receivedJoinRequests,
-      refresh,
-      pendingCount: pendingInvitationCount + pendingJoinRequestCount,
-    }}>
-      {children}
-    </RequestContext.Provider>
+      <RequestContext.Provider value={{
+        loading,
+        error,
+        sentJoinRequests,
+        receivedInvitations,
+        receivedJoinRequests,
+        refresh,
+        pendingCount: pendingInvitationCount + pendingJoinRequestCount,
+      }}>
+        {children}
+      </RequestContext.Provider>
   );
 };

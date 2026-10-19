@@ -36,6 +36,10 @@ public class UpdateProject {
     @Valid
     private List<ProjectSkill> skills;
 
+    @Valid
+    @Size(max = 20, message = "A project may define at most 20 required roles")
+    private List<ProjectRoleRequest> requiredRoles;
+
     @Size(max = 1000)
     private String problemStatement;
 

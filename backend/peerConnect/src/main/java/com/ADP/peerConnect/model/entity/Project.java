@@ -50,7 +50,7 @@ public class Project {
 
     @Column(name = "max_team_size", nullable = false)
     @NotNull(message = "Maximum team size is required")
-    @Min(value = 1, message = "Team size must be at least 2")
+    @Min(value = 2, message = "Team size must include the lead and at least one other member")
     @Max(value = 20, message = "Team size must not exceed 20")
     private Integer maxTeamSize;
 
@@ -106,6 +106,12 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private List<ProjectSkill> projectSkills = new ArrayList<>();
+
+    @BatchSize(size = 25)
+    @OrderBy("name ASC, id ASC")
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference("project-roles")
+    private List<ProjectRole> requiredRoles = new ArrayList<>();
 
     @OneToOne(mappedBy = "project",cascade = CascadeType.ALL, orphanRemoval = true)
     private Team team;
