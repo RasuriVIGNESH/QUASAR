@@ -27,10 +27,10 @@ public class TeamService {
         Project project = projectService.findById(projectId);
 
         if (project.getCurrentTeamSize() >= project.getMaxTeamSize()) {
-            throw new ConflictException("Project team is now full");
+            throw new TeamFullException();
         }
         if (teamRepo.existsByProjectIdAndUserId(projectId, memberId)) {
-            throw new ConflictException("User is already a member of this project");
+            throw new AlreadyProjectMemberException();
         }
         teamRepo.addMember(projectId, memberId);
         project.setCurrentTeamSize(project.getCurrentTeamSize() + 1);
@@ -39,37 +39,34 @@ public class TeamService {
     // ── Remove member ─────────────────────────────────────────────────────────
 
     public void removeMemberFromTeam(String projectId, String memberId, String requesterId) {
+        Project project = projectService.findById(projectId);
         if (!projectService.isProjectLead(projectId, requesterId)) {
-            throw new UnauthorizedException("Only project lead can remove members");
+            throw new ForbiddenException("Only project lead can remove members");
         }
         // Lead cannot be removed via this flow
         if (projectService.isProjectLead(projectId, memberId)) {
-            throw new ConflictException("Cannot remove project lead");
+            throw new ProjectLeadCannotBeRemovedException();
         }
         if (!teamRepo.existsByProjectIdAndUserId(projectId, memberId)) {
             throw new ResourceNotFoundException("Member not found in this project");
         }
 
         teamRepo.removeMember(projectId, memberId);
-
-        Project project = projectService.findById(projectId);
         project.setCurrentTeamSize(Math.max(0, project.getCurrentTeamSize() - 1));
     }
 
     // ── Leave project ─────────────────────────────────────────────────────────
 
     public void leaveProject(String projectId, String userId) {
+        Project project = projectService.findById(projectId);
         if (projectService.isProjectLead(projectId, userId)) {
-            throw new ConflictException(
-                    "Project lead cannot leave. Transfer leadership first or delete the project.");
+            throw new ProjectLeadCannotLeaveException();
         }
         if (!teamRepo.existsByProjectIdAndUserId(projectId, userId)) {
             throw new ResourceNotFoundException("You are not a member of this project");
         }
 
         teamRepo.removeMember(projectId, userId);
-
-        Project project = projectService.findById(projectId);
         project.setCurrentTeamSize(Math.max(0, project.getCurrentTeamSize() - 1));
 
         log.debug("User left projectId={} userId={}", projectId, userId);
@@ -79,21 +76,31 @@ public class TeamService {
 
     @Transactional(readOnly = true)
     public AllTeam getAllTeam(String projectId, String currentUserId) {
+        projectService.findById(projectId);
         if (!teamRepo.isInTeam(projectId, currentUserId)) {
-            throw new UnauthorizedException("Only project members can view the member list");
+            throw new ForbiddenException("Only project members can view the member list");
         }
         AllTeam team=new AllTeam();
         team.setMembers(teamRepo.getAllMembers(projectId)
                 .stream()
                 .map(UserCardResponse::new)
                 .collect(Collectors.toList()));
-        team.setLead(new UserCardResponse(teamRepo.getLead(projectId)));
+        User lead = teamRepo.getLead(projectId);
+        if (lead == null) {
+            throw new ResourceNotFoundException("Project lead not found");
+        }
+        team.setLead(new UserCardResponse(lead));
         return team;
     }
 
     @Transactional(readOnly = true)
     public UserCardResponse getLead(String projectId){
-        return new  UserCardResponse(teamRepo.getLead(projectId));
+        projectService.findById(projectId);
+        User lead = teamRepo.getLead(projectId);
+        if (lead == null) {
+            throw new ResourceNotFoundException("Project lead not found");
+        }
+        return new UserCardResponse(lead);
     }
 
     @Transactional(readOnly = true)
@@ -112,10 +119,10 @@ public class TeamService {
                 .orElseThrow(() -> new ResourceNotFoundException("Team not found for this project"));
 
         if (!team.getLead().getId().equals(currentUserId)) {
-            throw new UnauthorizedException("Only project lead can update members");
+            throw new ForbiddenException("Only project lead can update members");
         }
         if (memberId.equals(currentUserId)) {
-            throw new ConflictException("You are already the project lead");
+            throw new AlreadyProjectLeadException();
         }
 
         User newLead = team.getMembers().stream()

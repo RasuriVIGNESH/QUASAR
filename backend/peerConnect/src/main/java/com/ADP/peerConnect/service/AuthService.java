@@ -1,8 +1,6 @@
 package com.ADP.peerConnect.service;
+import com.ADP.peerConnect.exception.*;
 
-import com.ADP.peerConnect.exception.BadRequestException;
-import com.ADP.peerConnect.exception.ConflictException;
-import com.ADP.peerConnect.exception.UnauthorizedException;
 import com.ADP.peerConnect.model.dto.request.Auth.Login;
 import com.ADP.peerConnect.model.dto.request.Auth.Register;
 import com.ADP.peerConnect.model.dto.response.AuthResponse;
@@ -57,7 +55,7 @@ public class AuthService {
 
         // Check if email already exists
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new ConflictException(Constants.EMAIL_ALREADY_EXISTS);
+            throw new DuplicateAccountException();
         }
 
         // Find the college entity using the ID from the request

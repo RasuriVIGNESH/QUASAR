@@ -2,7 +2,7 @@ package com.ADP.peerConnect.service;
 
 import com.ADP.peerConnect.exception.BadRequestException;
 import com.ADP.peerConnect.exception.ResourceNotFoundException;
-import com.ADP.peerConnect.exception.UnauthorizedException;
+import com.ADP.peerConnect.exception.ForbiddenException;
 import com.ADP.peerConnect.model.dto.response.ChatMessageResponse;
 import com.ADP.peerConnect.model.entity.ChatMessage;
 import com.ADP.peerConnect.model.entity.Project;
@@ -48,7 +48,7 @@ public class ChatService {
         
         // Check if user is a member of the project
         if (!projectService.isProjectMember(projectId, senderId)) {
-            throw new UnauthorizedException("You must be a project member to send messages");
+            throw new ForbiddenException("You must be a project member to send messages");
         }
         
         // Get sender
@@ -77,7 +77,7 @@ public class ChatService {
         
         // Check if user is the sender
         if (!message.getSender().getId().equals(userId)) {
-            throw new UnauthorizedException("You can only edit your own messages");
+            throw new ForbiddenException("You can only edit your own messages");
         }
         
         // Update message
@@ -97,7 +97,7 @@ public class ChatService {
         boolean isProjectLead = projectService.isProjectLead(message.getProject().getId(), userId);
         
         if (!isSender && !isProjectLead) {
-            throw new UnauthorizedException("You can only delete your own messages or if you're the project Lead");
+            throw new ForbiddenException("You can only delete your own messages or if you're the project Lead");
         }
         
         chatMessageRepository.delete(message);
@@ -113,7 +113,7 @@ public class ChatService {
             Pageable pageable
     ) {
         if (!projectService.isProjectMember(projectId, userId)) {
-            throw new UnauthorizedException(
+            throw new ForbiddenException(
                     "You must be a project member to view messages"
             );
         }
@@ -129,7 +129,7 @@ public class ChatService {
      */
     public List<ChatMessage> getRecentMessages(String projectId, String userId) {
         if (!projectService.isProjectMember(projectId, userId)) {
-            throw new UnauthorizedException("You must be a project member to view messages");
+            throw new ForbiddenException("You must be a project member to view messages");
         }
         
         LocalDateTime since = LocalDateTime.now().minusHours(24);
@@ -142,7 +142,7 @@ public class ChatService {
     public Page<ChatMessage> searchMessages(String projectId, String query, String userId, Pageable pageable) {
         // Check if user is a member of the project
         if (!projectService.isProjectMember(projectId, userId)) {
-            throw new UnauthorizedException("You must be a project member to search messages");
+            throw new ForbiddenException("You must be a project member to search messages");
         }
         
         return chatMessageRepository.searchMessagesByContent(projectId, query, pageable);
@@ -154,7 +154,7 @@ public class ChatService {
     public List<ChatMessage> getMessagesAfter(String projectId, LocalDateTime after, String userId) {
         // Check if user is a member of the project
         if (!projectService.isProjectMember(projectId, userId)) {
-            throw new UnauthorizedException("You must be a project member to view messages");
+            throw new ForbiddenException("You must be a project member to view messages");
         }
         
         return chatMessageRepository.findMessagesAfter(projectId, after);
@@ -165,7 +165,7 @@ public class ChatService {
      */
     public ChatMessage getLatestMessage(String projectId, String userId) {
         if (!projectService.isProjectMember(projectId, userId)) {
-            throw new UnauthorizedException("You must be a project member to view messages");
+            throw new ForbiddenException("You must be a project member to view messages");
         }
         
         List<ChatMessage> messages = chatMessageRepository.findLatestMessage(projectId, PageRequest.of(0, 1));
@@ -178,7 +178,7 @@ public class ChatService {
     public long getMessageCount(String projectId, String userId) {
         // Check if user is a member of the project
         if (!projectService.isProjectMember(projectId, userId)) {
-            throw new UnauthorizedException("You must be a project member to view message count");
+            throw new ForbiddenException("You must be a project member to view message count");
         }
         
         return chatMessageRepository.countByProjectId(projectId);

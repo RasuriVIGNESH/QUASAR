@@ -1,8 +1,6 @@
 package com.ADP.peerConnect.service;
+import com.ADP.peerConnect.exception.*;
 
-import com.ADP.peerConnect.exception.BadRequestException;
-import com.ADP.peerConnect.exception.ConflictException;
-import com.ADP.peerConnect.exception.ResourceNotFoundException;
 import com.ADP.peerConnect.model.dto.request.Project.ProjectRoleRequest;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.ProjectRole;
@@ -68,7 +66,7 @@ public class ProjectRoleService {
                 continue;
             }
             if (!seenIds.add(request.getId())) {
-                throw new BadRequestException("A role ID may only appear once in requiredRoles.");
+                throw new DuplicateProjectRoleIdException();
             }
             ProjectRole role = existingById.get(request.getId());
             if (role == null) {
@@ -76,10 +74,10 @@ public class ProjectRoleService {
             }
             if (!role.getNormalizedName().equals(normalized)) {
                 if (role.isFilled()) {
-                    throw new ConflictException("A filled role cannot be renamed.");
+                    throw new RoleAlreadyFilledException();
                 }
                 if (referencedIds.contains(role.getId())) {
-                    throw new ConflictException("A role referenced by an invitation or join request cannot be renamed.");
+                    throw new ProjectRoleHistoryConflictException();
                 }
                 role.setName(name);
                 role.setNormalizedName(normalized);
@@ -90,7 +88,7 @@ public class ProjectRoleService {
         for (ProjectRole role : List.copyOf(project.getRequiredRoles())) {
             if (role.getId() == null || retainedIds.contains(role.getId())) continue;
             if (role.isFilled() || referencedIds.contains(role.getId())) {
-                throw new ConflictException("A filled or requested role cannot be removed; preserve its history or keep it in requiredRoles.");
+                throw new ProjectRoleHistoryConflictException();
             }
             project.getRequiredRoles().remove(role);
         }
@@ -100,7 +98,7 @@ public class ProjectRoleService {
         int maxTeamSize = project.getMaxTeamSize() == null ? 0 : project.getMaxTeamSize();
         int roleSeats = project.getRequiredRoles() == null ? 0 : project.getRequiredRoles().size();
         if (roleSeats > Math.max(0, maxTeamSize - 1)) {
-            throw new BadRequestException("Required roles cannot exceed the number of team seats available after the project lead.");
+            throw new ProjectRoleCapacityExceededException();
         }
     }
 
@@ -109,14 +107,14 @@ public class ProjectRoleService {
         if (roles.isEmpty() && roleId == null) return null;
         if (roleId == null) {
             if (roles.stream().noneMatch(role -> !role.isFilled())) {
-                throw new ConflictException("All required roles for this project have been filled.");
+                throw new NoOpenRolesException();
             }
-            throw new BadRequestException("Choose one of this project's open roles.");
+            throw new RoleSelectionRequiredException();
         }
         ProjectRole role = roleRepository.findByIdAndProjectIdForUpdate(roleId, projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found for this project."));
         if (role.isFilled()) {
-            throw new ConflictException("This role has already been filled.");
+            throw new RoleAlreadyFilledException();
         }
         return role;
     }
@@ -137,7 +135,7 @@ public class ProjectRoleService {
                         requestedRole.getId(), projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found for this project."));
         if (role.isFilled()) {
-            throw new ConflictException("This role has already been filled by another accepted request.");
+            throw new RoleAlreadyFilledException();
         }
         return role;
     }
@@ -146,11 +144,11 @@ public class ProjectRoleService {
         ProjectRole role = roleRepository.findByIdAndProjectIdForUpdate(roleId, projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Role not found for this project."));
         if (role.isFilled()) {
-            throw new ConflictException("This role is already filled.");
+            throw new RoleAlreadyFilledException();
         }
         if (requestsRepository.existsByProjectRoleIdAndStatus(roleId,
                 Status.PENDING)) {
-            throw new ConflictException("Resolve pending invitations or join requests for this role before marking it filled.");
+            throw new PendingRoleCollaborationsException();
         }
         role.setFilled(true);
     }
@@ -164,7 +162,7 @@ public class ProjectRoleService {
             String normalized = normalize(request.getName());
             validateNormalizedLength(cleanName(request.getName()));
             if (!names.add(normalized)) {
-                throw new BadRequestException("Duplicate role names are not allowed within a project.");
+                throw new DuplicateProjectRoleNameException();
             }
         }
     }

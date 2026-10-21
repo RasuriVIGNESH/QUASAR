@@ -137,12 +137,8 @@ public class ProjectController {
             @PathVariable String projectId,
             @Valid @RequestBody CreateTask request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            Task task = taskService.createTask(projectId, request, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Task created successfully", new TaskResponse(task)));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        Task task = taskService.createTask(projectId, request, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Task created successfully", new TaskResponse(task)));
     }
 
     @GetMapping("/{projectId}/tasks")
@@ -179,12 +175,8 @@ public class ProjectController {
             @PathVariable Long taskId,
             @Valid @RequestBody UpdateTask request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            TaskResponse taskResponse = new TaskResponse(taskService.updateTask(taskId, request, currentUser.getId()));
-            return ResponseEntity.ok(new ApiResponse(true, "Task updated successfully", taskResponse));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        TaskResponse taskResponse = new TaskResponse(taskService.updateTask(taskId, request, currentUser.getId()));
+        return ResponseEntity.ok(new ApiResponse(true, "Task updated successfully", taskResponse));
     }
 
     @Operation(summary = "Delete task")
@@ -193,12 +185,8 @@ public class ProjectController {
             @PathVariable String projectId,
             @PathVariable Long taskId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            taskService.deleteTask(taskId, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Task deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        taskService.deleteTask(taskId, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Task deleted successfully"));
     }
 
 

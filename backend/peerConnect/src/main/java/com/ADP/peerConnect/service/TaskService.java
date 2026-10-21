@@ -29,39 +29,41 @@ public class TaskService {
     private TaskRepository taskRepository;
 
     @Autowired
-    private ProjectRepository projectRepository;
-
-    @Autowired
     private TeamRepo teamRepo;
 
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ProjectService projectService;
     private Task loadTask(Long taskId) {
         return taskRepository.findByIdWithAssociations(taskId)
                 .orElseThrow(() -> new ResourceNotFoundException("Task not found"));
     }
     private Project loadProject(String projectId) {
-        return projectRepository.findByIdWithAssociations(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
+        return projectService.findById(projectId);
     }
     private void validateUserCanBeAssigned(Project project, String userId) {
-        boolean isLead = project.getTeam().getLead() != null && project.getTeam().getLead().getId().equals(userId);
+        boolean isLead = project.getTeam() != null && project.getTeam().getLead() != null
+                && project.getTeam().getLead().getId().equals(userId);
         boolean isMember = teamRepo.existsByProjectIdAndUserId(project.getId(), userId);
 
         if (!isLead && !isMember) {
-            throw new BadRequestException("Cannot assign task to non-project member or non-lead user");
+            throw new TaskAssigneeNotProjectMemberException();
         }
     }
 
 
     public Task createTask(String projectId, CreateTask request, String creatorId) {
+        if (request == null) throw new BadRequestException("Task details are required.");
         Project project = loadProject(projectId);
 
-        boolean isLead   = project.getTeam().getLead() != null && project.getTeam().getLead().getId().equals(creatorId);
+        boolean isLead   = project.getTeam() != null && project.getTeam().getLead() != null
+                && project.getTeam().getLead().getId().equals(creatorId);
         boolean isMember = teamRepo.existsByProjectIdAndUserId(projectId, creatorId);
 
         if (!isMember && !isLead) {
-            throw new UnauthorizedException("Only project members or the project lead can create tasks");
+            throw new ForbiddenException("Only project members or the project lead can create tasks");
         }
 
         User creator  = userService.findById(creatorId);
@@ -87,16 +89,18 @@ public class TaskService {
     }
 
     public Task updateTask(Long taskId, UpdateTask request, String userId) {
+        if (request == null) throw new BadRequestException("Task update details are required.");
         Task task = loadTask(taskId);
 
         Project project = task.getProject();
 
-        boolean isLead    = project.getTeam().getLead().getId().equals(userId);
+        boolean isLead    = project.getTeam() != null && project.getTeam().getLead() != null
+                && project.getTeam().getLead().getId().equals(userId);
         boolean isCreator = task.getCreatedBy().getId().equals(userId);
         boolean isAssignee = task.getAssignedTo() != null && task.getAssignedTo().getId().equals(userId);
 
         if (!isLead && !isCreator && !isAssignee) {
-            throw new UnauthorizedException("Cannot update this task");
+            throw new ForbiddenException("Cannot update this task");
         }
 
         if (request.getTitle()          != null) task.setTitle(request.getTitle());
@@ -125,10 +129,11 @@ public class TaskService {
         Project project = task.getProject();
 
         boolean canAssign = task.getCreatedBy().getId().equals(userId)
-                || project.getTeam().getLead().getId().equals(userId);
+                || (project.getTeam() != null && project.getTeam().getLead() != null
+                && project.getTeam().getLead().getId().equals(userId));
 
         if (!canAssign) {
-            throw new UnauthorizedException("Cannot assign this task");
+            throw new ForbiddenException("Cannot assign this task");
         }
 
         validateUserCanBeAssigned(project, assigneeId);
@@ -141,11 +146,12 @@ public class TaskService {
         Task task = loadTask(taskId);
 
         boolean canUnassign = task.getCreatedBy().getId().equals(userId)
-                || task.getProject().getTeam().getLead().getId().equals(userId)
+                || (task.getProject().getTeam() != null && task.getProject().getTeam().getLead() != null
+                && task.getProject().getTeam().getLead().getId().equals(userId))
                 || (task.getAssignedTo() != null && task.getAssignedTo().getId().equals(userId));
 
         if (!canUnassign) {
-            throw new UnauthorizedException("Cannot unassign this task");
+            throw new ForbiddenException("Cannot unassign this task");
         }
 
         task.setAssignedTo(null);
@@ -156,10 +162,11 @@ public class TaskService {
         Task task = loadTask(taskId);
 
         boolean canDelete = task.getCreatedBy().getId().equals(userId)
-                || task.getProject().getTeam().getLead().getId().equals(userId);
+                || (task.getProject().getTeam() != null && task.getProject().getTeam().getLead() != null
+                && task.getProject().getTeam().getLead().getId().equals(userId));
 
         if (!canDelete) {
-            throw new UnauthorizedException("Cannot delete this task");
+            throw new ForbiddenException("Cannot delete this task");
         }
 
         taskRepository.delete(task);
@@ -171,10 +178,11 @@ public class TaskService {
 
         boolean canUpdate = task.getCreatedBy().getId().equals(userId)
                 || (task.getAssignedTo() != null && task.getAssignedTo().getId().equals(userId))
-                || task.getProject().getTeam().getLead().getId().equals(userId);
+                || (task.getProject().getTeam() != null && task.getProject().getTeam().getLead() != null
+                && task.getProject().getTeam().getLead().getId().equals(userId));
 
         if (!canUpdate) {
-            throw new UnauthorizedException("Cannot update task status");
+            throw new ForbiddenException("Cannot update task status");
         }
 
         if (completed) {

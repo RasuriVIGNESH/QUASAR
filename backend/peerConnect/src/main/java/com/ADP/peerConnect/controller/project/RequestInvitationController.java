@@ -1,6 +1,6 @@
 package com.ADP.peerConnect.controller.project;
 
-import com.ADP.peerConnect.exception.BadRequestException;
+import com.ADP.peerConnect.exception.InvalidCollaborationDecisionException;
 import com.ADP.peerConnect.model.dto.request.Project.InviteUser;
 import com.ADP.peerConnect.model.dto.response.ApiResponse;
 import com.ADP.peerConnect.model.dto.response.PagedResponse;
@@ -110,7 +110,7 @@ public class RequestInvitationController {
             service.reject(requestId, currentUser.getId());
             return ResponseEntity.ok(new ApiResponse<>(true, "Collaboration request rejected."));
         }
-        throw new BadRequestException("response must be ACCEPTED or REJECTED.");
+        throw new InvalidCollaborationDecisionException();
     }
 
     @PutMapping("/projects/invitations/{invitationId}/cancel")

@@ -39,7 +39,7 @@ public class ProjectResponse {
     private List<ProjectRoleResponse> requiredRoles;
     private String githubRepo;
     private String demoUrl;
-    private String notepadContent;
+//    private String notepadContent;
     private String objectives;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
@@ -65,7 +65,7 @@ public class ProjectResponse {
         this.updatedAt = project.getUpdatedAt();
         this.githubRepo = project.getGithubRepo();
         this.demoUrl = project.getDemoUrl();
-        this.notepadContent = project.getNotepadContent();
+//        this.notepadContent = project.getNotepadContent();
         this.objectives = project.getObjectives();
         if (project.getTechStack() != null) {
             this.techStack = project.getTechStackList();

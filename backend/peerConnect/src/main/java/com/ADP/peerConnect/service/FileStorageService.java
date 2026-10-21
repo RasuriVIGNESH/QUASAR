@@ -1,6 +1,8 @@
 package com.ADP.peerConnect.service;
 
-import com.ADP.peerConnect.exception.ConflictException;
+import com.ADP.peerConnect.exception.BadRequestException;
+import com.ADP.peerConnect.exception.PayloadTooLargeException;
+import com.ADP.peerConnect.exception.ServiceUnavailableException;
 import com.ADP.peerConnect.model.dto.response.UserResponse;
 import com.ADP.peerConnect.model.entity.User;
 import org.springframework.beans.factory.annotation.Value;
@@ -12,11 +14,15 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.IOException;
+import software.amazon.awssdk.core.exception.SdkException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.UUID;
 
 @Service
 public class FileStorageService {
 
+    private static final Logger log = LoggerFactory.getLogger(FileStorageService.class);
     private final S3Client s3Client;
     private final UserService userService;
 
@@ -36,17 +42,23 @@ public class FileStorageService {
     public UserResponse updateProfilePhoto(MultipartFile file, String userId) {
         validateFile(file);
         User existing = userService.findById(userId);
-        deleteFromS3(existing.getProfilePictureUrl());
-
+        String oldImageUrl = existing.getProfilePictureUrl();
         String imageUrl = uploadToS3(file);
         User updated = userService.updateProfilePicture(userId, imageUrl);
+        try {
+            deleteFromS3(oldImageUrl);
+        } catch (ServiceUnavailableException cleanupFailure) {
+            // The new image is active; cleanup failure must not make the client retry the update.
+            log.warn("New profile image saved, but previous image cleanup failed.", cleanupFailure);
+        }
 
         return new UserResponse(updated);
     }
 
     public void deleteProfilePhoto(String userId) {
         User user = userService.findById(userId);
-        deleteFromS3(user.getProfilePictureUrl());
+        String oldImageUrl = user.getProfilePictureUrl();
+        deleteFromS3(oldImageUrl);
         user.setProfilePictureUrl(null);
         userService.update(user);
     }
@@ -55,14 +67,14 @@ public class FileStorageService {
 
     private void validateFile(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new ConflictException("File is required");
+            throw new BadRequestException("File is required.");
         }
         if (file.getSize() > 5 * 1024 * 1024) {
-            throw new ConflictException("File size must not exceed 5MB");
+            throw new PayloadTooLargeException("File size must not exceed 5 MB.");
         }
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            throw new ConflictException("Only image files are allowed");
+            throw new BadRequestException("Only image files are allowed.");
         }
     }
 
@@ -80,8 +92,9 @@ public class FileStorageService {
 
             return "https://s3." + region + ".amazonaws.com/" + bucketName + "/" + key;
 
-        } catch (IOException e) {
-            throw new RuntimeException("Image upload failed: " + e.getMessage());
+        } catch (IOException | SdkException e) {
+            log.error("Profile image upload failed", e);
+            throw new ServiceUnavailableException("Image storage is temporarily unavailable. Please try again.", e);
         }
     }
 
@@ -98,15 +111,16 @@ public class FileStorageService {
                     .key(key)
                     .build());
 
-        } catch (Exception e) {
-            throw new ConflictException("Failed to delete file from S3: " + e.getMessage());
+        } catch (SdkException e) {
+            log.error("Profile image deletion failed", e);
+            throw new ServiceUnavailableException("Image storage is temporarily unavailable. Please try again.", e);
         }
     }
 
     private String extractKey(String fileUrl) {
         String marker = ".amazonaws.com/";
         int idx = fileUrl.indexOf(marker);
-        if (idx == -1) throw new RuntimeException("Invalid S3 URL: " + fileUrl);
+        if (idx == -1) throw new BadRequestException("Profile image URL is invalid.");
         return fileUrl.substring(idx + marker.length());
     }
 

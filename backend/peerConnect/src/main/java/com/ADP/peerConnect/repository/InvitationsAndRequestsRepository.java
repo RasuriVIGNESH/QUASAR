@@ -126,7 +126,8 @@ public interface InvitationsAndRequestsRepository extends JpaRepository<Invitati
             @Param("status") Status status,
             Pageable pageable);
 
-    boolean existsByProjectIdAndTargetUserIdAndStatus(String projectId, String targetUserId, Status status);
+    Optional<InvitationsAndRequests> findFirstByProjectIdAndTargetUserIdAndStatusOrderByCreatedAtDesc(
+            String projectId, String targetUserId, Status status);
 
     @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END " +
             "FROM InvitationsAndRequests r WHERE r.projectRole.id = :roleId AND r.status = :status")

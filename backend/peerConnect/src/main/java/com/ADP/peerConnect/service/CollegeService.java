@@ -1,6 +1,6 @@
 package com.ADP.peerConnect.service;
 
-import com.ADP.peerConnect.exception.ConflictException;
+import com.ADP.peerConnect.exception.*;
 import com.ADP.peerConnect.exception.ResourceNotFoundException;
 import com.ADP.peerConnect.model.entity.College;
 import com.ADP.peerConnect.repository.CollegeRepository;
@@ -21,7 +21,7 @@ public class CollegeService{
     public College createCollege(String name, String location) {
         // Check if a college with this name already exists
         if (collegeRepository.existsByName(name)) {
-            throw new ConflictException("A college with this name or code already exists.");
+            throw new DuplicateCollegeException();
         }
 
         College college = new College(name, location);

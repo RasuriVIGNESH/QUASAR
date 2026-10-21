@@ -1,13 +1,13 @@
 package com.ADP.peerConnect.security;
 
 import com.ADP.peerConnect.service.UserService;
+import com.ADP.peerConnect.exception.UnauthorizedException;
 import com.ADP.peerConnect.util.Constants;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,6 +16,9 @@ import org.springframework.security.web.authentication.WebAuthenticationDetailsS
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * JWT authentication filter for processing JWT tokens in requests
@@ -34,71 +37,36 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
-        try {
-
-            String jwt = getJwtFromRequest(request);
-
-            if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
-
-                String userId = tokenProvider.getUserIdFromToken(jwt);
-
-                UserDetails userDetails = userService.loadUserById(userId);
-
-                if (userDetails != null) {
-
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
-
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource()
-                                    .buildDetails(request)
-                    );
-
-                    SecurityContextHolder.getContext()
-                            .setAuthentication(authentication);
+        String jwt = getJwtFromRequest(request);
+        if (StringUtils.hasText(jwt)) {
+            try {
+                if (tokenProvider.validateToken(jwt)) {
+                    String userId = tokenProvider.getUserIdFromToken(jwt);
+                    UserDetails userDetails = userService.loadUserById(userId);
+                    if (userDetails != null) {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails, null, userDetails.getAuthorities());
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
                 }
+            } catch (UnauthorizedException ex) {
+                SecurityContextHolder.clearContext();
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+                response.setCharacterEncoding("UTF-8");
+                Map<String, Object> error = new LinkedHashMap<>();
+                error.put("timestamp", LocalDateTime.now().toString());
+                error.put("status", HttpServletResponse.SC_UNAUTHORIZED);
+                error.put("error", "Unauthorized");
+                error.put("message", ex.getMessage());
+                error.put("path", request.getRequestURI());
+                new ObjectMapper().writeValue(response.getOutputStream(), error);
+                return;
             }
-
-            filterChain.doFilter(request, response);
-
-        }catch (io.jsonwebtoken.ExpiredJwtException ex) {
-
-//            logger.warn("JWT token expired");
-
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-
-            response.getWriter().write("""
-            {
-              "error": "JWT token expired",
-              "message": "Session expired. Please login again."
-            }
-            """);
-
-            response.getWriter().flush();
-
-            return;
-        }catch (Exception ex) {
-
-//            logger.error("Could not set user authentication", ex);
-
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setContentType("application/json");
-
-            response.getWriter().write("""
-            {
-              "message": "Invalid authentication token."
-            }
-        """);
-
-            response.getWriter().flush();
-
-            return;
         }
+        filterChain.doFilter(request, response);
     }
 
     /**

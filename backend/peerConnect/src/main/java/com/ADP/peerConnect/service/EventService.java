@@ -1,7 +1,6 @@
 package com.ADP.peerConnect.service;
+import com.ADP.peerConnect.exception.*;
 
-import com.ADP.peerConnect.exception.ConflictException;
-import com.ADP.peerConnect.exception.ResourceNotFoundException;
 import com.ADP.peerConnect.model.dto.request.Project.CreateProject;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectCardResponse;
 import com.ADP.peerConnect.model.entity.Event;
@@ -100,7 +99,7 @@ public class EventService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
         if (EventReopsitory.existsByEventIdAndUserId(project.getEventId(), userId)) {
-            throw new ConflictException("User already registered for event");
+            throw new AlreadyRegisteredForEventException();
         }
         return projectService.createProject(project, userId);
     }

@@ -2,7 +2,7 @@ package com.ADP.peerConnect.service;
 
 import com.ADP.peerConnect.exception.BadRequestException;
 import com.ADP.peerConnect.exception.ResourceNotFoundException;
-import com.ADP.peerConnect.exception.UnauthorizedException;
+import com.ADP.peerConnect.exception.ForbiddenException;
 import com.ADP.peerConnect.model.dto.request.PortfolioEntryRequest;
 import com.ADP.peerConnect.model.dto.response.PortfolioEntryResponse;
 import com.ADP.peerConnect.model.entity.PortfolioEntry;
@@ -50,7 +50,7 @@ public class PortfolioEntryService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
         if (!Boolean.TRUE.equals(teamRepository.isInTeam(projectId, ownerId))) {
-            throw new UnauthorizedException("Only current project members can add contribution evidence");
+            throw new ForbiddenException("Only current project members can add contribution evidence");
         }
         return PortfolioEntryResponse.from(repository.save(new PortfolioEntry(
                 owner, project, request.title().trim(), request.url().trim(), request.description())));

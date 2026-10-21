@@ -39,36 +39,24 @@ public class MeetingRoomController {
             @PathVariable String projectId,
             @Valid @RequestBody CreateMeetingRoom request,
             @Parameter(hidden = true)@AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            MeetingRoom room = meetingRoomService.createMeetingRoom(projectId, request, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Meeting room created successfully", room));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        MeetingRoom room = meetingRoomService.createMeetingRoom(projectId, request, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Meeting room created successfully", room));
     }
 
     @GetMapping("/projects/{projectId}/rooms")
     public ResponseEntity<ApiResponse> getMeetingRooms(
             @PathVariable String projectId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            List<MeetingRoom> rooms = meetingRoomService.getMeetingRoomsByProjectId(projectId, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Meeting rooms retrieved successfully", rooms));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        List<MeetingRoom> rooms = meetingRoomService.getMeetingRoomsByProjectId(projectId, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Meeting rooms retrieved successfully", rooms));
     }
 
     @DeleteMapping("/rooms/{roomId}")
     public ResponseEntity<ApiResponse> deleteMeetingRoom(
             @PathVariable Long roomId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            meetingRoomService.deleteMeetingRoom(roomId, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Meeting room deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        meetingRoomService.deleteMeetingRoom(roomId, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Meeting room deleted successfully"));
     }
 
     // NOTE ENDPOINTS
@@ -78,24 +66,16 @@ public class MeetingRoomController {
             @PathVariable Long roomId,
             @Valid @RequestBody CreateNote request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            Note note = meetingRoomService.createNote(roomId, request, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Note created successfully", note));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        Note note = meetingRoomService.createNote(roomId, request, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Note created successfully", note));
     }
 
     @GetMapping("/rooms/{roomId}/notes")
     public ResponseEntity<ApiResponse> getNotes(
             @PathVariable Long roomId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            List<Note> notes = meetingRoomService.getNotesByRoomId(roomId, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Notes retrieved successfully", notes));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        List<Note> notes = meetingRoomService.getNotesByRoomId(roomId, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Notes retrieved successfully", notes));
     }
 
     @PutMapping("/notes/{noteId}")
@@ -103,24 +83,16 @@ public class MeetingRoomController {
             @PathVariable Long noteId,
             @Valid @RequestBody UpdateNote request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            Note note = meetingRoomService.updateNote(noteId, request, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Note updated successfully", note));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        Note note = meetingRoomService.updateNote(noteId, request, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Note updated successfully", note));
     }
 
     @DeleteMapping("/notes/{noteId}")
     public ResponseEntity<ApiResponse> deleteNote(
             @PathVariable Long noteId,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        try {
-            meetingRoomService.deleteNote(noteId, currentUser.getId());
-            return ResponseEntity.ok(new ApiResponse(true, "Note deleted successfully"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
-        }
+        meetingRoomService.deleteNote(noteId, currentUser.getId());
+        return ResponseEntity.ok(new ApiResponse(true, "Note deleted successfully"));
     }
 }
 

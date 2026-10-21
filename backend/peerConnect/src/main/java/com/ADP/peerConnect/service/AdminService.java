@@ -1,4 +1,5 @@
 package com.ADP.peerConnect.service;
+import com.ADP.peerConnect.exception.*;
 
 import com.ADP.peerConnect.model.dto.request.CreateMentor;
 import com.ADP.peerConnect.model.dto.response.MentorResponse;
@@ -41,7 +42,7 @@ public class AdminService {
     public String createMentor(CreateMentor request){
 
         if(userRepository.existsByEmail(request.getEmail())){
-            throw new RuntimeException("Email already exists");
+            throw new DuplicateAccountException();
         }
 
         String rawPassword = generatePassword(request.getFirstName());
@@ -78,7 +79,7 @@ public class AdminService {
     @Transactional
     public void disableMentor(String userId) {
         Mentor mentor = mentorRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Mentor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Mentor not found"));
 
         mentor.setActive(false);
         mentorRepository.save(mentor);

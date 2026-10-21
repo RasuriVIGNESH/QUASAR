@@ -1,6 +1,6 @@
 package com.ADP.peerConnect.service;
+import com.ADP.peerConnect.exception.*;
 
-import com.ADP.peerConnect.exception.ConflictException;
 import com.ADP.peerConnect.model.entity.ProjectCategory;
 import com.ADP.peerConnect.repository.ProjectCategoryRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +31,7 @@ public class ProjectCategoryService {
 
     public ProjectCategory create(String categoryName) {
         if (projectCategoryRepository.findByName(categoryName).isPresent()) {
-            throw new ConflictException("Category '" + categoryName + "' already exists");
+            throw new DuplicateCategoryException();
         }
         return projectCategoryRepository.save(new ProjectCategory(categoryName));
     }

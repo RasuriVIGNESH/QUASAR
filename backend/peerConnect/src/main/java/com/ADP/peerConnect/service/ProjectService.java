@@ -1,10 +1,6 @@
 package com.ADP.peerConnect.service;
+import com.ADP.peerConnect.exception.*;
 
-import com.ADP.peerConnect.exception.BadRequestException;
-import com.ADP.peerConnect.exception.ConflictException;
-import com.ADP.peerConnect.exception.ResourceNotFoundException;
-import com.ADP.peerConnect.exception.ForbiddenException;
-import com.ADP.peerConnect.exception.ProjectDeletedException;
 import com.ADP.peerConnect.model.dto.request.Project.CreateProject;
 import com.ADP.peerConnect.model.dto.request.Project.UpdateProject;
 import com.ADP.peerConnect.model.dto.request.Project.ProjectSkill;
@@ -57,7 +53,7 @@ public class ProjectService {
 
     public Project createProject(CreateProject request, String leadId) {
         if (request.getSkills() == null || request.getSkills().isEmpty()) {
-            throw new BadRequestException("Project must have at least one skill");
+            throw new ProjectRequiresSkillsException();
         }
         Event event = null;
         if (request.getEventId() != null) {
@@ -99,12 +95,12 @@ public class ProjectService {
         if (request.getDescription() != null) project.setDescription(request.getDescription());
         if (request.getMaxTeamSize() != null) {
             if (request.getMaxTeamSize() < project.getCurrentTeamSize()) {
-                throw new BadRequestException("Maximum team size cannot be lower than the current team size.");
+                throw new TeamCapacityReductionException();
             }
             project.setMaxTeamSize(request.getMaxTeamSize());
         }
         if (request.getStatus() == ProjectStatus.DELETED) {
-            throw new BadRequestException("Use the delete endpoint to mark a project deleted.");
+            throw new ProjectDeletionEndpointRequiredException();
         }
         if (request.getStatus() != null)      project.setStatus(request.getStatus());
 
@@ -147,7 +143,7 @@ public class ProjectService {
             throw new ForbiddenException("Only the project lead can mark a role filled.");
         }
         if (project.getStatus() != ProjectStatus.RECRUITING) {
-            throw new ConflictException("Only recruiting projects can change role availability.");
+            throw new ProjectNotRecruitingException();
         }
         projectRoleService.markExternallyFilled(projectId, roleId);
         if (projectRoleService.hasRequiredRoles(projectId)
@@ -286,7 +282,10 @@ public class ProjectService {
 
     private void resolveCategory(Project project, Long categoryId, String categoryName) {
         if (categoryId != null && categoryId != 0) {
-            projectCategoryService.findById(categoryId).ifPresent(project::setCategory);
+            ProjectCategory category = projectCategoryService.findById(categoryId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Project category not found with id: " + categoryId));
+            project.setCategory(category);
         } else if (categoryName != null && !categoryName.isBlank()) {
             ProjectCategory cat = projectCategoryService.findByName(categoryName)
                     .orElseGet(() -> projectCategoryService.create(categoryName));
@@ -302,11 +301,11 @@ public class ProjectService {
 
         for (ProjectSkill req : skillRequests) {
             if (req == null || req.getSkillName() == null || req.getSkillName().isBlank()) {
-                throw new BadRequestException("Project skill name is required");
+                throw new ProjectSkillRequiredException();
             }
             String normalizedName = Skill.normalizeName(req.getSkillName());
             if (!normalizedNames.add(normalizedName)) {
-                throw new BadRequestException("Duplicate project skill: " + req.getSkillName().trim());
+                throw new DuplicateProjectSkillException(req.getSkillName().trim());
             }
             Skill skill = skillService.findOrCreateSkill(req.getSkillName());
 

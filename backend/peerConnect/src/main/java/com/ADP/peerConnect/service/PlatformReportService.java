@@ -1,8 +1,6 @@
 package com.ADP.peerConnect.service;
+import com.ADP.peerConnect.exception.*;
 
-import com.ADP.peerConnect.exception.BadRequestException;
-import com.ADP.peerConnect.exception.ConflictException;
-import com.ADP.peerConnect.exception.ResourceNotFoundException;
 import com.ADP.peerConnect.model.dto.request.ModerationActionRequest;
 import com.ADP.peerConnect.model.dto.request.ReportRequest;
 import com.ADP.peerConnect.model.dto.response.ReportResponse;
@@ -74,7 +72,7 @@ public class PlatformReportService {
         User admin = userRepository.findById(adminId)
                 .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
         if (report.getStatus() == ReportStatus.RESOLVED || report.getStatus() == ReportStatus.DISMISSED) {
-            throw new ConflictException("A closed report cannot be changed");
+            throw new ClosedReportModificationException();
         }
         report.setStatus(request.status());
         report.setModerationNote(request.note());

@@ -105,7 +105,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
             }
         } catch (DataIntegrityViolationException dive) {
             logger.error("Database constraint violation while saving OAuth user: {}", dive.getMessage(), dive);
-            throw new RuntimeException("Database error saving OAuth user: " + dive.getRootCause().getMessage(), dive);
+            throw new OAuth2AuthenticationException(
+                    new OAuth2Error("server_error", "Unable to complete sign-in right now.", null), dive);
         }
 
         return UserPrincipal.create(user);
@@ -149,7 +150,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 }
             }
         } catch (HttpClientErrorException hce) {
-            logger.warn("GitHub /user/emails call failed with status {}: {}", hce.getStatusCode(), hce.getResponseBodyAsString());
+            logger.warn("GitHub /user/emails call failed with status {}", hce.getStatusCode());
         } catch (Exception ex) {
             logger.warn("Unexpected error calling GitHub /user/emails: {}", ex.getMessage());
         }

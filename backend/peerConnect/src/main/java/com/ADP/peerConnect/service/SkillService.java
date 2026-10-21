@@ -1,7 +1,6 @@
 package com.ADP.peerConnect.service;
+import com.ADP.peerConnect.exception.*;
 
-import com.ADP.peerConnect.exception.ConflictException;
-import com.ADP.peerConnect.exception.ResourceNotFoundException;
 import com.ADP.peerConnect.model.entity.Skill;
 import com.ADP.peerConnect.repository.SkillRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,12 +25,12 @@ public class SkillService {
 
     /**
      * Create a new skill
-     */
+    */
     public Skill createSkill(String name, String category) {
-        String normalized = Skill.normalizeName(name);
+        String normalized = normalizeSkillName(name);
 
         if (skillRepository.existsByNormalizedName(normalized)) {
-            throw new ConflictException("Skill with this name already exists");
+            throw new DuplicateSkillException();
         }
 
         String trimmedCategory = category != null ? category.trim() : null;
@@ -47,7 +46,7 @@ public class SkillService {
 
 
     public Skill findOrCreateSkill(String name, String category) {
-        String normalized = Skill.normalizeName(name);
+        String normalized = normalizeSkillName(name);
 
         Optional<Skill> existingSkill = skillRepository.findByNormalizedName(normalized);
 
@@ -85,10 +84,7 @@ public class SkillService {
     public List<Skill> findByName(String name) {
 
         Optional<Skill> skills = skillRepository.findByNameIgnoreCase(name);
-        if (skills.isPresent()) {
-            return List.of(skills.get());
-        }
-        return null;
+        return skills.map(List::of).orElseGet(List::of);
     }
 
     public Page<Skill> findAll(Pageable pageable) {
@@ -115,14 +111,17 @@ public class SkillService {
 
     public Skill incrementUsers(Skill skill) {
         if (skill == null)
-            throw new IllegalArgumentException("Skill cannot be null");
+            throw new BadRequestException("Skill is required.");
         skill.setUsersCount(skill.getUsersCount() + 1);
         return skillRepository.save(skill);
     }
 
     public Skill decrementUsers(Skill skill) {
         if (skill == null)
-            throw new IllegalArgumentException("Skill cannot be null");
+            throw new BadRequestException("Skill is required.");
+        if (skill.getUsersCount() <= 0) {
+            throw new ConflictException("Skill usage count cannot be negative.");
+        }
         skill.setUsersCount(skill.getUsersCount() - 1);
         return skillRepository.save(skill);
     }
@@ -131,10 +130,10 @@ public class SkillService {
 
         // Check if new name conflicts with existing skill (excluding current skill)
         if (name != null && !name.isBlank() && !name.equalsIgnoreCase(skill.getName())) {
-            String normalized = Skill.normalizeName(name);
+            String normalized = normalizeSkillName(name);
             Optional<Skill> conflict = skillRepository.findByNormalizedName(normalized);
             if (conflict.isPresent() && !conflict.get().getId().equals(id)) {
-                throw new ConflictException("Skill with this name already exists");
+                throw new DuplicateSkillException();
             }
             skill.setName(name.trim());
             skill.setNormalizedName(normalized);
@@ -145,6 +144,17 @@ public class SkillService {
         }
 
         return skillRepository.save(skill);
+    }
+
+    private String normalizeSkillName(String name) {
+        if (name == null || name.isBlank()) {
+            throw new BadRequestException("Skill name is required.");
+        }
+        String normalized = Skill.normalizeName(name);
+        if (normalized.length() < 2 || normalized.length() > 100) {
+            throw new BadRequestException("Skill name must be between 2 and 100 characters.");
+        }
+        return normalized;
     }
 
     public void deleteSkill(Long id) {

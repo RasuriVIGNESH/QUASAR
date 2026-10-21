@@ -1,8 +1,7 @@
 package com.ADP.peerConnect.service;
+import com.ADP.peerConnect.exception.*;
 
-import com.ADP.peerConnect.exception.ConflictException;
-import com.ADP.peerConnect.exception.ForbiddenException;
-import com.ADP.peerConnect.exception.ResourceNotFoundException;
+
 import com.ADP.peerConnect.model.dto.response.Project.InvitationsAndRequestsResponse;
 import com.ADP.peerConnect.model.entity.InvitationsAndRequests;
 import com.ADP.peerConnect.model.entity.Project;
@@ -57,15 +56,15 @@ public class InvitationsAndRequestsService {
                                                           String message, String inviterId,
                                                           Long roleId) {
         Project project = projectService.lockForMembershipUpdate(projectId);
-        requireRecruitingAndCapacity(project);
         if (!teamService.isLead(projectId, inviterId)) {
             throw new ForbiddenException("Only the project lead can send invitations.");
         }
+        requireRecruitingAndCapacity(project);
         if (inviterId.equals(invitedUserId)) {
-            throw new ConflictException("You cannot invite yourself to your own project.");
+            throw new SelfInvitationNotAllowedException();
         }
         if (teamService.isProjectMember(projectId, invitedUserId)) {
-            throw new ConflictException("This student is already a project member.");
+            throw new AlreadyProjectMemberException();
         }
         requireNoPendingCollaboration(projectId, invitedUserId);
 
@@ -73,7 +72,7 @@ public class InvitationsAndRequestsService {
         User inviter = userService.findById(inviterId);
         User invitedUser = userService.findById(invitedUserId);
         if (invitedUser.getRole() != Role.STUDENT) {
-            throw new ConflictException("Only student accounts can be invited to a project team.");
+            throw new ForbiddenException("Only student accounts can be invited to a project team.");
         }
 
         InvitationsAndRequests invitation = new InvitationsAndRequests();
@@ -97,7 +96,7 @@ public class InvitationsAndRequestsService {
             throw new ForbiddenException("Only the inviter or project lead can cancel this invitation.");
         }
         if (!invitation.isPending()) {
-            throw new ConflictException("Only a pending invitation can be cancelled.");
+            throw new CollaborationAlreadyResolvedException();
         }
         Project project = projectService.findById(invitation.getProject().getId());
         invitation.cancel();
@@ -111,17 +110,17 @@ public class InvitationsAndRequestsService {
     public InvitationsAndRequestsResponse sendJoinRequest(String projectId, String userId,
                                                            String message, Long roleId) {
         Project project = projectService.lockForMembershipUpdate(projectId);
-        requireRecruitingAndCapacity(project);
-        if (teamService.isProjectMember(projectId, userId)) {
-            throw new ConflictException("You are already a member of this project.");
-        }
-        requireNoPendingCollaboration(projectId, userId);
-
-        ProjectRole role = projectRoleService.requireOpenRole(projectId, roleId);
         User user = userService.findById(userId);
         if (user.getRole() != Role.STUDENT) {
             throw new ForbiddenException("Only student accounts can request to join a project.");
         }
+        requireRecruitingAndCapacity(project);
+        if (teamService.isProjectMember(projectId, userId)) {
+            throw new AlreadyProjectMemberException();
+        }
+        requireNoPendingCollaboration(projectId, userId);
+
+        ProjectRole role = projectRoleService.requireOpenRole(projectId, roleId);
         InvitationsAndRequests request = new InvitationsAndRequests();
         request.createJoinRequest(project, user, cleanMessage(message));
         request.setProjectRole(role);
@@ -178,11 +177,11 @@ public class InvitationsAndRequestsService {
 
         String targetUserId = request.getTargetUser().getId();
         if (teamService.isProjectMember(project.getId(), targetUserId)) {
-            throw new ConflictException("This student is already a project member.");
+            throw new AlreadyProjectMemberException();
         }
 
         if (request.getProjectRole() == null && projectRoleService.hasRequiredRoles(project.getId())) {
-            throw new ConflictException("This request does not specify a required role. Submit a new role-specific request.");
+            throw new CollaborationRoleSelectionMissingException();
         }
 
         ProjectRole role = projectRoleService.lockOpenRole(project.getId(), request.getProjectRole());
@@ -254,23 +253,31 @@ public class InvitationsAndRequestsService {
     }
 
     private void requireRecruitingAndCapacity(Project project) {
-        if (project.getStatus() != ProjectStatus.RECRUITING) {
-            throw new ConflictException("This project is not recruiting new members.");
-        }
         if (project.isFull()) {
-            throw new ConflictException("This project's team is already full.");
+            throw new TeamFullException();
+        }
+        if (project.getStatus() != ProjectStatus.RECRUITING) {
+            if (projectRoleService.hasRequiredRoles(project.getId())
+                    && !projectRoleService.hasOpenRoles(project.getId())) {
+                throw new NoOpenRolesException();
+            }
+            throw new ProjectNotRecruitingException();
         }
     }
 
     private void requireNoPendingCollaboration(String projectId, String userId) {
-        if (repository.existsByProjectIdAndTargetUserIdAndStatus(projectId, userId, Status.PENDING)) {
-            throw new ConflictException("A pending invitation or join request already exists for this student and project.");
-        }
+        repository.findFirstByProjectIdAndTargetUserIdAndStatusOrderByCreatedAtDesc(
+                projectId, userId, Status.PENDING).ifPresent(existing -> {
+            if (existing.isInvitation()) {
+                throw new DuplicateInvitationException();
+            }
+            throw new DuplicateJoinRequestException();
+        });
     }
 
     private void requirePending(InvitationsAndRequests request) {
         if (!request.isPending()) {
-            throw new ConflictException("This request or invitation has already been responded to.");
+            throw new CollaborationAlreadyResolvedException();
         }
     }
 

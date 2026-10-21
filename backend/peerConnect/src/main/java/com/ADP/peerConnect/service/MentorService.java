@@ -1,5 +1,6 @@
 package com.ADP.peerConnect.service;
 
+import com.ADP.peerConnect.exception.ResourceNotFoundException;
 import com.ADP.peerConnect.model.entity.Mentor;
 import com.ADP.peerConnect.repository.MentorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,7 @@ public class MentorService {
 
     public Mentor getMentorByUserId(String userId) {
         return mentorRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Mentor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Mentor not found"));
     }
 
     public List<Mentor> getActiveMentors() {

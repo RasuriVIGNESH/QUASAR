@@ -2,7 +2,7 @@ package com.ADP.peerConnect.service;
 
 import com.ADP.peerConnect.exception.BadRequestException;
 import com.ADP.peerConnect.exception.ResourceNotFoundException;
-import com.ADP.peerConnect.exception.UnauthorizedException;
+import com.ADP.peerConnect.exception.ForbiddenException;
 import com.ADP.peerConnect.model.dto.response.RecommendationFeedbackResponse;
 import com.ADP.peerConnect.model.entity.Project;
 import com.ADP.peerConnect.model.entity.RecommendationFeedback;
@@ -40,7 +40,7 @@ public class RecommendationFeedbackCompanionService {
     public RecommendationFeedbackResponse saveProjectFeedback(String actorId, String projectId, FeedbackAction action) {
         User actor = findUser(actorId, "Actor not found");
         if (actor.getRole() != Role.STUDENT) {
-            throw new UnauthorizedException("Student account required to provide project recommendation feedback");
+            throw new ForbiddenException("Student account required to provide project recommendation feedback");
         }
         return save(actor, findProject(projectId), null, action);
     }
@@ -50,7 +50,7 @@ public class RecommendationFeedbackCompanionService {
                                                                  String candidateId, FeedbackAction action) {
         Project project = findProject(projectId);
         if (!Boolean.TRUE.equals(teamRepository.isLead(projectId, actorId))) {
-            throw new UnauthorizedException("Only the project lead can provide candidate feedback");
+            throw new ForbiddenException("Only the project lead can provide candidate feedback");
         }
         if (actorId.equals(candidateId)) {
             throw new BadRequestException("A user cannot provide feedback on their own candidate card");
@@ -65,7 +65,7 @@ public class RecommendationFeedbackCompanionService {
         validatePage(page, size);
         User student = findUser(studentId, "Student not found");
         if (student.getRole() != Role.STUDENT) {
-            throw new UnauthorizedException("Student account required to view saved projects");
+            throw new ForbiddenException("Student account required to view saved projects");
         }
         return feedbackRepository.findByActorIdAndCandidateUserIsNullAndActionOrderByUpdatedAtDesc(
                 studentId, FeedbackAction.SAVED, PageRequest.of(page, size)).map(RecommendationFeedbackResponse::from);
@@ -76,7 +76,7 @@ public class RecommendationFeedbackCompanionService {
         validatePage(page, size);
         findProject(projectId);
         if (!Boolean.TRUE.equals(teamRepository.isLead(projectId, actorId))) {
-            throw new UnauthorizedException("Only the project lead can view saved candidates");
+            throw new ForbiddenException("Only the project lead can view saved candidates");
         }
         return feedbackRepository.findByActorIdAndProjectIdAndActionOrderByUpdatedAtDesc(
                 actorId, projectId, FeedbackAction.SAVED, PageRequest.of(page, size)).map(RecommendationFeedbackResponse::from);

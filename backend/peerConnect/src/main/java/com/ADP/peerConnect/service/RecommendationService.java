@@ -1,7 +1,7 @@
 package com.ADP.peerConnect.service;
 
 import com.ADP.peerConnect.exception.ResourceNotFoundException;
-import com.ADP.peerConnect.exception.UnauthorizedException;
+import com.ADP.peerConnect.exception.ForbiddenException;
 import com.ADP.peerConnect.model.dto.response.MemberRecommendationResult;
 import com.ADP.peerConnect.model.dto.response.Project.ProjectCardResponse;
 import com.ADP.peerConnect.model.dto.response.ProjectRecommendationResult;
@@ -66,7 +66,7 @@ public class RecommendationService {
         User student = userRepository.findById(studentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
         if (student.getRole() != Role.STUDENT) {
-            throw new UnauthorizedException("Student account required for project recommendations");
+            throw new ForbiddenException("Student account required for project recommendations");
         }
 
         List<UserSkill> studentSkillRows = userSkillRepository.findByUserIdWithSkill(studentId);
@@ -116,7 +116,7 @@ public class RecommendationService {
         Project project = projectRepository.findByIdWithAssociations(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
         if (!teamRepository.isLead(projectId, requesterId)) {
-            throw new UnauthorizedException("Only the project lead can view recommended members");
+            throw new ForbiddenException("Only the project lead can view recommended members");
         }
         if (project.getStatus() != ProjectStatus.RECRUITING || isFull(project)) {
             return Page.empty(pageable);
@@ -196,7 +196,7 @@ public class RecommendationService {
         projectRepository.findByIdWithAssociations(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
         if (!teamRepository.isLead(projectId, requesterId)) {
-            throw new UnauthorizedException("Only the project lead can view team skill gaps");
+            throw new ForbiddenException("Only the project lead can view team skill gaps");
         }
         List<ProjectSkill> requirements = projectSkillRepository.findSkillsByProjectIds(List.of(projectId));
         if (requirements.isEmpty()) return List.of();
