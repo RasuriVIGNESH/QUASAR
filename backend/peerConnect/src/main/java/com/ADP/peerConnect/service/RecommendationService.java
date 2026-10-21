@@ -215,8 +215,7 @@ public class RecommendationService {
         for (ProjectSkill requirement : requirements) {
             List<UserSkill> matchingRows = skillsBySkill.getOrDefault(requirement.getSkill().getId(), List.of());
             List<String> qualified = matchingRows.stream()
-                    .filter(row -> requirement.getRequiredLevel() == null
-                            || levelRank(row.getLevel()) >= levelRank(requirement.getRequiredLevel()))
+                    .filter(row -> scoringService.meetsRequiredLevel(row.getLevel(), requirement.getRequiredLevel()))
                     .map(row -> teamUsers.get(row.getUser().getId()))
                     .filter(Objects::nonNull)
                     .map(this::displayName)
@@ -251,17 +250,8 @@ public class RecommendationService {
     private boolean isCovered(ProjectSkill requirement, List<SkillLevel> teamLevels) {
         if (teamLevels == null || teamLevels.isEmpty()) return false;
         if (requirement.getRequiredLevel() == null) return true;
-        return teamLevels.stream().anyMatch(level -> levelRank(level) >= levelRank(requirement.getRequiredLevel()));
-    }
-
-    private int levelRank(SkillLevel level) {
-        if (level == null) return -1;
-        return switch (level) {
-            case VIBE_CODING -> 0;
-            case BEGINNER -> 1;
-            case INTERMEDIATE -> 2;
-            case ADVANCED -> 3;
-        };
+        return teamLevels.stream().anyMatch(level ->
+                scoringService.meetsRequiredLevel(level, requirement.getRequiredLevel()));
     }
 
     private boolean isFull(Project project) {

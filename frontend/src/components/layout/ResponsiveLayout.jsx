@@ -69,7 +69,7 @@ export default function ResponsiveLayout() {
                                 className={`w-full flex items-center gap-4 px-4 py-3 rounded-lg transition-all duration-200 ${active
                                     ? 'bg-slate-50 text-indigo-600 font-bold'
                                     : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900 font-medium'
-                                    }`}
+                                }`}
                             >
                                 <Icon size={22} strokeWidth={active ? 2.5 : 2} />
                                 <span className="text-sm">{item.label}</span>
@@ -115,7 +115,7 @@ export default function ResponsiveLayout() {
                                 className={`flex-1 flex flex-col items-center justify-center py-1 transition-all ${active
                                     ? 'text-slate-900 scale-110'
                                     : 'text-slate-400 hover:text-slate-600'
-                                    }`}
+                                }`}
                             >
                                 <Icon size={26} strokeWidth={active ? 2.5 : 2} />
                             </button>

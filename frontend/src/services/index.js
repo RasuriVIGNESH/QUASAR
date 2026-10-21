@@ -15,3 +15,4 @@ export { default as recommendationService } from './recommendationService.js';
 export { default as portfolioService } from './portfolioService.js';
 export { default as moderationService } from './moderationService.js';
 export { default as discoveryService } from './discoveryService.js';
+export { default as skillInsightsService } from './skillInsightsService.js';

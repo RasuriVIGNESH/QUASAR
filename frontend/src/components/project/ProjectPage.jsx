@@ -30,7 +30,7 @@ import projectService, { toArray } from '@/services/projectService';
 import { teamService } from '@/services/TeamService';
 import { chatService } from '@/services/Chatservice';
 import MeetingRooms from './MeetingRooms';
-import RecruitingPanel from './RecruitingPanel';
+import TeamSkillCoverage from './TeamSkillCoverage';
 import PortfolioSection from './PortfolioSection';
 import ReportDialog from '@/components/common/ReportDialog';
 import { toast } from 'sonner';
@@ -1008,8 +1008,8 @@ const TeamSection = memo(({ project, lead, members, isProjectLead, isMember, pro
           ))}
           {totalCount === 0 && <p className="text-sm text-slate-400 col-span-3">No team members yet.</p>}
         </div>
-        {isProjectLead && <div className="pt-4 border-t border-slate-200"><RecruitingPanel projectId={projectId} requiredRoles={project?.requiredRoles || []} /></div>}
         {Array.isArray(project?.requiredRoles) && project.requiredRoles.length > 0 && <div className="pt-4 border-t border-slate-200"><div className="flex items-center justify-between mb-3"><h3 className="text-sm font-black text-slate-800">Required roles</h3><span className="text-xs text-slate-500">{project.requiredRoles.filter(role => !role.filled).length} open</span></div><div className="grid gap-2 sm:grid-cols-2">{project.requiredRoles.map(role => <div key={role.id} className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-3"><div><p className="text-sm font-bold text-slate-800">{role.name}</p><p className={`text-[11px] font-semibold ${role.filled ? 'text-slate-400' : 'text-emerald-600'}`}>{role.filled ? 'Filled' : 'Open seat'}</p></div>{isProjectLead && !role.filled && project.status === 'RECRUITING' && <Button size="sm" variant="outline" disabled={fillingRoleId === role.id} onClick={() => handleFillRole(role)} className="text-xs">Mark filled</Button>}</div>)}</div></div>}
+        <div className="pt-4 border-t border-slate-200"><TeamSkillCoverage projectId={projectId} /></div>
       </div>
   );
 });

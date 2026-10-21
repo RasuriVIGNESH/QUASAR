@@ -13,6 +13,7 @@ import {
 import { toast } from 'sonner';
 
 import { skillsService } from '@/services/skillsService';
+import SkillsInsightsPage from './SkillsInsightsPage';
 
 const LEVELS = ['VIBE_CODING', 'BEGINNER', 'INTERMEDIATE', 'ADVANCED'];
 
@@ -26,6 +27,7 @@ export default function SkillMastery() {
     const [adding, setAdding] = useState(false);
     const [deleting, setDeleting] = useState(null);
     const [updatingLevel, setUpdatingLevel] = useState(null); // skillId being updated
+    const [activeView, setActiveView] = useState('skills');
 
     useEffect(() => {
         const fetchSkillsData = async () => {
@@ -161,7 +163,8 @@ export default function SkillMastery() {
                 </div>
             </header>
 
-            <main className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-5"><div className="inline-flex rounded-xl border border-slate-200 bg-white p-1 shadow-sm"><button type="button" onClick={() => setActiveView('skills')} className={`rounded-lg px-4 py-2 text-xs font-bold transition-colors ${activeView === 'skills' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>My Skills</button><button type="button" onClick={() => setActiveView('insights')} className={`rounded-lg px-4 py-2 text-xs font-bold transition-colors ${activeView === 'insights' ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Insights</button></div></div>
+            {activeView === 'insights' ? <SkillsInsightsPage embedded /> : <main className="max-w-7xl mx-auto px-4 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
                     {/* LEFT COLUMN: SKILLS LIST */}
@@ -322,7 +325,7 @@ export default function SkillMastery() {
                         </Card>
                     </div>
                 </div>
-            </main>
+            </main>}
         </div>
     );
 }

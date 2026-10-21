@@ -19,6 +19,7 @@ import { toast } from 'sonner';
 import userService from '../../services/userService';
 import { projectService } from '../../services/projectService';
 import { teamService } from '../../services/TeamService';
+import RecruitingPanel from './RecruitingPanel';
 
 // Matches the default page size used by GET /sort, kept smaller here for a clean 3-col grid.
 const PAGE_SIZE = 12;
@@ -320,6 +321,7 @@ export default function InviteMembers() {
 
         <main className="max-w-6xl mx-auto px-4 lg:px-6 py-8">
           {projectRoles.length > 0 && <div className="mb-6 rounded-xl border border-slate-200 bg-white p-4"><div className="flex items-center justify-between"><p className="text-xs font-black uppercase tracking-wider text-slate-500">Choose an open role</p><span className="text-xs font-semibold text-slate-500">{openRoles.length} open</span></div>{openRoles.length > 0 ? <div className="mt-3 flex flex-wrap gap-2">{openRoles.map(role => <button type="button" key={role.id} onClick={() => setSelectedRoleId(String(role.id))} className={`rounded-lg border px-3 py-2 text-xs font-bold ${selectedRoleId === String(role.id) ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-slate-200 text-slate-600'}`}>{role.name}</button>)}</div> : <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs font-semibold text-amber-800">All project roles are filled. New invitations are unavailable.</p>}</div>}
+          <div className="mb-8"><RecruitingPanel projectId={projectId} requiredRoles={projectRoles} selectedRoleId={selectedRoleId} /></div>
           {/* SEARCH & FILTER - Professional UI */}
           <div className="mb-6 space-y-3">
             <div className="flex gap-2">

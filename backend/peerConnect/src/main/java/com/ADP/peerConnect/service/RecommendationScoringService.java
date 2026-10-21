@@ -113,7 +113,11 @@ public class RecommendationScoringService {
         };
     }
 
-    private int levelRank(SkillLevel level) {
+    public boolean meetsRequiredLevel(SkillLevel candidate, SkillLevel required) {
+        return candidate != null && (required == null || levelRank(candidate) >= levelRank(required));
+    }
+
+    public int levelRank(SkillLevel level) {
         return switch (level) {
             case VIBE_CODING -> 0;
             case BEGINNER -> 1;

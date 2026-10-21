@@ -92,6 +92,7 @@ export default function App() {
                   <Route path="/projects/my-projects" element={<MyProjects />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/skills" element={<SkillMastery />} />
+                  <Route path="/skills/insights" element={<Navigate to="/skills" replace />} />
                   <Route path="/messages" element={<RequestsPage />} />
                   <Route path="/requests" element={<RequestsPage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
