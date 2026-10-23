@@ -96,12 +96,6 @@ public class Project {
     @Column(name = "current_team_size", nullable = false)
     private Integer currentTeamSize = 0;
 
-    @Column(name = "open_tasks_count", nullable = false)
-    private Integer openTasksCount = 0;
-
-    @Column(name = "completed_tasks_count", nullable = false)
-    private Integer completedTasksCount = 0;
-
     @BatchSize(size = 25)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
