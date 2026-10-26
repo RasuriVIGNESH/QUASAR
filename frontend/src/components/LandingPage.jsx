@@ -33,12 +33,19 @@ function StatusNotice({ status, elapsed }) {
   const progress = live ? 100 : Math.min((elapsed / startupSeconds) * 100, 100);
   return (
       <div className="fixed bottom-5 left-1/2 z-50 w-[calc(100%-2rem)] max-w-md -translate-x-1/2 rounded-2xl border border-[#d9d1c4] bg-white/95 p-4 shadow-[0_20px_60px_rgba(47,42,35,0.16)] backdrop-blur">
-        <div className="flex items-start justify-between gap-4">
-          <div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-black text-[#0f172a]">{live ? 'Live workspace connected' : 'Preview mode is ready'}</p>
             <p className="mt-1 text-xs leading-5 text-[#64748b]">{live ? 'Recent projects are now connected to Quasar.' : remaining ? `Preparing live project data. You can explore the preview while we connect · ${remaining}s.` : 'The live feed is taking longer than expected. The preview remains available while we reconnect.'}</p>
           </div>
-          <span className={`mt-1 h-2.5 w-2.5 rounded-full ${live ? 'bg-[#4f8a6d]' : 'animate-pulse bg-[#b77946]'}`} />
+          {!live && <span className="h-2.5 w-2.5 shrink-0 animate-pulse rounded-full bg-[#b77946]" />}
+          {!live && <div className="h-20 w-32 shrink-0 overflow-hidden rounded-xl border border-[#e2e8f0] bg-[#f8fafc]">
+            <video className="h-full w-full object-cover" autoPlay muted loop playsInline aria-label="Server connectivity animation">
+              <source src="public/server.mp4" type="video/mp4" />
+              Your browser does not support the connectivity animation.
+            </video>
+          </div>}
+          {live && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-[#4f8a6d]" />}
         </div>
         {!live && <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[#f1f5f9]"><motion.div className="h-full rounded-full bg-[#b77946]" animate={{ width: `${progress}%` }} transition={{ duration: 0.5 }} /></div>}
       </div>
@@ -182,3 +189,4 @@ export default function LandingPage() {
       </div>
   );
 }
+"public/server.mp4"
