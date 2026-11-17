@@ -43,6 +43,7 @@ public class MeetingRoomService {
     // Meeting Room Methods
     @Transactional(readOnly = true)
     public List<MeetingRoom> getMeetingRoomsByProjectId(String projectId, String userId) {
+        projectService.findById(projectId);
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new ForbiddenException("User is not a member of this project.");
         }
@@ -68,6 +69,7 @@ public class MeetingRoomService {
     public void deleteMeetingRoom(Long roomId, String userId) {
         MeetingRoom room = meetingRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting room not found"));
+        projectService.findById(room.getProject().getId());
 
         if (!teamService.isLead(room.getProject().getId(),userId)) {
             throw new ForbiddenException("Only the project lead can delete meeting rooms.");
@@ -79,6 +81,7 @@ public class MeetingRoomService {
     public List<Note> getNotesByRoomId(Long roomId, String userId) {
         MeetingRoom room = meetingRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting room not found"));
+        projectService.findById(room.getProject().getId());
         if (!projectService.isProjectMember(room.getProject().getId(), userId)) {
             throw new ForbiddenException("User is not a member of this project.");
         }
@@ -88,6 +91,7 @@ public class MeetingRoomService {
     public Note createNote(Long roomId, CreateNote request, String userId) {
         MeetingRoom room = meetingRoomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Meeting room not found"));
+        projectService.findById(room.getProject().getId());
         User author = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -107,9 +111,14 @@ public class MeetingRoomService {
     public Note updateNote(Long noteId, UpdateNote request, String userId) {
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+        String projectId = note.getMeetingRoom().getProject().getId();
+        projectService.findById(projectId);
 
-        if (!note.getAuthor().getId().equals(userId)) {
-            throw new ForbiddenException("Only the author can edit this note.");
+        if (!projectService.isProjectMember(projectId, userId)) {
+            throw new ForbiddenException("Only current project members can edit notes.");
+        }
+        if (!note.getAuthor().getId().equals(userId) && !teamService.isLead(projectId, userId)) {
+            throw new ForbiddenException("Only the author or project lead can edit this note.");
         }
 
         note.setTitle(request.getTitle());
@@ -120,8 +129,13 @@ public class MeetingRoomService {
     public void deleteNote(Long noteId, String userId) {
         Note note = noteRepository.findById(noteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Note not found"));
+        String projectId = note.getMeetingRoom().getProject().getId();
+        projectService.findById(projectId);
 
-        if (!note.getAuthor().getId().equals(userId) && !teamService.isLead(note.getMeetingRoom().getProject().getId(),userId)) {
+        if (!projectService.isProjectMember(projectId, userId)) {
+            throw new ForbiddenException("Only current project members can delete notes.");
+        }
+        if (!note.getAuthor().getId().equals(userId) && !teamService.isLead(projectId,userId)) {
             throw new ForbiddenException("Only the author or project lead can delete this note.");
         }
         noteRepository.delete(note);

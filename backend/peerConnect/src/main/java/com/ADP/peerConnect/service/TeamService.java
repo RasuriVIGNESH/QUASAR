@@ -24,22 +24,22 @@ public class TeamService {
 
     // ── Internal: add member without lead check (used by invitation/join flow) ─
     public void addMember(String projectId, String memberId) {
-        Project project = projectService.findById(projectId);
+        Project project = projectService.lockForMembershipUpdate(projectId);
 
         if (project.getCurrentTeamSize() >= project.getMaxTeamSize()) {
             throw new TeamFullException();
         }
-        if (teamRepo.existsByProjectIdAndUserId(projectId, memberId)) {
+        int inserted = teamRepo.addMember(projectId, memberId);
+        if (inserted == 0) {
             throw new AlreadyProjectMemberException();
         }
-        teamRepo.addMember(projectId, memberId);
         project.setCurrentTeamSize(project.getCurrentTeamSize() + 1);
     }
 
     // ── Remove member ─────────────────────────────────────────────────────────
 
     public void removeMemberFromTeam(String projectId, String memberId, String requesterId) {
-        Project project = projectService.findById(projectId);
+        Project project = projectService.lockForMembershipUpdate(projectId);
         if (!projectService.isProjectLead(projectId, requesterId)) {
             throw new ForbiddenException("Only project lead can remove members");
         }
@@ -47,27 +47,25 @@ public class TeamService {
         if (projectService.isProjectLead(projectId, memberId)) {
             throw new ProjectLeadCannotBeRemovedException();
         }
-        if (!teamRepo.existsByProjectIdAndUserId(projectId, memberId)) {
+        int removed = teamRepo.removeMember(projectId, memberId);
+        if (removed == 0) {
             throw new ResourceNotFoundException("Member not found in this project");
         }
-
-        teamRepo.removeMember(projectId, memberId);
-        project.setCurrentTeamSize(Math.max(0, project.getCurrentTeamSize() - 1));
+        project.setCurrentTeamSize(Math.max(1, project.getCurrentTeamSize() - 1));
     }
 
     // ── Leave project ─────────────────────────────────────────────────────────
 
     public void leaveProject(String projectId, String userId) {
-        Project project = projectService.findById(projectId);
+        Project project = projectService.lockForMembershipUpdate(projectId);
         if (projectService.isProjectLead(projectId, userId)) {
             throw new ProjectLeadCannotLeaveException();
         }
-        if (!teamRepo.existsByProjectIdAndUserId(projectId, userId)) {
+        int removed = teamRepo.removeMember(projectId, userId);
+        if (removed == 0) {
             throw new ResourceNotFoundException("You are not a member of this project");
         }
-
-        teamRepo.removeMember(projectId, userId);
-        project.setCurrentTeamSize(Math.max(0, project.getCurrentTeamSize() - 1));
+        project.setCurrentTeamSize(Math.max(1, project.getCurrentTeamSize() - 1));
 
         log.debug("User left projectId={} userId={}", projectId, userId);
     }

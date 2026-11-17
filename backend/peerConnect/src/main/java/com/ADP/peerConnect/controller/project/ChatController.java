@@ -64,7 +64,7 @@ public class ChatController {
             @RequestParam(defaultValue = "50") int size,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
 
         Page<ChatMessageResponse> messages =
                 chatService.getProjectMessageResponses(

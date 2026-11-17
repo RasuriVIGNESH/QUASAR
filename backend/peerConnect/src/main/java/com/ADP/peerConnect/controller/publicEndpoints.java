@@ -57,11 +57,12 @@ public class publicEndpoints {
     @Operation(summary = "Get recent projects")
     @GetMapping("/RecentProjects")
     public ResponseEntity<PagedResponse<ProjectCardResponse>>
-    getAllProjects() {
+    getAllProjects(@RequestParam(defaultValue = "0") int page,
+                   @RequestParam(defaultValue = "10") int size) {
 
         Pageable pageable = PageRequest.of(
-                0,
-                10,
+                Math.max(page, 0),
+                Math.min(Math.max(size, 1), 100),
                 Sort.by(Sort.Direction.DESC, "createdAt")
         );
 
@@ -179,7 +180,7 @@ public class publicEndpoints {
     }
 
 
-    @GetMapping("/api/predefined-skills")
+    @GetMapping("/predefined-skills")
     @Operation(summary = "Get predefined skills", description = "Get list of predefined skills")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Predefined skills retrieved successfully")

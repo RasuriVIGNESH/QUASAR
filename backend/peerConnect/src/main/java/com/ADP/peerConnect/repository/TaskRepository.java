@@ -174,4 +174,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     long countByProjectId(String projectId);
 
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.project.id = :projectId AND t.dueDate < CURRENT_DATE AND t.status <> 'COMPLETED'")
+    long countOverdueByProjectId(@Param("projectId") String projectId);
+
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.project.id = :projectId AND t.dueDate = CURRENT_DATE AND t.status <> 'COMPLETED'")
+    long countDueTodayByProjectId(@Param("projectId") String projectId);
+
 }

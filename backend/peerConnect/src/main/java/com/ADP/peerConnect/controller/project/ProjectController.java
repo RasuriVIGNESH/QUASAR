@@ -59,7 +59,7 @@ public class ProjectController {
             @Valid @RequestBody CreateProject request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         Project project = projectService.createProject(request, currentUser.getId());
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.CREATED).body(
                 new ApiResponse(true, "Project created successfully", new ProjectResponse(project)));
     }
 
@@ -115,7 +115,7 @@ public class ProjectController {
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
         Page<ProjectCardResponse> projects =
                 projectService.findProjectsByUser(currentUser.getId(), pageable);
 
@@ -138,7 +138,8 @@ public class ProjectController {
             @Valid @RequestBody CreateTask request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
         Task task = taskService.createTask(projectId, request, currentUser.getId());
-        return ResponseEntity.ok(new ApiResponse(true, "Task created successfully", new TaskResponse(task)));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse(true, "Task created successfully", new TaskResponse(task)));
     }
 
     @GetMapping("/{projectId}/tasks")
@@ -148,12 +149,13 @@ public class ProjectController {
             @RequestParam(defaultValue = "10") int size,
             @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
 
         Page<TaskResponse> tasks =
                 taskService.getProjectTaskResponses(
                         projectId,
-                        pageable
+                        pageable,
+                        currentUser.getId()
                 );
 
         PagedResponse<TaskResponse> response =
@@ -172,10 +174,11 @@ public class ProjectController {
     @Operation(summary = "Update task")
     @PutMapping("/{projectId}/tasks/{taskId}")
     public ResponseEntity<ApiResponse> updateTask(
+            @PathVariable String projectId,
             @PathVariable Long taskId,
             @Valid @RequestBody UpdateTask request,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
-        TaskResponse taskResponse = new TaskResponse(taskService.updateTask(taskId, request, currentUser.getId()));
+        TaskResponse taskResponse = new TaskResponse(taskService.updateTask(taskId, projectId, request, currentUser.getId()));
         return ResponseEntity.ok(new ApiResponse(true, "Task updated successfully", taskResponse));
     }
 
@@ -219,7 +222,7 @@ public class ProjectController {
             @Parameter(description = "Page size") @RequestParam(defaultValue = DEFAULT_SIZE_STR) int size,
             @Parameter(hidden = true) @AuthenticationPrincipal UserPrincipal currentUser) {
 
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), Math.min(Math.max(size, 1), 100));
         String currentUserId = currentUser != null ? currentUser.getId() : null;
         Page<ProjectCardResponse> projects =
                 projectService.searchProjects(query, category, status, skills, availableOnly, pageable, currentUserId);

@@ -46,7 +46,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             "ORDER BY cm.createdAt DESC")
     List<ChatMessage> findRecentMessages(
             @Param("projectId") String projectId,
-            @Param("since") LocalDateTime since);
+            @Param("since") LocalDateTime since,
+            Pageable pageable);
 
     @Query(
             value = "SELECT cm FROM ChatMessage cm " +
@@ -72,7 +73,8 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             "ORDER BY cm.createdAt ASC")
     List<ChatMessage> findMessagesAfter(
             @Param("projectId") String projectId,
-            @Param("after") LocalDateTime after);
+            @Param("after") LocalDateTime after,
+            Pageable pageable);
 
     @Query("SELECT cm FROM ChatMessage cm " +
             "JOIN FETCH cm.sender " +

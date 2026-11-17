@@ -18,7 +18,7 @@ public interface TeamRepo extends JpaRepository<Team, String> {
     @Query("""
         SELECT t FROM Team t
         JOIN FETCH t.lead
-        JOIN FETCH t.members
+        LEFT JOIN FETCH t.members
         WHERE t.project.id = :projectId
         """)
     Optional<Team> findByProjectIdWithMembers(@Param("projectId") String projectId);
@@ -91,6 +91,13 @@ AND (t.lead.id = :userId OR :userId IN (SELECT m.id FROM t.members m))
     """)
     List<String> getMemberProfileImageUrls(@Param("projectId") String projectId);
 
+    @Query("""
+        SELECT t.project.id, u.profilePictureUrl
+        FROM Team t JOIN t.members u
+        WHERE t.project.id IN :projectIds AND u.profilePictureUrl IS NOT NULL
+        """)
+    List<Object[]> getMemberProfileImageUrlsByProjectIds(@Param("projectIds") List<String> projectIds);
+
     /** Counts recruiting/in-progress projects per candidate in one query; avoids per-user workload queries. */
     @Query(value = """
         SELECT project_members.user_id AS "userId",
@@ -117,8 +124,12 @@ AND (t.lead.id = :userId OR :userId IN (SELECT m.id FROM t.members m))
         INSERT INTO team_members (team_id, user_id)
         SELECT t.id, :userId FROM teams t
         WHERE t.project_id = :projectId
+          AND NOT EXISTS (
+              SELECT 1 FROM team_members existing
+              WHERE existing.team_id = t.id AND existing.user_id = :userId
+          )
         """, nativeQuery = true)
-    void addMember(
+    int addMember(
             @Param("projectId") String projectId,
             @Param("userId") String userId);
 
@@ -128,7 +139,7 @@ AND (t.lead.id = :userId OR :userId IN (SELECT m.id FROM t.members m))
         WHERE team_id = (SELECT id FROM teams WHERE project_id = :projectId)
         AND user_id = :userId
         """, nativeQuery = true)
-    void removeMember(
+    int removeMember(
             @Param("projectId") String projectId,
             @Param("userId") String userId);
 

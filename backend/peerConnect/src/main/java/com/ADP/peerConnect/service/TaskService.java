@@ -94,12 +94,7 @@ public class TaskService {
 
         Project project = task.getProject();
 
-        boolean isLead    = project.getTeam() != null && project.getTeam().getLead() != null
-                && project.getTeam().getLead().getId().equals(userId);
-        boolean isCreator = task.getCreatedBy().getId().equals(userId);
-        boolean isAssignee = task.getAssignedTo() != null && task.getAssignedTo().getId().equals(userId);
-
-        if (!isLead && !isCreator && !isAssignee) {
+        if (!teamRepo.isInTeam(project.getId(), userId)) {
             throw new ForbiddenException("Cannot update this task");
         }
 
@@ -121,6 +116,14 @@ public class TaskService {
         }
 
         return taskRepository.save(task);
+    }
+
+    public Task updateTask(Long taskId, String projectId, UpdateTask request, String userId) {
+        Task task = loadTask(taskId);
+        if (!task.getProject().getId().equals(projectId)) {
+            throw new ResourceNotFoundException("Task not found in this project");
+        }
+        return updateTask(taskId, request, userId);
     }
 
     public Task assignTask(Long taskId, String assigneeId, String userId) {
@@ -200,7 +203,12 @@ public class TaskService {
     @Transactional(readOnly = true)
     public Page<TaskResponse> getProjectTaskResponses(
             String projectId,
-            Pageable pageable) {
+            Pageable pageable,
+            String requesterId) {
+
+        if (!teamRepo.isInTeam(projectId, requesterId)) {
+            throw new ForbiddenException("Only current project members can view project tasks");
+        }
 
         Page<Long> idPage =
                 taskRepository.findIdsByProjectId(projectId, pageable);
@@ -234,6 +242,18 @@ public class TaskService {
                 pageable,
                 idPage.getTotalElements()
         );
+    }
+
+    /** Compatibility overload for non-controller internal callers; HTTP callers must use the authorized overload. */
+    @Deprecated
+    public Page<TaskResponse> getProjectTaskResponses(String projectId, Pageable pageable) {
+        Page<Long> idPage = taskRepository.findIdsByProjectId(projectId, pageable);
+        if (idPage.isEmpty()) return Page.empty(pageable);
+        Map<Long, Task> taskMap = taskRepository.findByIdsWithAssociations(idPage.getContent()).stream()
+                .collect(Collectors.toMap(Task::getId, Function.identity(), (first, second) -> first));
+        List<TaskResponse> responses = idPage.getContent().stream()
+                .map(taskMap::get).filter(Objects::nonNull).map(TaskResponse::new).toList();
+        return new PageImpl<>(responses, pageable, idPage.getTotalElements());
     }
 
 
@@ -286,8 +306,8 @@ public class TaskService {
         long completed   = taskRepository.countByProjectIdAndStatus(projectId, TaskStatus.COMPLETED);
         long inProgress  = taskRepository.countByProjectIdAndStatus(projectId, TaskStatus.IN_PROGRESS);
         long todo        = taskRepository.countByProjectIdAndStatus(projectId, TaskStatus.TODO);
-        long overdue     = getOverdueTasks(projectId).size();
-        long dueToday    = getTasksDueToday(projectId).size();
+        long overdue     = taskRepository.countOverdueByProjectId(projectId);
+        long dueToday    = taskRepository.countDueTodayByProjectId(projectId);
 
         return new TaskStatistics(total, completed, inProgress, todo, overdue, dueToday);
     }

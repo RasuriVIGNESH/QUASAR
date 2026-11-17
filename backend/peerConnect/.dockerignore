@@ -1,0 +1,13 @@
+.git
+.github
+../.idea
+.vscode
+.DS_Store
+*.iml
+target
+build
+out
+node_modules
+.env
+.env.*
+*.log

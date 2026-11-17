@@ -112,6 +112,7 @@ public class ChatService {
             String userId,
             Pageable pageable
     ) {
+        projectService.findById(projectId);
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new ForbiddenException(
                     "You must be a project member to view messages"
@@ -128,18 +129,20 @@ public class ChatService {
      * Get recent messages (last 24 hours)
      */
     public List<ChatMessage> getRecentMessages(String projectId, String userId) {
+        projectService.findById(projectId);
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new ForbiddenException("You must be a project member to view messages");
         }
         
         LocalDateTime since = LocalDateTime.now().minusHours(24);
-        return chatMessageRepository.findRecentMessages(projectId, since);
+        return chatMessageRepository.findRecentMessages(projectId, since, PageRequest.of(0, 100));
     }
     
     /**
      * Search messages
      */
     public Page<ChatMessage> searchMessages(String projectId, String query, String userId, Pageable pageable) {
+        projectService.findById(projectId);
         // Check if user is a member of the project
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new ForbiddenException("You must be a project member to search messages");
@@ -152,18 +155,20 @@ public class ChatService {
      * Get messages after a specific time (for real-time updates)
      */
     public List<ChatMessage> getMessagesAfter(String projectId, LocalDateTime after, String userId) {
+        projectService.findById(projectId);
         // Check if user is a member of the project
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new ForbiddenException("You must be a project member to view messages");
         }
         
-        return chatMessageRepository.findMessagesAfter(projectId, after);
+        return chatMessageRepository.findMessagesAfter(projectId, after, PageRequest.of(0, 100));
     }
     
     /**
      * Get latest message in project
      */
     public ChatMessage getLatestMessage(String projectId, String userId) {
+        projectService.findById(projectId);
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new ForbiddenException("You must be a project member to view messages");
         }
@@ -176,6 +181,7 @@ public class ChatService {
      * Get message count for project
      */
     public long getMessageCount(String projectId, String userId) {
+        projectService.findById(projectId);
         // Check if user is a member of the project
         if (!projectService.isProjectMember(projectId, userId)) {
             throw new ForbiddenException("You must be a project member to view message count");

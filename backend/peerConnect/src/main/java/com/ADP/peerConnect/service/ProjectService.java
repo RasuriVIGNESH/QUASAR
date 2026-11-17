@@ -55,6 +55,10 @@ public class ProjectService {
         if (request.getSkills() == null || request.getSkills().isEmpty()) {
             throw new ProjectRequiresSkillsException();
         }
+        if (request.getExpectedStartDate() != null && request.getExpectedEndDate() != null
+                && request.getExpectedStartDate().isAfter(request.getExpectedEndDate())) {
+            throw new InvalidProjectScheduleException();
+        }
         Event event = null;
         if (request.getEventId() != null) {
             event = eventRepo.findById(request.getEventId())
@@ -104,14 +108,18 @@ public class ProjectService {
         }
         if (request.getStatus() != null)      project.setStatus(request.getStatus());
 
-        project.setExpectedStartDate(request.getExpectedStartDate());
-        project.setExpectedEndDate(request.getExpectedEndDate());
-        project.setGoals(request.getGoals());
-        project.setProblemStatement(request.getProblemStatement());
-        project.setObjectives(request.getObjectives());
-        project.setTechStackFromList(request.getTechStack());
-        project.setGithubRepo(request.getGithubRepo());
-        project.setDemoUrl(request.getDemoUrl());
+        if (request.getExpectedStartDate() != null) project.setExpectedStartDate(request.getExpectedStartDate());
+        if (request.getExpectedEndDate() != null) project.setExpectedEndDate(request.getExpectedEndDate());
+        if (project.getExpectedStartDate() != null && project.getExpectedEndDate() != null
+                && project.getExpectedStartDate().isAfter(project.getExpectedEndDate())) {
+            throw new InvalidProjectScheduleException();
+        }
+        if (request.getGoals() != null) project.setGoals(request.getGoals());
+        if (request.getProblemStatement() != null) project.setProblemStatement(request.getProblemStatement());
+        if (request.getObjectives() != null) project.setObjectives(request.getObjectives());
+        if (request.getTechStack() != null) project.setTechStackFromList(request.getTechStack());
+        if (request.getGithubRepo() != null) project.setGithubRepo(request.getGithubRepo());
+        if (request.getDemoUrl() != null) project.setDemoUrl(request.getDemoUrl());
 
         if (request.getCategoryId() != null || request.getCategoryName() != null) {
             resolveCategory(project, request.getCategoryId(), request.getCategoryName());
@@ -200,13 +208,13 @@ public class ProjectService {
                                 (first, second) -> first
                         ));
 
-        List<ProjectCardResponse> responses =
+        List<Project> orderedProjects =
                 idPage.getContent()
                         .stream()
                         .map(projectMap::get)
                         .filter(Objects::nonNull)
-                        .map(ProjectCardResponse::new)
                         .collect(Collectors.toList());
+        List<ProjectCardResponse> responses = mapCardListWithImages(orderedProjects);
 
         return new PageImpl<>(
                 responses,
@@ -221,15 +229,15 @@ public class ProjectService {
     public Page<ProjectCardResponse> findProjectsByUser(String userId, Pageable pageable) {
         Page<Project> page = projectRepository.findProjectsByLeadOrMember(userId, pageable);
         hydrateSkills(page.getContent());
-        return page.map(this::toCardResponseWithImages);
+        return mapCardsWithImages(page);
     }
 
     @Transactional(readOnly = true)
     public Page<ProjectCardResponse> discoverProjects(String currentUserId, Pageable pageable) {
         Page<Project> page = projectRepository.findDiscoverProjectsForUser(
-                currentUserId, ProjectStatus.RECRUITING, pageable);
+                currentUserId, null, pageable);
         hydrateSkills(page.getContent());
-        return page.map(this::toCardResponseWithImages);
+        return mapCardsWithImages(page);
     }
 
     @Transactional(readOnly = true)
@@ -238,7 +246,7 @@ public class ProjectService {
             Long cId = Long.parseLong(collegeId);
             Page<Project> page = projectRepository.findByLeadCollegeId(cId, pageable);
             hydrateSkills(page.getContent());
-            return page.map(this::toCardResponseWithImages);
+            return mapCardsWithImages(page);
         } catch (NumberFormatException e) {
             throw new BadRequestException("Invalid College ID format. Must be a number.");
         }
@@ -254,11 +262,11 @@ public class ProjectService {
 
         Page<Project> page = projectRepository.findAll(spec, pageable);
         hydrateSkills(page.getContent());
-        return page.map(this::toCardResponseWithImages);
+        return mapCardsWithImages(page);
     }
 
     public int countAllProjects() {
-        return (int) projectRepository.count();
+        return (int) projectRepository.countByStatusNot(ProjectStatus.DELETED);
     }
 
     // ── Member / lead checks (delegates to TeamRepo) ──────────────────────────
@@ -275,7 +283,8 @@ public class ProjectService {
 
     @Transactional(readOnly = true)
     public int getCurrentTeamSize(String projectId) {
-        return teamRepo.countByProjectId(projectId);
+        return projectRepository.findCurrentTeamSizeById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found"));
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -290,8 +299,6 @@ public class ProjectService {
             ProjectCategory cat = projectCategoryService.findByName(categoryName)
                     .orElseGet(() -> projectCategoryService.create(categoryName));
             project.setCategory(cat);
-        } else {
-            project.setCategory(null);
         }
     }
 
@@ -343,6 +350,22 @@ public class ProjectService {
         return card;
     }
 
+    private Page<ProjectCardResponse> mapCardsWithImages(Page<Project> page) {
+        if (page.isEmpty()) return Page.empty(page.getPageable());
+        List<String> projectIds = page.getContent().stream().map(Project::getId).toList();
+        Map<String, List<String>> imagesByProject = teamRepo
+                .getMemberProfileImageUrlsByProjectIds(projectIds)
+                .stream()
+                .collect(Collectors.groupingBy(row -> (String) row[0],
+                        Collectors.mapping(row -> (String) row[1], Collectors.toList())));
+        List<ProjectCardResponse> cards = page.getContent().stream().map(project -> {
+            ProjectCardResponse card = new ProjectCardResponse(project);
+            card.setMemberProfileImageUrls(imagesByProject.getOrDefault(project.getId(), List.of()));
+            return card;
+        }).toList();
+        return new PageImpl<>(cards, page.getPageable(), page.getTotalElements());
+    }
+
 
     private Specification<Project> buildSearchSpec(String query, String category,
                                                    ProjectStatus status, List<String> skills,
@@ -370,6 +393,7 @@ public class ProjectService {
             }
 
             List<Predicate> predicates = new ArrayList<>();
+            predicates.add(cb.notEqual(root.get("status"), ProjectStatus.DELETED));
 
             if (query != null && !query.isBlank()) {
                 String pattern = "%" + query.toLowerCase() + "%";
@@ -420,8 +444,23 @@ public class ProjectService {
 
     public List<ProjectCardResponse> getAllProjectsInEvent(Long eventId) {
         List<Project>projects=projectRepository.findByEventId(eventId);
-        return projects.stream()
-                .map(this::toCardResponseWithImages)
-                .collect(Collectors.toList());
+        return mapCardListWithImages(projects);
+    }
+
+    private List<ProjectCardResponse> mapCardListWithImages(List<Project> projects) {
+        if (projects == null || projects.isEmpty()) return List.of();
+        Map<String, List<String>> imagesByProject = loadMemberImages(
+                projects.stream().map(Project::getId).toList());
+        return projects.stream().map(project -> {
+            ProjectCardResponse card = new ProjectCardResponse(project);
+            card.setMemberProfileImageUrls(imagesByProject.getOrDefault(project.getId(), List.of()));
+            return card;
+        }).toList();
+    }
+
+    private Map<String, List<String>> loadMemberImages(List<String> projectIds) {
+        return teamRepo.getMemberProfileImageUrlsByProjectIds(projectIds).stream()
+                .collect(Collectors.groupingBy(row -> (String) row[0],
+                        Collectors.mapping(row -> (String) row[1], Collectors.toList())));
     }
 }

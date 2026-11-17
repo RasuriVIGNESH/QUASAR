@@ -1019,6 +1019,7 @@ const SettingsTab = ({ project, isProjectLead, onPurge, onUpdate, onStatusChange
   const [formData, setFormData] = useState({
     title: project.title || '',
     description: project.description || '',
+    maxTeamSize: project.maxTeamSize ?? 2,
     categoryId: project.category?.id || '',
     categoryName: project.category?.name || project.categoryName || '',
     techStack: project.techStack || [],
@@ -1037,7 +1038,7 @@ const SettingsTab = ({ project, isProjectLead, onPurge, onUpdate, onStatusChange
   const [projectCategories, setProjectCategories] = useState([]);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const addRole = () => setFormData(prev => prev.requiredRoles.length >= Math.max(0, Number(project.maxTeamSize || 1) - 1) ? prev : ({ ...prev, requiredRoles: [...prev.requiredRoles, { name: '' }] }));
+  const addRole = () => setFormData(prev => prev.requiredRoles.length >= Math.max(0, Number(prev.maxTeamSize || 1) - 1) ? prev : ({ ...prev, requiredRoles: [...prev.requiredRoles, { name: '' }] }));
   const updateRole = (index, name) => setFormData(prev => ({ ...prev, requiredRoles: prev.requiredRoles.map((role, i) => i === index ? { ...role, name } : role) }));
   const removeRole = index => setFormData(prev => ({ ...prev, requiredRoles: prev.requiredRoles.filter((_, i) => i !== index) }));
 
@@ -1049,11 +1050,18 @@ const SettingsTab = ({ project, isProjectLead, onPurge, onUpdate, onStatusChange
 
   const handleUpdate = async () => {
     if (!formData.title.trim()) { toast.error('Title cannot be empty'); return; }
+    const newSize = Number(formData.maxTeamSize);
+    const minAllowed = Math.max(2, Number(project.currentTeamSize || 0), formData.requiredRoles.length + 1);
+    if (!Number.isInteger(newSize) || newSize > 20 || newSize < minAllowed) {
+      toast.error(`Team size must be a whole number between ${minAllowed} and 20`);
+      return;
+    }
     setIsUpdating(true);
     try {
       const payload = {
         title: formData.title,
         description: formData.description,
+        maxTeamSize: newSize,
         techStack: formData.techStack,
         requiredRoles: formData.requiredRoles.map(role => role.id ? { id: role.id, name: role.name } : { name: role.name }),
         skills: formData.skills.map(s => ({
@@ -1144,6 +1152,23 @@ const SettingsTab = ({ project, isProjectLead, onPurge, onUpdate, onStatusChange
                 {formData.categoryId && (
                     <button type="button" onClick={() => { setFormData(prev => ({ ...prev, categoryId: '', categoryName: '' })); setCategoryInput(''); }} className="px-3 text-slate-400 hover:text-slate-600 border border-slate-200 rounded-xl text-sm">Clear</button>
                 )}
+              </div>
+            </div>
+            <div className="col-span-2 space-y-2">
+              <Label className="text-xs font-bold text-slate-500">Max Team Size</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                    type="number"
+                    min={Math.max(2, Number(project.currentTeamSize || 0), formData.requiredRoles.length + 1)}
+                    max={20}
+                    step={1}
+                    value={formData.maxTeamSize}
+                    onChange={e => setFormData(prev => ({ ...prev, maxTeamSize: e.target.value }))}
+                    className="h-11 w-32 rounded-xl border-slate-200 text-slate-900"
+                />
+                <span className="text-[11px] text-slate-500">
+                  Currently {project.currentTeamSize ?? 0} member(s) including the lead. Cannot go below current members or required roles + 1 (lead). Max 20.
+                </span>
               </div>
             </div>
             <div className="col-span-2 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4"><div className="flex items-start justify-between gap-3"><div><Label className="text-xs font-bold text-slate-500">Required Roles</Label><p className="mt-1 text-[11px] text-slate-500">One role is one seat; the lead uses one team seat.</p></div><button type="button" onClick={addRole} className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-bold text-slate-600">Add role</button></div>{formData.requiredRoles.map((role, index) => <div key={role.id || index} className="flex gap-2"><Input maxLength={100} value={role.name} onChange={e => updateRole(index, e.target.value)} placeholder="e.g. Backend Developer" className="h-10 rounded-xl border-slate-200 bg-white text-sm" /><button type="button" onClick={() => removeRole(index)} className="px-2 text-xs font-bold text-slate-500 hover:text-rose-600">Remove</button></div>)}</div>

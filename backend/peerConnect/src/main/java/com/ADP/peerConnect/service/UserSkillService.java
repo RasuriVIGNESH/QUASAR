@@ -2,6 +2,8 @@ package com.ADP.peerConnect.service;
 
 import com.ADP.peerConnect.exception.BadRequestException;
 import com.ADP.peerConnect.exception.ConflictException;
+import com.ADP.peerConnect.exception.DuplicateUserSkillException;
+import com.ADP.peerConnect.exception.InvalidUserSkillException;
 import com.ADP.peerConnect.exception.ResourceNotFoundException;
 import com.ADP.peerConnect.model.dto.response.UserSkillResponse;
 import com.ADP.peerConnect.model.entity.Skill;
@@ -15,7 +17,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Service class for UserSkill entity operations
@@ -78,23 +82,30 @@ public class UserSkillService {
         User user = userService.findById(userId);
         List<UserSkill> toSave = new ArrayList<>();
         List<UserSkill> added = new ArrayList<>();
+        Set<String> namesInRequest = new HashSet<>();
 
         for (AddUserSkill req : skills) {
+            if (req == null) {
+                throw new InvalidUserSkillException("Skill item is required");
+            }
             String skillName = req.getSkillName();
             SkillLevel level = req.getLevel();
             String experience = req.getExperience();
             String category = req.getCategory();
 
             if (skillName == null || skillName.trim().isEmpty()) {
-                continue;
+                throw new InvalidUserSkillException("Skill name is required");
             }
             if (level == null) {
-                continue;
+                throw new InvalidUserSkillException("Skill level is required for " + skillName.trim());
             }
 
-            // If user already has the skill, skip
+            String normalizedName = Skill.normalizeName(skillName);
+            if (!namesInRequest.add(normalizedName)) {
+                throw new DuplicateUserSkillException(skillName.trim());
+            }
             if (userSkillRepository.existsByUserIdAndSkillNameIgnoreCase(userId, skillName)) {
-                continue;
+                throw new DuplicateUserSkillException(skillName.trim());
             }
 
             Skill skill = skillService.findOrCreateSkill(skillName, category);

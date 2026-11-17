@@ -23,6 +23,9 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
     @Query("SELECT p.status FROM Project p WHERE p.id = :id")
     Optional<ProjectStatus> findStatusById(@Param("id") String id);
 
+    @Query("SELECT p.currentTeamSize FROM Project p WHERE p.id = :id")
+    Optional<Integer> findCurrentTeamSizeById(@Param("id") String id);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Project p WHERE p.id = :id")
     Optional<Project> findByIdForMembershipUpdate(@Param("id") String id);
@@ -44,11 +47,13 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
             value = """
                 SELECT p.id
                 FROM Project p
+                WHERE p.status <> 'DELETED'
                 ORDER BY p.createdAt DESC
                 """,
             countQuery = """
                 SELECT COUNT(p)
                 FROM Project p
+                WHERE p.status <> 'DELETED'
                 """
     )
     Page<String> findRecentProjectIds(Pageable pageable);
@@ -64,7 +69,7 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
         LEFT JOIN FETCH p.event
         LEFT JOIN FETCH p.projectSkills ps
         LEFT JOIN FETCH ps.skill
-        WHERE p.id IN :ids
+        WHERE p.id IN :ids AND p.status <> 'DELETED'
         """)
     List<Project> findByIdsWithCardAssociations(
             @Param("ids") List<String> ids
@@ -79,21 +84,23 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
             JOIN FETCH t.lead
             LEFT JOIN FETCH p.category
             LEFT JOIN FETCH p.event
-            WHERE t.lead.id = :userId
+            WHERE p.status <> 'DELETED'
+              AND (t.lead.id = :userId
                OR EXISTS (
                    SELECT 1 FROM Team tm JOIN tm.members u
                    WHERE tm.project.id = p.id AND u.id = :userId
-               )
+               ))
             ORDER BY p.updatedAt DESC
             """,
             countQuery = """
             SELECT COUNT(DISTINCT p) FROM Project p
             JOIN p.team t
-            WHERE t.lead.id = :userId
+            WHERE p.status <> 'DELETED'
+              AND (t.lead.id = :userId
                OR EXISTS (
                    SELECT 1 FROM Team tm JOIN tm.members u
                    WHERE tm.project.id = p.id AND u.id = :userId
-               )
+               ))
             """
     )
     Page<Project> findProjectsByLeadOrMember(
@@ -107,8 +114,8 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
             JOIN FETCH t.lead
             LEFT JOIN FETCH p.category
             LEFT JOIN FETCH p.event
-            WHERE p.status = :status
-              AND p.currentTeamSize < p.maxTeamSize
+            WHERE p.status <> 'DELETED'
+              AND (:status IS NULL OR p.status = :status)
               AND t.lead.id != :userId
               AND NOT EXISTS (
                   SELECT 1 FROM Team tm JOIN tm.members u
@@ -119,8 +126,8 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
             countQuery = """
             SELECT COUNT(DISTINCT p) FROM Project p
             JOIN p.team t
-            WHERE p.status = :status
-              AND p.currentTeamSize < p.maxTeamSize
+            WHERE p.status <> 'DELETED'
+              AND (:status IS NULL OR p.status = :status)
               AND t.lead.id != :userId
               AND NOT EXISTS (
                   SELECT 1 FROM Team tm JOIN tm.members u
@@ -140,12 +147,12 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
             JOIN FETCH t.lead u
             LEFT JOIN FETCH p.category
             LEFT JOIN FETCH p.event
-            WHERE u.college.id = :collegeId
+            WHERE u.college.id = :collegeId AND p.status <> 'DELETED'
             """,
             countQuery = """
             SELECT COUNT(DISTINCT p) FROM Project p
             JOIN p.team t JOIN t.lead u
-            WHERE u.college.id = :collegeId
+            WHERE u.college.id = :collegeId AND p.status <> 'DELETED'
             """
     )
     Page<Project> findByLeadCollegeId(
@@ -154,7 +161,7 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
 
     @Query("""
         SELECT p FROM Project p
-        WHERE p.status = 'RECRUITING'
+        WHERE p.status <> 'DELETED'
           AND p.currentTeamSize < p.maxTeamSize
         """)
     Page<Project> findProjectsWithAvailableSpots(Pageable pageable);
@@ -174,16 +181,20 @@ public interface ProjectRepository extends JpaRepository<Project, String>, JpaSp
     @Query("""
         SELECT COUNT(DISTINCT p) FROM Project p
         JOIN p.team t
-        WHERE t.lead.id = :userId
+        WHERE p.status <> 'DELETED'
+          AND (t.lead.id = :userId
            OR EXISTS (
                SELECT 1 FROM Team tm JOIN tm.members u
                WHERE tm.project.id = p.id AND u.id = :userId
-           )
+           ))
         """)
     long countProjectsByLeadOrMember(@Param("userId") String userId);
+
+    long countByStatusNot(ProjectStatus status);
 
     // ── Specification (search) ────────────────────────────────────────────────
 
     Page<Project> findAll(Specification<Project> spec, Pageable pageable);
-    List<Project> findByEventId(Long eventId);
+    @Query("SELECT p FROM Project p WHERE p.event.id = :eventId AND p.status <> 'DELETED' ORDER BY p.createdAt DESC, p.id ASC")
+    List<Project> findByEventId(@Param("eventId") Long eventId);
 }
