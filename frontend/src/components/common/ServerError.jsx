@@ -81,7 +81,7 @@ export default function ServerError() {
                         opacity: [0.1, 0.3, 0.1]
                     }}
                     transition={{ duration: 7, repeat: Infinity, delay: 1 }}
-                    className="absolute bottom-20 right-20 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl"
+                    className="absolute bottom-20 right-20 w-80 h-80 bg-teal-500/10 rounded-full blur-3xl"
                 />
             </div>
         </div>

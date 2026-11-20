@@ -1,14 +1,4 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import { ThemeProvider } from "@/components/theme-provider"
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    {/* Updated storage key to professional-ui */}
-    <ThemeProvider defaultTheme="light" storageKey="professional-ui-theme" attribute="data-theme">
-      <App />
-    </ThemeProvider>
-  </StrictMode>,
-)
+import React from 'react';import {createRoot} from 'react-dom/client';import {BrowserRouter} from 'react-router-dom';import {MotionConfig} from 'framer-motion';
+import App from './App';import {Store} from './ui';import {AuthProvider} from './auth';import './index.css';
+try{const t=localStorage.getItem('qt');document.documentElement.classList.toggle('dark',t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches)}catch{}
+createRoot(document.getElementById('root')).render(<BrowserRouter><MotionConfig reducedMotion="user"><AuthProvider><Store><App/></Store></AuthProvider></MotionConfig></BrowserRouter>);

@@ -48,7 +48,7 @@ class ProjectService {
       if (filters.sortDir !== undefined) queryParams.append('sortDir', filters.sortDir);
 
       const queryString = queryParams.toString();
-      const endpoint = queryString ? `/projects?${queryString}` : '/projects';
+      const endpoint = queryString ? `/projects/searchProjects?${queryString}` : '/projects/searchProjects';
 
       return await apiService.get(endpoint, {}, options);
     } catch (error) {
@@ -94,7 +94,7 @@ class ProjectService {
   async getJoinedProjects(page = 0, size = 6) {
     try {
       const params = { page, size };
-      return await apiService.get('/joined', params);
+      return await apiService.get('/projects/my-projects', params);
     } catch (error) {
       console.error('Failed to get joined projects:', error);
       throw new Error(error.message || 'Failed to get joined projects');
@@ -104,8 +104,8 @@ class ProjectService {
   // Get available projects - matches ProjectController endpoint
   async getAvailableProjects(page = 0, size = 8) {
     try {
-      const params = { page, size };
-      return await apiService.get('/available', params);
+      const params = { page, size, availableOnly: true, status: 'RECRUITING' };
+      return await apiService.get('/projects/searchProjects', params);
     } catch (error) {
       console.error('Failed to get available projects:', error);
       throw new Error(error.message || 'Failed to get available projects');
@@ -321,8 +321,11 @@ class ProjectService {
       if (!memberData.userId) {
         throw new Error('User ID is required');
       }
-
-      return await apiService.post(`/projects/${projectId}/members`, memberData);
+      return await apiService.post(`/${projectId}/Invite`, {
+        InvitedId: memberData.userId,
+        ...(memberData.roleId ? { roleId: memberData.roleId } : {}),
+        message: memberData.message || ''
+      });
     } catch (error) {
       console.error(`Failed to add member to project ${projectId}:`, error);
       throw new Error(error.message || 'Failed to add member');
@@ -338,8 +341,11 @@ class ProjectService {
       if (!role) {
         throw new Error('Role is required');
       }
+      if (String(role).toUpperCase() !== 'LEAD') {
+        throw new Error('Only transferring the Lead role is supported by the backend');
+      }
+      return await apiService.put(`/projects/${projectId}/members/${memberId}`);
 
-      return await apiService.put(`/projects/${projectId}/members/${memberId}`, { role });
     } catch (error) {
       console.error(`Failed to update member role:`, error);
       throw new Error(error.message || 'Failed to update member role');
@@ -402,7 +408,7 @@ class ProjectService {
         throw new Error('Response must be ACCEPTED or REJECTED');
       }
 
-      return await apiService.put(`/${requestId}/respond`, { response });
+      return await apiService.put(`/${requestId}/respond`, null, { response });
     } catch (error) {
       console.error(`Failed to respond to request ${requestId}:`, error);
       throw new Error(error.message || 'Failed to respond to request');
@@ -470,11 +476,15 @@ class ProjectService {
   async discoverProjects(page = 0, size = 8) {
     try {
       const params = { page, size };
-      return await apiService.get('/projectDiscovery/discover', params);
+      return await apiService.get('/projects/searchProjects', params);
     } catch (error) {
       console.error('Failed to discover projects:', error);
       throw new Error(error.message || 'Failed to discover projects');
     }
+  }
+  async transferLead(projectId, memberId) {
+    if (!projectId || !memberId) throw new Error('Project ID and Member ID are required');
+    return apiService.put(`/projects/${projectId}/members/${memberId}`);
   }
 
   // ===== UTILITY METHODS =====

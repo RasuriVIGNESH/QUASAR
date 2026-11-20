@@ -23,7 +23,7 @@ import {
   Github, Globe, ArrowLeft, Plus, Send, CheckCircle2,
   Link as LinkIcon, Video, Flag, MoreHorizontal, Calendar,
   Edit, Loader2, Cpu, MoreVertical, Zap, ChevronDown, Pencil, Trash2, Inbox,
-  X, Clock, ChevronLeft, ChevronRight
+  X, Clock, ChevronLeft, ChevronRight, Bell
 } from 'lucide-react';
 // Services
 import projectService, { toArray } from '@/services/projectService';
@@ -199,6 +199,9 @@ export default function ProjectPage() {
               </Badge>
             </div>
             <div className="flex items-center gap-4 shrink-0">
+              <button aria-label="Open notifications" onClick={() => navigate('/notifications')} className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-teal-700 dark:hover:bg-slate-800">
+                <Bell size={18} />
+              </button>
               <div className="flex -space-x-2">
                 {members.slice(0, 4).map((m, i) => {
                   const memberId = m.user?.id ?? m.userId;

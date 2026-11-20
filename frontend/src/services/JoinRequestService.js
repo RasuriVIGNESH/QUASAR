@@ -11,7 +11,11 @@ class JoinRequestService {
   // GET /api/User/invitations-requests?status=PENDING
   // Used by RequestContext to populate sentJoinRequests
   async getMyJoinRequests(page = 0, size = 20) {
-    return apiService.get('/User/invitations-requests', { page, size, status: 'PENDING' });
+    return apiService.get('/User/join-requests', { page, size }, { skipCache: true });
+  }
+
+  async getMyPendingInvitations(page = 0, size = 20) {
+    return apiService.get('/User/invitations-requests', { page, size, status: 'PENDING' }, { skipCache: true });
   }
 
   // GET /api/projects/{projectId}/invitations-requests

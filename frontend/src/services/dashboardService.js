@@ -39,7 +39,7 @@ export default function Dashboard() {
 
   // Fetch recommended projects
   const { data: recommendedProjects, loading: projectsLoading, isValidating: projectsValidating } = useFetch(
-    user?.id ? `/recommendations/user/${user.id}` : null,
+      user?.id ? `/recommendations/projects` : null,np
     {},
     {
       method: 'GET',
@@ -91,7 +91,7 @@ export default function Dashboard() {
         label: 'Achievements',
         value: dashboardData?.achievements || 0,
         icon: Trophy,
-        color: 'bg-purple-100 text-purple-600'
+        color: 'bg-teal-100 text-teal-600'
       },
       {
         label: 'Upcoming Events',

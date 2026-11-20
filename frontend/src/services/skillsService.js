@@ -112,8 +112,8 @@ class SkillsService {
         try {
         if (!name || name.trim().length === 0) throw new Error('Skill name is required');
         return await apiService.get(
-            `/skills/discovery/by-name/${encodeURIComponent(name.trim())}`,
-            {},
+            '/skills/discovery/search',
+            { query: name.trim() },
             { skipCache: true }
         );
         } catch (error) {
@@ -166,6 +166,12 @@ class SkillsService {
         }
     }
 
+    async getPublicPredefinedSkills() {
+        const response = await apiService.get('/predefined-skills', {}, {
+            cacheTTL: this.staticDataCacheTTL, preventRedirect: true
+        });
+        return Array.isArray(response) ? response : (response?.data || []);
+    }
     // GET /api/students/users/{userId}/skills → List<UserSkillResponse>
     // Returns: { data: [...], success }
     async getUserSkillsByUserId(userId) {

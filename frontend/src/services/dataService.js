@@ -17,6 +17,9 @@ class DataService {
     this.recommendationCacheTTL = 60000;
   }
 
+  async getHealth() {
+    return apiService.get('/health', {}, { skipCache: true, preventRedirect: true, includeAuth: false });
+  }
     async getBranches() {
       try {
         const response = await apiService.get('/branches', {}, { cacheTTL: this.staticDataCacheTTL });
@@ -118,8 +121,8 @@ class DataService {
       if (!userId) throw new Error('User ID is required');
 
       const response = await apiService.get(
-        `/recommendations/user/${userId}`,
-        {},
+          '/recommendations/projects',
+          { page: 0, size: 20 },
         { cacheTTL: this.recommendationCacheTTL }
       );
 
@@ -140,9 +143,9 @@ class DataService {
     try {
       if (!userId) throw new Error('User ID is required');
 
-      const params = { limit };
+      const params = { page: 0, size: limit };
       const response = await apiService.get(
-        `/recommendations/user/${userId}/top`,
+          '/recommendations/projects',
         params,
         { cacheTTL: this.recommendationCacheTTL }
       );

@@ -13,6 +13,7 @@ export { default as notificationService } from './NotificationService.js';
 export { default as teamService } from './TeamService.js';
 export { default as recommendationService } from './recommendationService.js';
 export { default as portfolioService } from './portfolioService.js';
-export { default as moderationService } from './moderationService.js';
 export { default as discoveryService } from './discoveryService.js';
 export { default as skillInsightsService } from './skillInsightsService.js';
+export { default as joinRequestService } from './JoinRequestService.js';
+export { meetingRoomService } from './MeetingRoomService.js';

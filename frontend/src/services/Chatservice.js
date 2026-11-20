@@ -216,12 +216,12 @@ class ChatService {
       if (!projectId) throw new Error('Project ID is required');
 
       const response = await apiService.get(
-        `/chat/projects/${projectId}/messages/count`,
-        {},
-        { cacheTTL: this.countCacheTTL }
+          `/chat/projects/${projectId}/messages`,
+          { page: 0, size: 1 },
+          { cacheTTL: this.countCacheTTL }
       );
-
-      return response;
+      const page = response?.data ?? response;
+      return page?.totalElements ?? 0;
     } catch (error) {
       console.error('ChatService: Error getting message count:', error);
       throw error;

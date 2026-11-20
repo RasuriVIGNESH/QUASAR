@@ -13,7 +13,7 @@ class AnalyticsService {
   // Get skills demand analytics
   async getSkillsDemand() {
     try {
-      return await apiService.get('/analytics/skills/demand');
+      return await apiService.get('/skills/demand');
     } catch (error) {
       throw new Error(error.message || 'Failed to get skills demand analytics');
     }

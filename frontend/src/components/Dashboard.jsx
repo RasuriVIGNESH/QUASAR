@@ -435,19 +435,6 @@ export default function Dashboard() {
             {/* RIGHT: CAMPUS EVENTS - Sticky Sidebar */}
             <div className="lg:col-span-4">
               <div className="sticky top-24 space-y-6">
-                <div id="notifications" className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                  <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                    <div><h3 className="text-sm font-black text-slate-950 uppercase tracking-widest flex items-center gap-2"><Bell size={16} className="text-indigo-600" /> Notifications</h3><p className="text-xs text-slate-500 mt-1">Invitations and request updates.</p></div>
-                    <Button variant="outline" size="sm" onClick={() => navigate('/notifications')}>View all</Button>
-                  </div>
-                  <div className="p-4 space-y-2">
-                    {notifications.length > 0 ? notifications.slice(0, 5).map(item => {
-                      const actionable = ['PROJECT_INVITATION', 'JOIN_REQUEST', 'REQUEST_DECISION'].includes(item.eventType);
-                      const tab = item.eventType === 'PROJECT_INVITATION' ? 'invitations' : item.eventType === 'JOIN_REQUEST' ? 'received' : 'sent';
-                      return <button key={item.id} type="button" onClick={() => navigate(actionable ? `/requests?tab=${tab}` : '/notifications')} className="w-full text-left flex items-center gap-2 p-2.5 rounded-lg border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all"><div className={`w-7 h-7 rounded-full flex items-center justify-center ${item.read ? 'bg-slate-100 text-slate-500' : 'bg-indigo-100 text-indigo-600'}`}><Bell size={13} /></div><div className="flex-1 min-w-0"><p className="text-xs font-bold text-slate-900 truncate">{item.title || 'Notification'}</p><p className="text-[11px] text-slate-500 truncate">{item.message}</p></div>{!item.read && <span className="w-1.5 h-1.5 rounded-full bg-indigo-600" />}</button>;
-                    }) : <p className="text-xs text-slate-500 text-center py-4">No notifications.</p>}
-                  </div>
-                </div>
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl font-black text-slate-950 flex items-center gap-3">
                     <div className="p-2 bg-indigo-100 rounded-lg">

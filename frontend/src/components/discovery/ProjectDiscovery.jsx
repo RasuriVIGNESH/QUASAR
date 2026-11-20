@@ -1,9 +1,8 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import projectService from '@/services/projectService';
 import recommendationService from '@/services/recommendationService';
-import ProjectDetailModal from './ProjectDetailModal';
 
 import {
   Search,
@@ -151,15 +150,17 @@ const Pagination = ({ page, totalPages, totalElements, pageSize, onPageChange })
 export default function ProjectDiscovery() {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const [searchInput, setSearchInput] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
   const [page, setPage] = useState(0);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [feedMode, setFeedMode] = useState('all');
+  const [feedMode, setFeedMode] = useState(() => searchParams.get('feed') === 'recommended' ? 'recommended' : 'all');
 
+  useEffect(() => {
+    if (searchParams.get('feed') === 'recommended') setFeedMode('recommended');
+  }, [searchParams]);
   // ── Projects state ──
   const [projects, setProjects] = useState([]);
   const [totalPages, setTotalPages] = useState(0);
@@ -314,8 +315,8 @@ export default function ProjectDiscovery() {
                     </button>
                 )}
                 <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5" aria-label="Explore feed mode">
-                  <button type="button" onClick={() => { setFeedMode('all'); setPage(0); }} className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${feedMode === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900'}`}>All projects</button>
-                  <button type="button" onClick={() => { setFeedMode('recommended'); setPage(0); }} className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${feedMode === 'recommended' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Recommended</button>
+                  <button type="button" onClick={() => { setFeedMode('all'); setPage(0); navigate('/discover/projects'); }} className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${feedMode === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900'}`}>All projects</button>
+                  <button type="button" onClick={() => { setFeedMode('recommended'); setPage(0); navigate('/discover/projects?feed=recommended'); }} className={`px-3 py-1.5 rounded-md text-[11px] font-bold transition-colors ${feedMode === 'recommended' ? 'bg-indigo-600 text-white' : 'text-slate-500 hover:text-slate-900'}`}>Recommended</button>
                 </div>
                 <select
                     id="status-filter"
@@ -414,7 +415,7 @@ export default function ProjectDiscovery() {
                 {projects.map((p) => (
                     <div
                         key={p.id}
-                        onClick={() => { setSelectedProject(p); setIsModalOpen(true); }}
+                        onClick={() => navigate(`/projects/${p.id}`)}
                         className="group bg-white border border-slate-200 rounded-lg p-5 hover:border-indigo-300 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col"
                     >
                       <div className="flex justify-between items-start mb-3">
@@ -494,12 +495,6 @@ export default function ProjectDiscovery() {
               onPageChange={handlePageChange}
           />
         </main>
-
-        <ProjectDetailModal
-            project={selectedProject}
-            open={isModalOpen}
-            onOpenChange={setIsModalOpen}
-        />
       </div>
   );
 }
